@@ -129,19 +129,44 @@ export async function deleteTeam(id: string): Promise<boolean> {
   return true;
 }
 
-// export async function retrieveTeamUsers(id: string): Promise<{ users: SafeUser[] }> {
-//   const result = await db
-//     .select({
-//       users: safeUserSelect,
-//     })
-//     .from(userTeams)
-//     // .innerJoin(teams, eq(userTeams.team_id, teams.id))
-//     .innerJoin(users, eq(teams.managerId, users.id))
-//     .innerJoin(users, eq(userTeams.user_id, users.id))
-//     .where(eq(userTeams.team_id, id))
-//     .limit(1);
+export async function retrieveTeamUsers(team_id: string): Promise<{ manager: SafeUser, members: SafeUser[] }> {
+  // get team with manager
+  const [teamWithManager] = await db
+    .select({
+      manager: safeUserSelect
+    })
+    .from(teams)
+    .innerJoin(users, eq(teams.managerId, users.id))
+    .where(eq(teams.id, team_id));
+
+  // get members
+  const members = await db
+    .select({
+      users: safeUserSelect
+    })
+    .from(userTeams)
+    .innerJoin(users, eq(userTeams.user_id, users.id))
+    .where(eq(userTeams.team_id, team_id))
+    .then(rows => rows.map(row => row.users));
+
+  const result = {
+    manager: teamWithManager.manager,
+    members: members
+  };
+
+  return result;
+}
+
+export async function addTeamUser(team_id: string, user_id: string) {
+  return db.insert(userTeams).values({ user_id, team_id });   // may throw error if couple (user_id, team_id) is not unique
+}
+
+export async function removeTeamUser(team_id: string, user_id: string): Promise<boolean> {
+  const [_deleted] = await db
+    .delete(userTeams)
+    .where(and(eq(userTeams.user_id, user_id), eq(userTeams.team_id, team_id)))
+    .returning();
   
-//   return result.map((row) => ({
-//     users: row.users,
-//   }));
-// }
+    // throws error if no rows, so this can always be true
+    return true;
+}

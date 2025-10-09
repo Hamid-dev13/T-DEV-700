@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { addTeam, deleteTeam, isTeamManager, retrieveTeam, retrieveTeams, updateTeam } from "../services/team.service";
+import { addTeam, addTeamUser, deleteTeam, isTeamManager, removeTeamUser, retrieveTeam, retrieveTeams, retrieveTeamUsers, updateTeam } from "../services/team.service";
 
 export async function retrieveTeamController(req: Request, res: Response) {
   try {
@@ -71,10 +71,8 @@ export async function retrieveTeamUsersController(req: Request, res: Response) {
   try {
     const team_id = req.params.id!;
 
-    // const users = await retrieveTeamUsers(team_id);
-    
-    // return res.status(200).json(users);
-    return res.status(200).json();
+    const users = await retrieveTeamUsers(team_id);
+    return res.status(200).json(users);
   } catch (err) {
     return res.sendStatus(500);
   }
@@ -83,8 +81,13 @@ export async function retrieveTeamUsersController(req: Request, res: Response) {
 export async function addTeamUserController(req: Request, res: Response) {
   try {
     const team_id = req.params.id!;
+    const body = req.body as any;
+    const { user } = body ?? {};
+    if (!user)
+      return res.status(400).json({ error: "Missing required field \"user\"" });
     
-    return res.status(200).json();
+    await addTeamUser(team_id, user);
+    return res.sendStatus(200);
   } catch (err) {
     return res.sendStatus(500);
   }
@@ -93,8 +96,13 @@ export async function addTeamUserController(req: Request, res: Response) {
 export async function removeTeamUserController(req: Request, res: Response) {
   try {
     const team_id = req.params.id!;
+    const body = req.body as any;
+    const { user } = body ?? {};
+    if (!user)
+      return res.status(400).json({ error: "Missing required field \"user\"" });
     
-    return res.status(200).json();
+    await removeTeamUser(team_id, user);
+    return res.sendStatus(200);
   } catch (err) {
     return res.sendStatus(500);
   }
