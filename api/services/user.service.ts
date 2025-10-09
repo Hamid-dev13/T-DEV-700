@@ -29,7 +29,7 @@ export type UpdateUserInput = {
 export async function loginUser({
   email,
   password,
-}: LoginInput): Promise<string> {
+}: LoginInput): Promise<{ token: string; user: SafeUser }> {
   if (!email || !password) {
     throw new Error("Missing required fields: email, password");
   }
@@ -53,7 +53,9 @@ export async function loginUser({
   const payload = { user_id: user.id, admin: user.admin };
   const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: process.env.JWT_EXPIRES_IN! as StringValue });
 
-  return token;
+  // Retourner le token et les infos utilisateur (sans le mot de passe)
+  const { password: _, ...safeUser } = user;
+  return { token, user: safeUser as SafeUser };
 }
 
 export async function retrieveUser(user_id: string): Promise<SafeUser> {
