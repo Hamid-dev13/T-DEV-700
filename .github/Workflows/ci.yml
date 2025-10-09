@@ -5,10 +5,10 @@ name: CI - Build Docker
 on:
   # Sur les push vers main et dev
   push:
-    branches: [main, dev]
+    branches: [main, dev, CICD]
   # Sur les pull requests vers main et dev
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev,CICD]
 
 # Les différentes tâches à exécuter
 jobs:
