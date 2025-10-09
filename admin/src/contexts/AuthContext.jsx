@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await fetch('http://localhost:3001/user', {
         method: 'GET',
-        credentials: 'include', // Important pour envoyer les cookies
+        credentials: 'include', 
         headers: {
           'Content-Type': 'application/json',
         },
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await fetch('http://localhost:3001/user/login', {
         method: 'POST',
-        credentials: 'include', // Important pour recevoir les cookies
+        credentials: 'include', 
         headers: {
           'Content-Type': 'application/json',
         },
