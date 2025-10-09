@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { 
-  LayoutDashboard, 
-  Users, 
-  UserCog, 
-  Clock, 
-  BarChart3, 
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import {
+  LayoutDashboard,
+  Users,
+  UserCog,
+  Clock,
+  BarChart3,
   LogOut,
   Menu,
   X
@@ -12,13 +14,21 @@ import {
 
 function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { logout } = useAuth();
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', active: true },
-    { icon: Users, label: 'Users', active: false },
-    { icon: UserCog, label: 'Teams', active: false },
-    { icon: BarChart3, label: 'Reports', active: false },
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+    { icon: Users, label: 'Users', path: '/users' },
+    { icon: UserCog, label: 'Teams', path: '/teams' },
+    { icon: BarChart3, label: 'Reports', path: '/reports' },
   ];
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <div 
@@ -47,11 +57,12 @@ function Sidebar() {
           {menuItems.map((item, index) => (
             <li key={index}>
               <button
+                onClick={() => navigate(item.path)}
                 className={`
                   w-full flex items-center gap-3 px-4 py-3 rounded-lg
                   transition-all duration-200
-                  ${item.active 
-                    ? 'bg-blue-600 text-white' 
+                  ${location.pathname === item.path
+                    ? 'bg-blue-600 text-white'
                     : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                   }
                 `}
@@ -69,6 +80,7 @@ function Sidebar() {
       {/* Logout en bas */}
       <div className="absolute bottom-4 left-0 right-0 px-4">
         <button
+          onClick={handleLogout}
           className="
             w-full flex items-center gap-3 px-4 py-3 rounded-lg
             text-gray-400 hover:bg-gray-800 hover:text-white

@@ -9,9 +9,16 @@ export async function loginUserController(req: Request, res: Response) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const token = await loginUser({ email, password });
+    const result = await loginUser({ email, password });
 
-    return res.status(200).cookie("token", token).json(token);    // TODO set cookie options
+    return res.status(200)
+      .cookie("token", result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000 // 24 heures
+      })
+      .json(result.user);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Internal server error";

@@ -1,32 +1,59 @@
-import Sidebar from './components/Sidebar';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import PrivateRoute from './components/PrivateRoute';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Users from './pages/Users';
+import Teams from './pages/Teams';
+import Reports from './pages/Reports';
 
 function App() {
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <Sidebar />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
 
-      {/* Contenu principal */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="h-16 bg-white shadow-sm flex items-center px-6">
-          <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
-        </header>
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
 
-        {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-7xl mx-auto">
-            {/* Votre contenu ici */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-xl font-semibold mb-4">Bienvenue sur Time Manager</h3>
-              <p className="text-gray-600">
-                Ceci est votre interface d'administration. Utilisez le menu à gauche pour naviguer.
-              </p>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
+          <Route
+            path="/users"
+            element={
+              <PrivateRoute>
+                <Users />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/teams"
+            element={
+              <PrivateRoute>
+                <Teams />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/reports"
+            element={
+              <PrivateRoute>
+                <Reports />
+              </PrivateRoute>
+            }
+          />
+
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

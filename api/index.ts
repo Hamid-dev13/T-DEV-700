@@ -11,7 +11,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173', // L'URL admin
+  credentials: true, // Permet l'envoi de cookies
+}));
 app.use(express.json());
 
 // Routers
