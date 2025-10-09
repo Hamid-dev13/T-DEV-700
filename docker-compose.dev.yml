@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  
+  # ============================================
+  # FRONTEND
+  # ============================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: builder
+    container_name: dev-frontend
+    ports:
+      - "${FRONTEND_HOST_PORT}:${FRONTEND_CONTAINER_PORT}"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    command: npm run dev -- --host 0.0.0.0
+    networks:
+      - app-network
+    depends_on:
+      - backend
+
+  # ============================================
+  # BACKEND
+  # ============================================
+  backend:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      target: builder
+    container_name: dev-backend
+    ports:
+      - "${BACKEND_HOST_PORT}:${BACKEND_CONTAINER_PORT}"
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+    networks:
+      - app-network
+
+
+
+networks:
+  app-network:
+    driver: bridge

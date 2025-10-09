@@ -1,0 +1,254 @@
+# ==========================================
+# ENVIRONNEMENT & CONFIGURATION
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# ==========================================
+# NODE.JS & NPM
+# ==========================================
+# Dépendances
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+jspm_packages/
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# ==========================================
+# REACT & FRONTEND
+# ==========================================
+# Build outputs
+dist/
+build/
+
+# Vite
+.vite/
+
+# Next.js
+.next/
+out/
+
+# Nuxt.js
+.nuxt/
+.output/
+
+# Gatsby
+.cache/
+public/
+
+# ==========================================
+# BACKEND & DATABASE
+# ==========================================
+# Drizzle migrations (garder les migrations mais pas les logs)
+*.log
+
+# Base de données locale
+*.db
+*.sqlite
+*.sqlite3
+
+# ==========================================
+# DOCKER
+# ==========================================
+# Docker volumes
+docker-data/
+.docker/
+
+# ==========================================
+# IDE & ÉDITEURS
+# ==========================================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains IDEs
+.idea/
+*.swp
+*.swo
+*~
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ==========================================
+# SYSTÈME
+# ==========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+.target/
+.apt_generated/
+.factorypath
+.buildpath
+.classpath
+.project
+.metadata
+bin/
+tmp/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ==========================================
+# LOGS & TEMPORAIRES
+# ==========================================
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ==========================================
+# SUPABASE & AUTH
+# ==========================================
+# Fichiers de configuration sensibles
+.supabase/
+supabase/.env
+supabase/config.toml
+
+# ==========================================
+# TESTS
+# ==========================================
+# Coverage
+coverage/
+.nyc_output/
+junit.xml
+
+# Jest
+.jest/
+
+# ==========================================
+# AUTRES
+# ==========================================
+# Fichiers temporaires
+*.tmp
+*.temp
+*.cache
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# Fichiers de sauvegarde
+*.backup
+*.bak
+*.orig
