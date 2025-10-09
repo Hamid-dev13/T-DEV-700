@@ -1,0 +1,72 @@
+# Nom du workflow (apparaît dans l'interface GitHub)
+name: CI - Build Docker
+
+# Quand ce workflow se déclenche ?
+on:
+  # Sur les push vers main et dev
+  push:
+    branches: [main, dev]
+  # Sur les pull requests vers main et dev
+  pull_request:
+    branches: [main, dev]
+
+# Les différentes tâches à exécuter
+jobs:
+  # ==========================================
+  # JOB UNIQUE : Builder les IMAGES DOCKER (production)
+  # ==========================================
+  docker-build:
+    name: Docker - Build Images Production
+    runs-on: ubuntu-latest
+
+    steps:
+      # Étape 1 : Récupérer le code du repo
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      # Étape 2 : Configurer Docker Buildx (buildeur avancé et plus rapide)
+      - name:  Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Étape 3 : Builder l'image Docker du BACKEND (target production)
+      - name:  Build Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          # Où se trouve le Dockerfile
+          context: ./api
+          file: ./api/Dockerfile
+          
+          target: production
+          # On ne pousse pas l'image sur un registry, juste on la build
+          push: false
+          # Nom de l'image (local uniquement pour ce test)
+          tags: monapp-backend:production
+          # Cache pour accélérer les builds suivants (très important !)
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Étape 4 : Builder l'image Docker du FRONTEND (target production)
+      - name:  Build Frontend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          # Le frontend n'a que 2 stages : builder et production
+          target: production
+          push: false
+          tags: monapp-frontend:production
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Étape 5 : Message de succès avec détails
+      - name:  Build réussi !
+        run: |
+          echo " Toutes les images Docker ont été créées avec succès !"
+          echo ""
+          echo " Backend : monapp-backend:production"
+          echo "   └─ Étapes exécutées : dependencies → builder → production"
+          echo "   └─ TypeScript compilé et image optimisée créée"
+          echo ""
+          echo " Frontend : monapp-frontend:production"
+          echo "   └─ Étapes exécutées : builder → production (nginx)"
+          echo "   └─ React buildé et servi par Nginx"
