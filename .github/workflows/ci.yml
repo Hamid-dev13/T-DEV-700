@@ -1,5 +1,5 @@
 # Nom du workflow (apparaît dans l'interface GitHub)
-name: CI/CD - Build et Push Docker
+name: CI/CD - Build, Push et Deploy
 
 # Quand ce workflow se déclenche ?
 on:
@@ -13,7 +13,7 @@ on:
 # Les différentes tâches à exécuter
 jobs:
   # ==========================================
-  # JOB : Builder et Pousser les IMAGES DOCKER
+  # JOB 1 : Builder et Pousser les IMAGES DOCKER
   # ==========================================
   docker-build-push:
     name: 🐳 Docker - Build et Push vers Docker Hub
@@ -36,20 +36,16 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
 
       # Étape 4 : Préparer les tags pour les images
-      # On crée des tags différents selon la branche
-      - name: 🏷️ Préparer les tags Docker
+      - name: 🏷️ Préparer les tags Docker Backend
         id: meta-backend
         run: |
-          # Récupérer le nom de la branche
           BRANCH=${GITHUB_REF##*/}
-          # Créer un tag avec le nom de branche (main, dev, CICD...)
           echo "tags=${{ secrets.DOCKER_USERNAME }}/monapp-backend:${BRANCH}" >> $GITHUB_OUTPUT
-          # Si c'est la branche main, on ajoute aussi le tag "latest"
           if [ "$BRANCH" == "main" ]; then
             echo "tags=${{ secrets.DOCKER_USERNAME }}/monapp-backend:${BRANCH},${{ secrets.DOCKER_USERNAME }}/monapp-backend:latest" >> $GITHUB_OUTPUT
           fi
 
-      - name: 🏷️ Préparer les tags Frontend
+      - name: 🏷️ Préparer les tags Docker Frontend
         id: meta-frontend
         run: |
           BRANCH=${GITHUB_REF##*/}
@@ -65,10 +61,8 @@ jobs:
           context: ./api
           file: ./api/Dockerfile
           target: production
-          # IMPORTANT : On pousse maintenant l'image sur Docker Hub !
           push: true
           tags: ${{ steps.meta-backend.outputs.tags }}
-          # Cache pour accélérer les builds
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -84,14 +78,76 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Étape 7 : Message de succès avec les images publiées
+      # Étape 7 : Message de succès
       - name: ✅ Images publiées avec succès !
         run: |
           echo "🎉 Images Docker publiées sur Docker Hub !"
-          echo ""
           echo "📦 Backend : ${{ steps.meta-backend.outputs.tags }}"
           echo "📦 Frontend : ${{ steps.meta-frontend.outputs.tags }}"
-          echo ""
-          echo "Pour télécharger les images :"
-          echo "docker pull ${{ secrets.DOCKER_USERNAME }}/monapp-backend:${GITHUB_REF##*/}"
-          echo "docker pull ${{ secrets.DOCKER_USERNAME }}/monapp-frontend:${GITHUB_REF##*/}"
+
+  # ==========================================
+  # JOB 2 : DÉPLOIEMENT sur le VPS
+  # ==========================================
+  deploy:
+    name: 🚀 Déploiement sur VPS
+    runs-on: ubuntu-latest
+    # Ce job attend que les images soient buildées et poussées
+    needs: docker-build-push
+    # Déployer UNIQUEMENT quand on push sur main (pas sur dev ou CICD)
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      # Étape 1 : Récupérer le code (pour avoir les fichiers docker-compose)
+      - name: 📥 Checkout du code
+        uses: actions/checkout@v4
+
+      # Étape 2 : Déployer sur le VPS via SSH
+      - name: 🚀 Déploiement via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            echo "🔄 Début du déploiement sur le VPS..."
+            
+            # Se déplacer dans le dossier du projet
+            cd /root/T-DEV-700
+            
+            # Pull les dernières modifications depuis GitHub
+            echo "📥 Récupération des dernières modifications..."
+            git pull origin main
+            
+            # Se connecter à Docker Hub (pour pouvoir pull les images privées si besoin)
+            echo "🔐 Connexion à Docker Hub..."
+            echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            
+            # Pull les nouvelles images Docker depuis Docker Hub
+            echo "🐳 Téléchargement des nouvelles images Docker..."
+            docker pull ${{ secrets.DOCKER_USERNAME }}/monapp-backend:main
+            docker pull ${{ secrets.DOCKER_USERNAME }}/monapp-frontend:main
+            
+            # Arrêter les anciens containers
+            echo "🛑 Arrêt des anciens containers..."
+            docker-compose -f docker-compose.prod.yml down
+            
+            # Démarrer les nouveaux containers avec les nouvelles images
+            echo "🚀 Démarrage des nouveaux containers..."
+            docker-compose -f docker-compose.prod.yml up -d
+            
+            # Nettoyer les anciennes images non utilisées (économiser de l'espace)
+            echo "🧹 Nettoyage des anciennes images..."
+            docker image prune -af
+            
+            # Vérifier que les containers tournent
+            echo "✅ Vérification des containers..."
+            docker-compose -f docker-compose.prod.yml ps
+            
+            echo "🎉 Déploiement terminé avec succès !"
+
+      # Étape 3 : Message de succès
+      - name: ✅ Déploiement réussi !
+        run: |
+          echo "🎉 Application déployée sur le VPS !"
+          echo "🌐 L'application est maintenant accessible sur http://${{ secrets.SSH_HOST }}"
