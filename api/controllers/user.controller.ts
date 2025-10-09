@@ -3,7 +3,7 @@ import { addUser, deleteUser, loginUser, retrieveUser, retrieveUsers, updateUser
 
 export async function loginUserController(req: Request, res: Response) {
   try {
-    const body = req.body as any;
+    const body = req.body;
     const { email, password } = body ?? {};
     if (!email || !password) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -54,7 +54,7 @@ export async function retrieveUsersController(req: Request, res: Response) {
 
 export async function addUserController(req: Request, res: Response) {
   try {
-    const body = req.body as any;
+    const body = req.body;
     const { first_name, last_name, email, password, phone } = body ?? {};
     if (!first_name || !last_name || !email || !password) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -70,7 +70,7 @@ export async function addUserController(req: Request, res: Response) {
 export async function updateMyUserController(req: Request, res: Response) {
   try {
     const id = req.params.id!;
-    const body = req.body as any;
+    const body = req.body;
     const { first_name, last_name, email, password, phone } = body ?? {};
 
     const user = await updateUser(id, { first_name, last_name, email, password, phone });
@@ -83,7 +83,7 @@ export async function updateMyUserController(req: Request, res: Response) {
 export async function updateOtherUserController(req: Request, res: Response) {
   try {
     const id = req.params.id!;
-    const body = req.body as any;
+    const body = req.body;
     const { first_name, last_name, email, password, phone } = body ?? {};
 
     const user = await updateUser(id, { first_name, last_name, email, password, phone });

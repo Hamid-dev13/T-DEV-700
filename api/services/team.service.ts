@@ -19,7 +19,7 @@ export type UpdateTeamInput = {
   end_hour?: number,
 };
 
-/// Checks the work hours range.
+/** Checks the work hours range. */
 export function checkWorkHours(start: number, end: number) {
   return (!(start > end || start === end)) && start >= 0 && end < 24;
 }
