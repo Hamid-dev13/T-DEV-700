@@ -4,12 +4,8 @@ import { reportTime, retrieveReportTimeSummary } from "../services/clock.service
 export async function reportTimeController(req: Request, res: Response) {
   try {
     const user_id = req.user_id!;
-    const body = req.body as any;
-    const { is_departure } = body ?? {};
-    if (is_departure === undefined)
-      return res.status(400).json({ error: "Missing required field \"is_departure\"" });
 
-    const log = await reportTime(user_id, { is_departure });
+    const log = await reportTime(user_id);
     return res.status(200).json(log);
   } catch (err) {
     console.log(err)
