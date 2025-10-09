@@ -7,7 +7,6 @@ export const logs = pgTable("logs", {
   id: uuid("id").notNull().defaultRandom().primaryKey(),
   user_id: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   at: timestamp("at").defaultNow().notNull(),
-  isDeparture: boolean("is_departure").notNull(),
 });
 
 // Types
