@@ -1,55 +1,32 @@
 version: '3.8'
 services:
   
-  # ============================================
-  # FRONTEND PRODUCTION (Nginx)
-  # ============================================
   frontend:
-    # On utilise directement l'image depuis Docker Hub
-    # Plus besoin de "build:" car l'image est déjà buildée par GitHub Actions
-    image: hamidiedev/monapp-frontend:main
-    
+    image: hamidledev/monapp-frontend:main
     container_name: prod-frontend
-    
     ports:
-      - "80:80"
-    
+      - "3001:80"
     environment:
       - VITE_API_URL=${API_URL}
-    
     restart: unless-stopped
-    
     networks:
       - app-network
-    
     depends_on:
       - backend
-    
-    # Healthcheck Nginx
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # ============================================
-  # BACKEND PRODUCTION
-  # ============================================
   backend:
-    # On utilise directement l'image depuis Docker Hub
-    image: hamidiedev/monapp-backend:main
-    
+    image: hamidledev/monapp-backend:main
     container_name: prod-backend
-    
     ports:
-      - "3000:3000"
-    
-    # Variables d'environnement depuis fichier
+      - "5001:3000"
     env_file:
       - .env
-    
     restart: unless-stopped
-    
     deploy:
       resources:
         limits:
@@ -58,7 +35,6 @@ services:
         reservations:
           cpus: '0.5'
           memory: 512M
-    
     networks:
       - app-network
 
