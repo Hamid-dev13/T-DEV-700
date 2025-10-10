@@ -1,6 +1,6 @@
-import { Mail, Phone, Shield, User as UserIcon, Calendar } from 'lucide-react';
+import { Mail, Phone, Shield, User as UserIcon, Calendar, Edit2, Trash2 } from 'lucide-react';
 
-function UserCard({ user }) {
+function UserCard({ user, onEdit, onDelete }) {
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('fr-FR', {
       day: '2-digit',
@@ -47,6 +47,23 @@ function UserCard({ user }) {
           <Calendar className="w-4 h-4 mr-2 text-gray-400" />
           Créé le {formatDate(user.createdAt)}
         </div>
+      </div>
+
+      <div className="flex gap-2 mt-4 pt-4 border-t">
+        <button
+          onClick={() => onEdit(user)}
+          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition"
+        >
+          <Edit2 className="w-4 h-4" />
+          Modifier
+        </button>
+        <button
+          onClick={() => onDelete(user)}
+          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
+        >
+          <Trash2 className="w-4 h-4" />
+          Supprimer
+        </button>
       </div>
     </div>
   );
