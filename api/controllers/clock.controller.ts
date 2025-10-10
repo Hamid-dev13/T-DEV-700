@@ -5,8 +5,8 @@ export async function reportTimeController(req: Request, res: Response) {
   try {
     const user_id = req.user_id!;
 
-    const log = await reportTime(user_id);
-    return res.status(200).json(log);
+    const clock = await reportTime(user_id);
+    return res.status(200).json(clock);
   } catch (err) {
     console.log(err)
     return res.sendStatus(500);

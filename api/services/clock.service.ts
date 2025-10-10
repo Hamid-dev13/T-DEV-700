@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/client";
-import { Log, logs } from "../models/log.model";
+import { Clock, clocks } from "../models/clock.model";
 import { getPeriodQueryCondition } from "../utils/date";
 
 export type ReportTimeSummaryInput = {
@@ -8,12 +8,12 @@ export type ReportTimeSummaryInput = {
   days?: number,
 };
 
-export async function reportTime(user_id: string): Promise<Log> {
-  const [log] = await db
-    .insert(logs)
+export async function reportTime(user_id: string): Promise<Clock> {
+  const [clock] = await db
+    .insert(clocks)
     .values({ user_id })
     .returning();
-  return log;
+  return clock;
 }
 
 export async function retrieveReportTimeSummary(
@@ -24,17 +24,17 @@ export async function retrieveReportTimeSummary(
   }: ReportTimeSummaryInput
 ): Promise<Date[]> {
   const now = new Date();
-  const periodCondition = getPeriodQueryCondition(logs.at, now, date, days);
+  const periodCondition = getPeriodQueryCondition(clocks.at, now, date, days);
 
-  const queryCondition = periodCondition ? and(eq(logs.user_id, user_id), periodCondition) : eq(logs.user_id, user_id);
+  const queryCondition = periodCondition ? and(eq(clocks.user_id, user_id), periodCondition) : eq(clocks.user_id, user_id);
 
   const results = await db
     .select({
-      at: logs.at,
+      at: clocks.at,
     })
-    .from(logs)
+    .from(clocks)
     .where(queryCondition)
-    .orderBy(logs.at);
+    .orderBy(clocks.at);
 
   return results.map((row) => row.at);
 }

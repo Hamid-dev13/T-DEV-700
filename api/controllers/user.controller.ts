@@ -9,9 +9,9 @@ export async function loginUserController(req: Request, res: Response) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const token = await loginUser({ email, password });
+    const { token, user } = await loginUser({ email, password });
 
-    return res.status(200).cookie("token", token).json(token);    // TODO set cookie options
+    return res.status(200).cookie("token", token).json(user);    // TODO set cookie options
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Internal server error";
