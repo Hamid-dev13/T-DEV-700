@@ -4,6 +4,7 @@ import express, { NextFunction, Request, Response } from "express";
 import { db } from "./db/client";
 import userRouter from "./routes/user.routes";
 import teamRouter from "./routes/team.routes";
+import clockRouter from "./routes/clock.routes";
 
 dotenv.config({ path: "../.env" });
 
@@ -36,6 +37,7 @@ app.use(['/user', '/me', '/user/login', '/user/logout', '/auth/login', '/auth/lo
 // Routers
 app.use(userRouter);
 app.use(teamRouter);
+app.use(clockRouter);
 
 // Route hello world
 app.get("/", (req: Request, res: Response) => {

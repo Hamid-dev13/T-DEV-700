@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { safeUserSelect, users, type SafeUser } from "../models/user.model";
-import { hashPassword, verifyPassword } from "../utils/password";
+import { hashPassword, verifyPassword, verifyPasswordRequirements } from "../utils/password";
 import jwt from "jsonwebtoken";
 import type { StringValue } from "ms";
 
@@ -29,7 +29,7 @@ export type UpdateUserInput = {
 export async function loginUser({
   email,
   password,
-}: LoginInput): Promise<string> {
+}: LoginInput): Promise<{token: string, user: SafeUser}> {
   if (!email || !password) {
     throw new Error("Missing required fields: email, password");
   }
@@ -53,7 +53,8 @@ export async function loginUser({
   const payload = { user_id: user.id, admin: user.admin };
   const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: process.env.JWT_EXPIRES_IN! as StringValue });
 
-  return token;
+  const { password: _, ...safeUser } = user;
+  return { token, user: safeUser };
 }
 
 export async function retrieveUser(user_id: string): Promise<SafeUser> {
@@ -77,6 +78,9 @@ export async function addUser({
     throw new Error("Missing required fields: first_name, last_name, email, password");
   }
 
+  if (!verifyPasswordRequirements(password))
+    throw new Error("Password doesn't meet the minimum security requirements");
+
   password = await hashPassword(password);
 
   const [user] = await db
@@ -84,7 +88,8 @@ export async function addUser({
     .values({firstName: first_name, lastName: last_name, email: email, password: password, phone: phone})
     .returning();
   
-  return user as SafeUser;
+  const { password: _, ...safeUser } = user;
+  return safeUser;
 }
 
 export async function updateUser(
@@ -93,6 +98,8 @@ export async function updateUser(
 ): Promise<SafeUser> {
 
   if (data.password) {
+    if (!verifyPasswordRequirements(data.password))
+      throw new Error("Password doesn't meet the minimum security requirements");
     data.password = await hashPassword(data.password);
   }
 
@@ -101,7 +108,9 @@ export async function updateUser(
     .set(data)
     .where(eq(users.id, id))
     .returning();
-  return user as SafeUser;
+  
+  const { password, ...safeUser } = user;
+  return safeUser;
 }
 
 export async function deleteUser(id: string): Promise<boolean> {

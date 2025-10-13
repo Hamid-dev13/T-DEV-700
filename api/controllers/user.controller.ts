@@ -1,17 +1,19 @@
-import { Request, Response } from "express";
+import { CookieOptions, Request, Response } from "express";
 import { addUser, deleteUser, loginUser, retrieveUser, retrieveUsers, updateUser } from "../services/user.service";
+
+const COOKIE_OPTS: CookieOptions = {secure:false, sameSite:"lax"};    // TODO set cookie options
 
 export async function loginUserController(req: Request, res: Response) {
   try {
-    const body = req.body as any;
+    const body = req.body;
     const { email, password } = body ?? {};
     if (!email || !password) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const token = await loginUser({ email, password });
+    const { token, user } = await loginUser({ email, password });
 
-    return res.status(200).cookie("token", token,{secure:false, sameSite:"lax"}).json(token);    // TODO set cookie options
+    return res.status(200).cookie("token", token,COOKIE_OPTS).json(token);    // TODO set cookie options
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Internal server error";
@@ -54,7 +56,7 @@ export async function retrieveUsersController(req: Request, res: Response) {
 
 export async function addUserController(req: Request, res: Response) {
   try {
-    const body = req.body as any;
+    const body = req.body;
     const { first_name, last_name, email, password, phone } = body ?? {};
     if (!first_name || !last_name || !email || !password) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -70,7 +72,7 @@ export async function addUserController(req: Request, res: Response) {
 export async function updateMyUserController(req: Request, res: Response) {
   try {
     const id = req.params.id!;
-    const body = req.body as any;
+    const body = req.body;
     const { first_name, last_name, email, password, phone } = body ?? {};
 
     const user = await updateUser(id, { first_name, last_name, email, password, phone });
@@ -83,7 +85,7 @@ export async function updateMyUserController(req: Request, res: Response) {
 export async function updateOtherUserController(req: Request, res: Response) {
   try {
     const id = req.params.id!;
-    const body = req.body as any;
+    const body = req.body;
     const { first_name, last_name, email, password, phone } = body ?? {};
 
     const user = await updateUser(id, { first_name, last_name, email, password, phone });

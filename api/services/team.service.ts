@@ -1,8 +1,9 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { db } from "../db/client";
 import { Team, teams } from "../models/team.model";
 import { SafeUser, safeUserSelect, users } from "../models/user.model";
 import { userTeams } from "../models/user_team.model";
+import { alias } from "drizzle-orm/pg-core";
 
 export type AddTeamInput = {
   name: string,
@@ -19,7 +20,7 @@ export type UpdateTeamInput = {
   end_hour?: number,
 };
 
-/// Checks the work hours range.
+/** Checks the work hours range. */
 export function checkWorkHours(start: number, end: number) {
   return (!(start > end || start === end)) && start >= 0 && end < 24;
 }
@@ -34,33 +35,66 @@ export async function isTeamManager(user_id: string, team_id: string) {
     return result.length > 0
 }
 
-export async function retreiveTeamsForUser(user_id: string): Promise<Team[]> {
-  const userTeamsWithTeams = await db
-    .select({
-      team: teams,
-    })
-    .from(userTeams)
-    .innerJoin(teams, eq(userTeams.team_id, teams.id))
-    .where(eq(userTeams.user_id, user_id));
-  
-  return userTeamsWithTeams.map((row) => row.team);
-}
-
 export async function retreiveTeamsForUserWithManager(user_id: string): Promise<{ team: Team, manager: SafeUser }[]> {
-  const userTeamsWithTeamsAndManager = await db
+  // const userTeamsWithTeamsAndManager = await db
+  //   .select({
+  //     team: teams,
+  //     manager: safeUserSelect,
+  //   })
+  //   .from(userTeams)
+  //   .innerJoin(teams, eq(userTeams.team_id, teams.id))
+  //   .innerJoin(users, eq(teams.managerId, users.id))
+  //   .where(eq(userTeams.user_id, user_id));
+  
+  // return userTeamsWithTeamsAndManager.map((row) => ({
+  //   team: row.team,
+  //   manager: row.manager,
+  // }));
+
+  const members = alias(users, "members");
+
+  const teamIdsSubquery = db
+    .select({ team_id: userTeams.team_id })
+    .from(userTeams)
+    .where(eq(userTeams.user_id, user_id));
+
+  const rows = await db
     .select({
       team: teams,
-      manager: safeUserSelect,
+      manager: users,
+      member: members,
     })
-    .from(userTeams)
-    .innerJoin(teams, eq(userTeams.team_id, teams.id))
+    .from(teams)
     .innerJoin(users, eq(teams.managerId, users.id))
-    .where(eq(userTeams.user_id, user_id));
-  
-  return userTeamsWithTeamsAndManager.map((row) => ({
-    team: row.team,
-    manager: row.manager,
-  }));
+    .innerJoin(userTeams, eq(userTeams.team_id, teams.id))
+    .innerJoin(members, eq(userTeams.user_id, members.id))
+    .where(inArray(teams.id, teamIdsSubquery))
+    .execute();
+
+  const teamsMap = new Map<string, {
+    team: Team;
+    manager: SafeUser;
+    members: SafeUser[];
+  }>();
+
+  for (const row of rows) {
+    const teamId = row.team.id;
+
+    if (!teamsMap.has(teamId)) {
+      const { password, ...manager } = row.manager;
+      teamsMap.set(teamId, {
+        team: row.team,
+        manager: manager,
+        members: [],
+      });
+    }
+    const { password, ...member } = row.member;
+    teamsMap.get(teamId)!.members.push(member);
+  }
+
+  const result = Array.from(teamsMap.values());
+
+  return result;
 }
 
 export async function retrieveTeam(id: string): Promise<Team> {
@@ -86,10 +120,20 @@ export async function addTeam({
   if (!checkWorkHours(start_hour, end_hour))
     throw new Error("Invalid Work Hour Range")
 
-  const [team] = await db
-    .insert(teams)
-    .values({name, description, startHour: start_hour, endHour: end_hour, managerId: manager_id})
-    .returning();
+  const team = await db.transaction(async (tx) => {
+    const [team] = await tx
+      .insert(teams)
+      .values({name, description, startHour: start_hour, endHour: end_hour, managerId: manager_id})
+      .returning();
+    
+    // add user_teams entry for manager
+    await tx
+      .insert(userTeams)
+      .values({ team_id: team.id, user_id: manager_id });
+
+    return team;
+  });
+  
   
   return team;
 }
@@ -129,19 +173,44 @@ export async function deleteTeam(id: string): Promise<boolean> {
   return true;
 }
 
-// export async function retrieveTeamUsers(id: string): Promise<{ users: SafeUser[] }> {
-//   const result = await db
-//     .select({
-//       users: safeUserSelect,
-//     })
-//     .from(userTeams)
-//     // .innerJoin(teams, eq(userTeams.team_id, teams.id))
-//     .innerJoin(users, eq(teams.managerId, users.id))
-//     .innerJoin(users, eq(userTeams.user_id, users.id))
-//     .where(eq(userTeams.team_id, id))
-//     .limit(1);
+export async function retrieveTeamUsers(team_id: string): Promise<{ manager: SafeUser, members: SafeUser[] }> {
+  // get team with manager
+  const [teamWithManager] = await db
+    .select({
+      manager: safeUserSelect
+    })
+    .from(teams)
+    .innerJoin(users, eq(teams.managerId, users.id))
+    .where(eq(teams.id, team_id));
+
+  // get members
+  const members = await db
+    .select({
+      users: safeUserSelect
+    })
+    .from(userTeams)
+    .innerJoin(users, eq(userTeams.user_id, users.id))
+    .where(and(eq(userTeams.team_id, team_id), ne(userTeams.user_id, teamWithManager.manager.id)))
+    .then(rows => rows.map(row => row.users));
+
+  const result = {
+    manager: teamWithManager.manager,
+    members: members
+  };
+
+  return result;
+}
+
+export async function addTeamUser(team_id: string, user_id: string) {
+  return db.insert(userTeams).values({ user_id, team_id });   // may throw error if couple (user_id, team_id) is not unique
+}
+
+export async function removeTeamUser(team_id: string, user_id: string): Promise<boolean> {
+  const [_deleted] = await db
+    .delete(userTeams)
+    .where(and(eq(userTeams.user_id, user_id), eq(userTeams.team_id, team_id)))
+    .returning();
   
-//   return result.map((row) => ({
-//     users: row.users,
-//   }));
-// }
+    // throws error if no rows, so this can always be true
+    return true;
+}
