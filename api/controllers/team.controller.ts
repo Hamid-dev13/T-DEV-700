@@ -110,10 +110,9 @@ export async function removeTeamUserController(req: Request, res: Response) {
 
 export async function retrieveMyTeamsController(req: Request, res: Response) {
   try {
-    const user_id = req.params.id!;
+    const user_id = req.user_id!;
 
-    const teams = retreiveTeamsForUserWithManager(user_id);
-    console.log("Teams: %s", teams);
+    const teams = await retreiveTeamsForUserWithManager(user_id);
     return res.status(200).json(teams);
   } catch (err) {
     return res.sendStatus(500);

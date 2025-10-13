@@ -1,8 +1,9 @@
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { db } from "../db/client";
 import { Team, teams } from "../models/team.model";
 import { SafeUser, safeUserSelect, users } from "../models/user.model";
 import { userTeams } from "../models/user_team.model";
+import { alias } from "drizzle-orm/pg-core";
 
 export type AddTeamInput = {
   name: string,
@@ -34,33 +35,66 @@ export async function isTeamManager(user_id: string, team_id: string) {
     return result.length > 0
 }
 
-export async function retreiveTeamsForUser(user_id: string): Promise<Team[]> {
-  const userTeamsWithTeams = await db
-    .select({
-      team: teams,
-    })
-    .from(userTeams)
-    .innerJoin(teams, eq(userTeams.team_id, teams.id))
-    .where(eq(userTeams.user_id, user_id));
-  
-  return userTeamsWithTeams.map((row) => row.team);
-}
-
 export async function retreiveTeamsForUserWithManager(user_id: string): Promise<{ team: Team, manager: SafeUser }[]> {
-  const userTeamsWithTeamsAndManager = await db
+  // const userTeamsWithTeamsAndManager = await db
+  //   .select({
+  //     team: teams,
+  //     manager: safeUserSelect,
+  //   })
+  //   .from(userTeams)
+  //   .innerJoin(teams, eq(userTeams.team_id, teams.id))
+  //   .innerJoin(users, eq(teams.managerId, users.id))
+  //   .where(eq(userTeams.user_id, user_id));
+  
+  // return userTeamsWithTeamsAndManager.map((row) => ({
+  //   team: row.team,
+  //   manager: row.manager,
+  // }));
+
+  const members = alias(users, "members");
+
+  const teamIdsSubquery = db
+    .select({ team_id: userTeams.team_id })
+    .from(userTeams)
+    .where(eq(userTeams.user_id, user_id));
+
+  const rows = await db
     .select({
       team: teams,
-      manager: safeUserSelect,
+      manager: users,
+      member: members,
     })
-    .from(userTeams)
-    .innerJoin(teams, eq(userTeams.team_id, teams.id))
+    .from(teams)
     .innerJoin(users, eq(teams.managerId, users.id))
-    .where(eq(userTeams.user_id, user_id));
-  
-  return userTeamsWithTeamsAndManager.map((row) => ({
-    team: row.team,
-    manager: row.manager,
-  }));
+    .innerJoin(userTeams, eq(userTeams.team_id, teams.id))
+    .innerJoin(members, eq(userTeams.user_id, members.id))
+    .where(inArray(teams.id, teamIdsSubquery))
+    .execute();
+
+  const teamsMap = new Map<string, {
+    team: Team;
+    manager: SafeUser;
+    members: SafeUser[];
+  }>();
+
+  for (const row of rows) {
+    const teamId = row.team.id;
+
+    if (!teamsMap.has(teamId)) {
+      const { password, ...manager } = row.manager;
+      teamsMap.set(teamId, {
+        team: row.team,
+        manager: manager,
+        members: [],
+      });
+    }
+    const { password, ...member } = row.member;
+    teamsMap.get(teamId)!.members.push(member);
+  }
+
+  const result = Array.from(teamsMap.values());
+
+  return result;
 }
 
 export async function retrieveTeam(id: string): Promise<Team> {
