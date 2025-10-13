@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { db } from "../db/client";
 import { Team, teams } from "../models/team.model";
 import { SafeUser, safeUserSelect, users } from "../models/user.model";
@@ -86,10 +86,20 @@ export async function addTeam({
   if (!checkWorkHours(start_hour, end_hour))
     throw new Error("Invalid Work Hour Range")
 
-  const [team] = await db
-    .insert(teams)
-    .values({name, description, startHour: start_hour, endHour: end_hour, managerId: manager_id})
-    .returning();
+  const team = await db.transaction(async (tx) => {
+    const [team] = await tx
+      .insert(teams)
+      .values({name, description, startHour: start_hour, endHour: end_hour, managerId: manager_id})
+      .returning();
+    
+    // add user_teams entry for manager
+    await tx
+      .insert(userTeams)
+      .values({ team_id: team.id, user_id: manager_id });
+
+    return team;
+  });
+  
   
   return team;
 }
@@ -146,7 +156,7 @@ export async function retrieveTeamUsers(team_id: string): Promise<{ manager: Saf
     })
     .from(userTeams)
     .innerJoin(users, eq(userTeams.user_id, users.id))
-    .where(eq(userTeams.team_id, team_id))
+    .where(and(eq(userTeams.team_id, team_id), ne(userTeams.user_id, teamWithManager.manager.id)))
     .then(rows => rows.map(row => row.users));
 
   const result = {

@@ -1,11 +1,10 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte, lt } from "drizzle-orm";
 import { db } from "../db/client";
 import { Clock, clocks } from "../models/clock.model";
-import { getPeriodQueryCondition } from "../utils/date";
 
 export type ReportTimeSummaryInput = {
-  date?: Date,
-  days?: number,
+  from: Date,
+  to: Date,
 };
 
 export async function reportTime(user_id: string): Promise<Clock> {
@@ -19,14 +18,20 @@ export async function reportTime(user_id: string): Promise<Clock> {
 export async function retrieveReportTimeSummary(
   user_id: string,
   {
-    date,
-    days,
+    from,
+    to,
   }: ReportTimeSummaryInput
 ): Promise<Date[]> {
-  const now = new Date();
-  const periodCondition = getPeriodQueryCondition(clocks.at, now, date, days);
+  const dateOffset = new Date(0);
+  dateOffset.setDate(2);  // 1 based, next day is 2
 
-  const queryCondition = periodCondition ? and(eq(clocks.user_id, user_id), periodCondition) : eq(clocks.user_id, user_id);
+  const queryCondition = and(
+    eq(clocks.user_id, user_id),
+    and(
+      gte(clocks.at, from),
+      lt(clocks.at, new Date(to.getTime() + dateOffset.getTime()))
+    )
+  );
 
   const results = await db
     .select({

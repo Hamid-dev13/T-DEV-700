@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { reportTime, retrieveReportTimeSummary } from "../services/clock.service";
+import { zeroOutTime } from "../utils/date";
 
 export async function reportTimeController(req: Request, res: Response) {
   try {
@@ -17,15 +18,17 @@ export async function retrieveReportTimeSummaryController(req: Request, res: Res
   try {
     const user_id = req.user_id!;
     const body = req.body;
-    let { date, days } = body ?? {};
+    let { from, to } = body ?? {};
+    if (!from || !to)
+      throw new Error("Missing required fields from, to");
 
-    if (date) {
-      date = new Date(date);
-      // set hours, minutes, seconds and milliseconds to 0, keep only the date component
-      date.setHours(0); date.setMinutes(0); date.setSeconds(0); date.setMilliseconds(0);
-    }
+    from = new Date(from);
+    zeroOutTime(from);
 
-    const results = await retrieveReportTimeSummary(user_id, { date, days });
+    to = new Date(to);
+    zeroOutTime(to);
+
+    const results = await retrieveReportTimeSummary(user_id, { from, to });
     return res.status(200).json(results);
   } catch (err) {
     console.log(err)

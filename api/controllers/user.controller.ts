@@ -1,5 +1,7 @@
-import { Request, Response } from "express";
+import { CookieOptions, Request, Response } from "express";
 import { addUser, deleteUser, loginUser, retrieveUser, retrieveUsers, updateUser } from "../services/user.service";
+
+const COOKIE_OPTS: CookieOptions = {};    // TODO set cookie options
 
 export async function loginUserController(req: Request, res: Response) {
   try {
@@ -11,7 +13,7 @@ export async function loginUserController(req: Request, res: Response) {
 
     const { token, user } = await loginUser({ email, password });
 
-    return res.status(200).cookie("token", token).json(user);    // TODO set cookie options
+    return res.status(200).cookie("token", token, COOKIE_OPTS).json(user);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Internal server error";
