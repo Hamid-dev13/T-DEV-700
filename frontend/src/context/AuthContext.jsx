@@ -1,35 +1,52 @@
+// src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import * as api from '../utils/fakeApi.js'
+import * as api from '../utils/api.js'
 
 const AuthCtx = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => api.getSession())
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.bootstrap() // seed on first run
+    let alive = true
+    ;(async () => {
+      try {
+        const u = await api.getSession()
+        if (!alive) return
+        setUser(u || null)
+      } catch {
+        if (!alive) return
+        setUser(null)
+      } finally {
+        if (alive) setLoading(false)
+      }
+    })()
+    return () => { alive = false }
   }, [])
 
   const login = async (email, password) => {
-    const u = await api.login({ email, password })
-    setUser(u)
-    return u
-  }
-  const logout = () => {
-    api.logout()
-    setUser(null)
-  }
-  const updateProfile = async (updates) => {
-    const updated = await api.updateUser(user.id, updates)
-    setUser(updated)
-    return updated
-  }
-  const deleteAccount = async () => {
-    await api.deleteUser(user.id)
-    logout()
+    setLoading(true)
+    try {
+      const u = await api.login({ email, password })
+      setUser(u || null)
+      return u
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const value = useMemo(() => ({ user, login, logout, updateProfile, deleteAccount }), [user])
+  const logout = async () => {
+    setLoading(true)
+    try {
+      await api.logout()
+      setUser(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const value = useMemo(() => ({ user, loading, login, logout }), [user, loading])
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>
 }
 

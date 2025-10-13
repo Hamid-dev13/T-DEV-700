@@ -40,7 +40,7 @@ export async function isAuth(req: Request, res: Response, next: NextFunction) {
             return res.status(401).json({ error: "Invalid Token" });
         }
 
-    } catch(error) {
-        return res.status(401).json({ error: "Invalid Token" });
+    } catch(error:any) {
+        return res.status(401).json({ error: error.message });
     }
 }

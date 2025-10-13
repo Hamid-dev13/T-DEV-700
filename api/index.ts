@@ -1,6 +1,6 @@
 import cors from "cors";
 import dotenv from "dotenv";
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { db } from "./db/client";
 import userRouter from "./routes/user.routes";
 import teamRouter from "./routes/team.routes";
@@ -11,8 +11,27 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: process.env.WEBSITE_URL!,
+  credentials: true,
+}));
 app.use(express.json());
+// 1) Désactive l'ETag par défaut d'Express
+app.set('etag', false)
+
+// 2) No-cache sur les endpoints sensibles (session, login, logout, data protégées)
+const noCache = (req:Request, res:Response, next:NextFunction) => {
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'Surrogate-Control': 'no-store',
+    'Vary': 'Cookie'  // ⚠️ crucial si tu dépends des cookies
+  })
+  next()
+}
+
+app.use(['/user', '/me', '/user/login', '/user/logout', '/auth/login', '/auth/logout'], noCache)
 
 // Routers
 app.use(userRouter);

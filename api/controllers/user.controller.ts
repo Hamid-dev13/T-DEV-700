@@ -11,7 +11,7 @@ export async function loginUserController(req: Request, res: Response) {
 
     const token = await loginUser({ email, password });
 
-    return res.status(200).cookie("token", token).json(token);    // TODO set cookie options
+    return res.status(200).cookie("token", token,{secure:false, sameSite:"lax"}).json(token);    // TODO set cookie options
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Internal server error";

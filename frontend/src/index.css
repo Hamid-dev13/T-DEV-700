@@ -156,3 +156,13 @@ a, .link:focus { outline-offset: 2px; }
 
 .card-scroll{ max-height: 320px; overflow: auto; }
 .table.compact th, .table.compact td{ padding: 8px 10px; font-size: .92rem; }
+
+@layer base {
+  html, :host {
+    /* Standard support (Chrome/Firefox/Safari modernes) */
+    text-size-adjust: 100%;
+    /* Fallback Safari/iOS anciens */
+    -webkit-text-size-adjust: 100%;
+  }
+}
+

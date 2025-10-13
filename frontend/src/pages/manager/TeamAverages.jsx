@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import PageShell from '../../components/PageShell.jsx'
 import { LineChartCard, BarChartCard } from '../../components/ChartCard.jsx'
 import { useData } from '../../context/DataContext.jsx'
-import * as api from '../../utils/fakeApi.js'
+import * as api from '../../utils/api.js'
 
 export default function TeamAverages() {
   const { teams } = useData()
