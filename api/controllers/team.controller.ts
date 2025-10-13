@@ -113,7 +113,8 @@ export async function retrieveMyTeamsController(req: Request, res: Response) {
     const user_id = req.params.id!;
 
     const teams = retreiveTeamsForUserWithManager(user_id);
-    return res.send(200).json(teams);
+    console.log("Teams: %s", teams);
+    return res.status(200).json(teams);
   } catch (err) {
     return res.sendStatus(500);
   }
