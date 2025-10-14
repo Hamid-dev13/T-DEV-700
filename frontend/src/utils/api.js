@@ -40,45 +40,20 @@ export async function getTeams() {
   return Array.isArray(list) ? list : (list?.items || [])
 }
 
-export async function getClocks() {
+export async function getClocks(id, from, to) {
   try {
-    const me = await getSession()
-    const userId = me?.id
-    if (!userId) return []
-    const list = await apiClient.get(`/users/${encodeURIComponent(userId)}/clocks`)
-    return Array.isArray(list) ? list : (list?.items || [])
-  } catch {
-    return []
-  }
-}
-
-export async function getClocksForUser(id) {
-  try {
-    const list = await apiClient.get(`/users/${encodeURIComponent(id)}/clocks`)
-    return Array.isArray(list) ? list : (list?.items || [])
-  } catch {
+    if (!from) from = new Date()
+    if (!to) to = new Date()
+    const list = await apiClient.get(`/users/${encodeURIComponent(id)}/clocks`, { query: { from, to } })
+    return list.map((item) => new Date(item))
+  } catch (err) {
+    console.log("Error getting clocks: %s", err.message)
     return []
   }
 }
 
 export async function addClock() {
   return apiClient.post('/clocks')
-}
-
-export async function getUserClocks(userId, from, to) {
-  const query = { userId, from, to }
-  try {
-    const list = await apiClient.get('/clocks', { query })
-    return Array.isArray(list) ? list : (list?.items || [])
-  } catch {
-    // Fallback : ancienne route
-    try {
-      const list = await apiClient.get('/entries', { query: { userId, start: from, end: to } })
-      return Array.isArray(list) ? list : (list?.items || [])
-    } catch {
-      return []
-    }
-  }
 }
 
 export async function teamAverages(teamId, from, to) {
@@ -96,7 +71,7 @@ export async function teamAverages(teamId, from, to) {
   const count = members.length || 1
 
   for (const m of members) {
-    const events = await getUserClocks(m, from, to)
+    const events = await getClocks(m, from, to)
     const daily = computeDailyHours(events)
     for (const d of daily) dailyAgg[d.day] = (dailyAgg[d.day] || 0) + d.hours
     const weekly = aggregateWeekly(daily)

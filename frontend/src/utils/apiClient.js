@@ -58,7 +58,7 @@ async function request(path, { method = "GET", headers = {}, payload, query } = 
 }
 
 export const api = {
-  get: (path, payload, opts) => request(path, { ...opts, method: "GET", payload: payload }),
+  get: (path, opts) => request(path, { ...opts, method: "GET" }),
   post: (path, payload, opts) => request(path, { ...opts, method: "POST", payload: payload }),
   patch: (path, payload, opts) => request(path, { ...opts, method: "PATCH", payload: payload }),
   put: (path, payload, opts) => request(path, { ...opts, method: "PUT", payload: payload }),

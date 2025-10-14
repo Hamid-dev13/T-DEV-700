@@ -1,52 +1,38 @@
-
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Shell, Card } from '../components/Layout'
 import { addClock, getClocks } from '../utils/api'
-
-const RANGES = [
-  { key: 'today', label: "Aujourd'hui", days: 1 },
-  { key: '7d', label: '7 jours', days: 7 },
-  { key: '30d', label: '30 jours', days: 30 },
-  { key: 'all', label: 'Tout', days: null },
-]
+import { useAuth } from '../context/AuthContext'
 
 function groupByDay(entries){
   const map = new Map()
   for (const e of entries) {
-    const d = new Date(e.time)
-    const day = d.toISOString().slice(0,10)
+    const day = e.toISOString().slice(0,10)
     const arr = map.get(day) || []
     arr.push(e); map.set(day, arr)
   }
   // sort days desc, entries desc
   const days = Array.from(map.entries()).map(([day, list])=>{
-    list.sort((a,b)=> new Date(b.time) - new Date(a.time))
+    list.sort((a,b)=> a.getTime() - a.getTime())
     return [day, list]
   }).sort((a,b)=> a[0] < b[0] ? 1 : -1)
   return days
 }
 
 export default function ClockPage() {
-  const { user } = useAuth()
+  const { user: me } = useAuth()
   const [last, setLast] = useState(null)
-  const [range, setRange] = useState('7d')
+  const [rawData, setRawData] = useState([])
 
-  const raw = useMemo(()=> me ? getClocks(me.id) : [], [me, last])
-  const filtered = useMemo(()=>{
-    if (!raw.length) return []
-    if (range === 'all') return raw
-    const days = RANGES.find(r=>r.key===range)?.days ?? 7
-    const since = new Date(Date.now() - days*864e5)
-    return raw.filter(e => new Date(e.time) >= since)
-  }, [raw, range])
+  useEffect(() => {
+    if (!me) return
+    getClocks(me.id).then(data => setRawData(data || []))
+  }, [me, last])
 
-  const limited = useMemo(()=> filtered.slice(0, 8), [filtered])
-
-  const grouped = useMemo(()=> groupByDay(limited), [limited])
+  const grouped = useMemo(() => groupByDay(rawData), [rawData])
 
   async function act() {
-    const entry = await addClock(kind)
-    setLast(entry.at)
+    const entry = await addClock()
+    setLast(new Date(entry.at))
   }
 
   return (
@@ -57,23 +43,10 @@ export default function ClockPage() {
             <div className="flex gap-2">
               <button className="btn-accent" onClick={()=>act()}>Pointer</button>
             </div>
-            {last ? <p className="mt-4 subtle">Dernière action: …{last.kind} @ {new Date(last.time).toLocaleString()}</p> : null}
+            {last ? <p className="mt-4 subtle">Pointage effectué à {last.toLocaleTimeString()}</p> : null}
           </Card>
 
           <Card title="Historique">
-            {/* Range selector */}
-            <div className="mb-4 flex flex-wrap gap-2">
-              {RANGES.map(r => (
-                <button
-                  key={r.key}
-                  onClick={()=>setRange(r.key)}
-                  className={`px-3 py-1 rounded-full border ${range===r.key ? 'bg-black text-white' : 'bg-white'} border-gray-200`}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
-
             {/* Empty state */}
             {grouped.length === 0 ? (
               <div className="p-6 text-center text-gray-500">
@@ -90,19 +63,18 @@ export default function ClockPage() {
                     </div>
 
                     {/* Timeline */}
-                    <ol className="relative border-s border-gray-200 ps-4 ms-2">
-                      {list.map(e => (
-                        <li key={e.id} className="mb-4 ms-2">
-                          <span className={`absolute -start-3 mt-1 size-2 rounded-full ${e.kind==='in' ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                    <ol className="relative border-s border-gray-200 ps-4 ms-2 overflow-y-auto max-h-[40vh]">
+                      {list.map((e, i) => (
+                        <li key={"clock-"+i} className="mb-4 ms-2">
+                          <span className={`absolute -start-3 mt-1 size-2 rounded-full ${i % 2 == 0 ? 'bg-green-500' : 'bg-red-500'}`}></span>
                           <div className="flex items-center gap-3">
-                            <span className={`text-xs px-2 py-1 rounded-full ${e.kind==='in' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                              {e.kind==='in' ? 'Arrivée ⬆️' : 'Départ ⬇️'}
+                            <span className={`text-xs px-2 py-1 rounded-full ${i % 2 == 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                              {i % 2 == 0 ? 'Arrivée ⬆️' : 'Départ ⬇️'}
                             </span>
-                            <span className="text-sm">{new Date(e.time).toLocaleTimeString()}</span>
-                            <span className="text-xs text-gray-500">{new Date(e.time).toLocaleString()}</span>
+                            <span className="text-sm">{e.toLocaleTimeString()}</span>
                           </div>
                         </li>
-                      ))}
+                      )).toReversed()}
                     </ol>
                   </div>
                 ))}

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { Shell, Card } from '../components/Layout'
-import { currentUser, entriesForUser, computeDailyHoursForUser, employeesOnly, averageDailyHoursForTeam } from '../auth'
+import { getClocks } from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 function iso(d){ return d.toISOString().slice(0,10) }
 function startOfWeek(d){
@@ -83,25 +84,27 @@ function LineChart({ points, height=100 }){
 }
 
 export default function DashboardPage(){
-  const { user } = useAuth()
+  const { user: me } = useAuth()
   const now = new Date()
 
   // EMPLOYEE VIEW
   const empData = useMemo(()=>{
     if (!me) return null
     const last7Days = rangeDays(7, now)
-    const perDay = computeDailyHoursForUser(me.id, last7Days[0], last7Days[last7Days.length-1])
+    // const perDay = computeDailyHoursForUser(me.id, last7Days[0], last7Days[last7Days.length-1])
+    const perDay = []
     const map = new Map(perDay.map(d => [d.day, d.hours]))
     const bars = last7Days.map(day => ({ label: day, value: +(map.get(day)||0).toFixed(2) }))
 
     const todayISO = iso(now)
     const todays = perDay.find(d => d.day === todayISO)?.hours || 0
     const sw = startOfWeek(now)
-    const perWeek = computeDailyHoursForUser(me.id, iso(sw), todayISO)
+    // const perWeek = computeDailyHoursForUser(me.id, iso(sw), todayISO)
+    const perWeek = []
     const weekTotal = perWeek.reduce((a,b)=> a + (b.hours||0), 0)
     const pct7h = (bars.filter(b => b.value >= 7).length / bars.length) * 100
 
-    const all = entriesForUser(me.id)
+    const all = getClocks(me.id)
     const last = all[0] ? all[0] : (all.length ? all[all.length-1] : null)
     const lastTime = last ? new Date(last.time) : null
 
@@ -135,29 +138,33 @@ export default function DashboardPage(){
 
 function ManagerDashboard(){
   const now = new Date()
-  const emps = employeesOnly()
+  // const emps = employeesOnly()
+  const emps = []
   const [selectedEmp, setSelectedEmp] = useState(emps[0]?.id || '')
 
   const last7Days = rangeDays(7, now)
-  const avgSeries = averageDailyHoursForTeam(last7Days[0], last7Days[last7Days.length-1])
+  // const avgSeries = averageDailyHoursForTeam(last7Days[0], last7Days[last7Days.length-1])
+  const avgSeries = []
   const linePoints = last7Days.map(d => ({ x: d, y: +(avgSeries.find(x=>x.day===d)?.avg || 0).toFixed(2) }))
   const teamAvg = linePoints.reduce((a,b)=> a + b.y, 0) / (linePoints.length||1)
   let teamTotal = 0
   const top = []
   for (const u of emps){
-    const perDay = computeDailyHoursForUser(u.id, last7Days[0], last7Days[last7Days.length-1])
+    // const perDay = computeDailyHoursForUser(u.id, last7Days[0], last7Days[last7Days.length-1])
+    const perDay = []
     const total = perDay.reduce((a,b)=> a + (b.hours||0), 0)
     teamTotal += total
     top.push({ id: u.id, name: u.name, total: +total.toFixed(2) })
   }
   top.sort((a,b)=> b.total - a.total)
 
-  const empPerDay = computeDailyHoursForUser(selectedEmp, last7Days[0], last7Days[last7Days.length-1])
+  // const empPerDay = computeDailyHoursForUser(selectedEmp, last7Days[0], last7Days[last7Days.length-1])
+  const empPerDay = []
   const empMap = new Map(empPerDay.map(d => [d.day, d.hours]))
   const empBars = last7Days.map(day => ({ label: day, value: +(empMap.get(day)||0).toFixed(2) }))
   const total7 = empPerDay.reduce((a,b)=> a + (b.hours||0), 0)
   const pct7h = Math.round((empPerDay.filter(d => (d.hours||0) >= 7).length / (empPerDay.length||1)) * 100)
-  const all = entriesForUser(selectedEmp)
+  const all = getClocks(selectedEmp)
   const last = all[0] ? all[0] : (all.length ? all[all.length-1] : null)
   const lastTime = last ? new Date(last.time) : null
 
@@ -206,7 +213,7 @@ function ManagerDashboard(){
         <div className="card-scroll">
         <ul className="list-disc pl-5">
           {emps.map(u => {
-            const allU = entriesForUser(u.id)
+            const allU = getClocks(u.id)
             const lastU = allU[0] ? allU[0] : (allU.length ? allU[allU.length-1] : null)
             return <li key={u.id}><b>{u.name}:</b> {lastU ? new Date(lastU.time).toLocaleString() : '—'}</li>
           })}

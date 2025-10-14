@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Shell, Card } from '../components/Layout'
 import { navigate } from '../router'
+import { useAuth } from '../context/AuthContext'
 
 export default function TeamManagePage() {
-  const { user } = useAuth()
+  const { user: me } = useAuth()
   const [refresh, setRefresh] = useState(0)
   const [showCreate, setShowCreate] = useState(false)
   const [showEdit, setShowEdit] = useState(false)

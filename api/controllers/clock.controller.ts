@@ -22,27 +22,21 @@ export async function reportTimeController(req: Request, res: Response) {
 export async function retrieveReportTimeSummaryController(req: Request, res: Response) {
   try {
     const user_id = req.user_id!;
-    const body = req.body;
-    let { from, to } = body ?? {};  // 👈 CHANGÉ : date/days → from/to
+    let { from, to } = req.query ?? {};
 
-    if (from) {
-      from = new Date(from);
-      from.setHours(0, 0, 0, 0);
-    }
-
-    if (to) {
-      to = new Date(to);
-      to.setHours(0, 0, 0, 0);
-    }
-
-    // Vérifier que from et to sont définis
     if (!from || !to) {
       return res.status(400).json({ 
-        error: "Les paramètres 'from' et 'to' sont requis" 
+        error: "Missing required fields 'from', 'to'" 
       });
     }
 
-    const results = await retrieveReportTimeSummary(user_id, { from, to });
+    const fromDate = new Date(from as string);
+    fromDate.setHours(0, 0, 0, 0)
+
+    const toDate = new Date(to as string);
+    toDate.setHours(0, 0, 0, 0)
+
+    const results = await retrieveReportTimeSummary(user_id, { from: fromDate, to: toDate });
     
     // Formater toutes les dates avec date-fns-tz
     const formattedResults = results.map(dateUTC => formatWithTimezone(dateUTC));
@@ -53,7 +47,6 @@ export async function retrieveReportTimeSummaryController(req: Request, res: Res
     return res.sendStatus(500);
   }
 }
-// Gardez aussi votre testDateController si vous voulez
 export async function testDateController(req: Request, res: Response) {
   const now = new Date();
   
