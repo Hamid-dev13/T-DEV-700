@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import { clockIn, getUserClocks, getAttendanceDelay } from '../services/api';
+import { clockIn, getUserClocks, getUserTeams } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import type { AttendanceDelay } from '../types';
 
 const EmployeePage: React.FC = () => {
   const { user } = useAuth();
@@ -11,8 +10,8 @@ const EmployeePage: React.FC = () => {
   const [clocks, setClocks] = useState<string[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [delay, setDelay] = useState<AttendanceDelay | null>(null);
-  const [loadingDelay, setLoadingDelay] = useState(true);
+  const [teamStartHour, setTeamStartHour] = useState<number | null>(null);
+  const [loadingTeam, setLoadingTeam] = useState(true);
 
   // Timer qui se met à jour toutes les secondes
   useEffect(() => {
@@ -27,7 +26,7 @@ const EmployeePage: React.FC = () => {
   useEffect(() => {
     if (user?.id) {
       loadClockHistory();
-      loadDelayInfo();
+      loadTeamInfo();
     }
   }, [user?.id]);
 
@@ -47,15 +46,17 @@ const EmployeePage: React.FC = () => {
     }
   };
 
-  const loadDelayInfo = async () => {
+  const loadTeamInfo = async () => {
     try {
-      const delayData = await getAttendanceDelay();
-      setDelay(delayData);
+      const teams = await getUserTeams();
+      // Prend la première équipe de l'utilisateur
+      if (teams.length > 0) {
+        setTeamStartHour(teams[0].team.startHour);
+      }
     } catch (error) {
-      console.error('Erreur lors du chargement des retards:', error);
-      setDelay(null);
+      console.error('Erreur lors du chargement de l\'équipe:', error);
     } finally {
-      setLoadingDelay(false);
+      setLoadingTeam(false);
     }
   };
 
@@ -97,6 +98,36 @@ const EmployeePage: React.FC = () => {
   };
 
   const elapsedTime = getElapsedTime();
+
+  // Calcul du retard (même logique que MemberRow)
+  const calculateDelay = (): number | null => {
+    if (todayClocks.length === 0 || !teamStartHour) return null;
+    
+    // Le PREMIER élément du tableau = le DERNIER pointage (le plus récent)
+    // On doit donc prendre le DERNIER élément = le PREMIER pointage du jour (arrivée)
+    // Mais si le tableau est à l'envers, on prend le premier
+    const allTodayTimes = todayClocks.map(c => new Date(c).getTime());
+    const earliestTime = Math.min(...allTodayTimes);
+    const firstClockOfDay = new Date(earliestTime);
+    
+    const arrivalHour = firstClockOfDay.getHours();
+    const arrivalMinutes = firstClockOfDay.getMinutes();
+    const arrivalTotalMinutes = arrivalHour * 60 + arrivalMinutes;
+    
+    const expectedTotalMinutes = teamStartHour * 60;
+    const delayMinutes = arrivalTotalMinutes - expectedTotalMinutes;
+    
+    return delayMinutes > 0 ? delayMinutes : 0;
+  };
+
+  // Filtrer les pointages d'aujourd'hui seulement
+  const todayClocks = clocks.filter(clockTime => {
+    const clockDate = new Date(clockTime);
+    const today = new Date();
+    return clockDate.toDateString() === today.toDateString();
+  });
+
+  const delayMinutes = calculateDelay();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -161,144 +192,142 @@ const EmployeePage: React.FC = () => {
         <div className="mt-12 w-full max-w-6xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
-            {/* COLONNE GAUCHE: Historique */}
-            <div>
-              <h3 className="text-2xl font-bold text-[#1E2448] mb-6 flex items-center gap-2">
-                <span>📋</span>
-                Historique des pointages
-              </h3>
+          {/* COLONNE GAUCHE: Historique */}
+          <div>
+            <h3 className="text-2xl font-bold text-[#1E2448] mb-6 flex items-center gap-2">
+              <span>📋</span>
+              Historique des pointages
+            </h3>
 
-              {loadingHistory ? (
-                <div className="text-center text-[#64748B] bg-white rounded-xl p-8 shadow-sm">
-                  Chargement de l'historique...
-                </div>
-              ) : clocks.length === 0 ? (
-                <div className="text-center text-[#64748B] bg-white rounded-xl p-8 shadow-sm">
-                  Aucun pointage enregistré ces 7 derniers jours
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {clocks.slice(0, 10).map((clockTime, index) => {
-                    const date = new Date(clockTime);
-                    const isToday = date.toDateString() === new Date().toDateString();
-                    
-                    return (
-                      <div 
-                        key={index}
-                        className="bg-white border-2 border-gray-200 rounded-xl p-4 
-                                   hover:border-[#FFC933] transition-all duration-300
-                                   flex items-center justify-between shadow-sm hover:shadow-md"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-[#FFC933]/10 rounded-full 
-                                        flex items-center justify-center">
-                            <svg className="w-6 h-6 text-[#FFC933]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="font-semibold text-[#1E2448]">
-                              {date.toLocaleDateString('fr-FR', { 
-                                weekday: 'long', 
-                                day: 'numeric', 
-                                month: 'long' 
-                              })}
-                            </p>
-                            <p className="text-[#64748B] text-sm">
-                              {date.toLocaleTimeString('fr-FR', { 
-                                hour: '2-digit', 
-                                minute: '2-digit',
-                                second: '2-digit'
-                              })}
-                            </p>
-                          </div>
+            {loadingHistory ? (
+              <div className="text-center text-[#64748B] bg-white rounded-xl p-8 shadow-sm">
+                Chargement de l'historique...
+              </div>
+            ) : clocks.length === 0 ? (
+              <div className="text-center text-[#64748B] bg-white rounded-xl p-8 shadow-sm">
+                Aucun pointage enregistré ces 7 derniers jours
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {clocks.slice(0, 10).map((clockTime, index) => {
+                  const date = new Date(clockTime);
+                  const isToday = date.toDateString() === new Date().toDateString();
+                  
+                  return (
+                    <div 
+                      key={index}
+                      className="bg-white border-2 border-gray-200 rounded-xl p-4 
+                                 hover:border-[#FFC933] transition-all duration-300
+                                 flex items-center justify-between shadow-sm hover:shadow-md"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-[#FFC933]/10 rounded-full 
+                                      flex items-center justify-center">
+                          <svg className="w-6 h-6 text-[#FFC933]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
                         </div>
-                        {isToday && (
-                          <span className="bg-[#FFC933] text-[#1E2448] text-xs font-bold 
-                                         px-3 py-1 rounded-full">
-                            Aujourd'hui
-                          </span>
-                        )}
+                        <div>
+                          <p className="font-semibold text-[#1E2448]">
+                            {date.toLocaleDateString('fr-FR', { 
+                              weekday: 'long', 
+                              day: 'numeric', 
+                              month: 'long' 
+                            })}
+                          </p>
+                          <p className="text-[#64748B] text-sm">
+                            {date.toLocaleTimeString('fr-FR', { 
+                              hour: '2-digit', 
+                              minute: '2-digit',
+                              second: '2-digit'
+                            })}
+                          </p>
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* COLONNE DROITE: Retards */}
-            <div>
-              <h3 className="text-2xl font-bold text-[#1E2448] mb-6 flex items-center gap-2">
-                <span>⏰</span>
-                Statut aujourd'hui
-              </h3>
-
-              {loadingDelay ? (
-                <div className="text-center text-[#64748B] bg-white rounded-xl p-8 shadow-sm">
-                  Chargement...
-                </div>
-              ) : !delay ? (
-                <div className="bg-gray-50 border-2 border-gray-300 rounded-xl p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                      <span className="text-2xl">ℹ️</span>
+                      {isToday && (
+                        <span className="bg-[#FFC933] text-[#1E2448] text-xs font-bold 
+                                       px-3 py-1 rounded-full">
+                          Aujourd'hui
+                        </span>
+                      )}
                     </div>
-                    <div>
-                      <p className="font-bold text-gray-700 text-lg">Pas encore pointé</p>
-                      <p className="text-sm text-gray-500">Aucun pointage aujourd'hui</p>
-                    </div>
-                  </div>
-                </div>
-              ) : delay.status === 'late' ? (
-                <div className="bg-red-50 border-2 border-red-400 rounded-xl p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-red-200 rounded-full flex items-center justify-center">
-                      <span className="text-2xl">⚠️</span>
-                    </div>
-                    <div>
-                      <p className="font-bold text-red-700 text-lg">En retard</p>
-                      <p className="text-sm text-red-600">
-                        {new Date(delay.date).toLocaleDateString('fr-FR', { 
-                          weekday: 'long', 
-                          day: 'numeric', 
-                          month: 'long' 
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="bg-white/60 rounded-lg p-4">
-                    <p className="text-red-800 font-semibold text-center text-3xl">
-                      {Math.floor(delay.delay_minutes / 60)}h{String(delay.delay_minutes % 60).padStart(2, '0')}
-                    </p>
-                    <p className="text-red-600 text-center text-sm mt-1">de retard</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-green-50 border-2 border-green-400 rounded-xl p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center">
-                      <span className="text-2xl">✅</span>
-                    </div>
-                    <div>
-                      <p className="font-bold text-green-700 text-lg">À l'heure</p>
-                      <p className="text-sm text-green-600">
-                        {new Date(delay.date).toLocaleDateString('fr-FR', { 
-                          weekday: 'long', 
-                          day: 'numeric', 
-                          month: 'long' 
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-green-700 text-center">Vous êtes arrivé à l'heure 🎉</p>
-                </div>
-              )}
-            </div>
-
+                  );
+                })}
+              </div>
+            )}
           </div>
+
+          {/* COLONNE DROITE: Retards */}
+          <div>
+            <h3 className="text-2xl font-bold text-[#1E2448] mb-6 flex items-center gap-2">
+              <span>⏰</span>
+              Statut aujourd'hui
+            </h3>
+
+            {loadingTeam ? (
+              <div className="text-center text-[#64748B] bg-white rounded-xl p-6 shadow-sm text-sm">
+                Chargement...
+              </div>
+            ) : todayClocks.length === 0 ? (
+              <div className="bg-gray-50 border-2 border-gray-300 rounded-xl p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                    <span className="text-xl">ℹ️</span>
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-700">Pas encore pointé</p>
+                    <p className="text-xs text-gray-500">Aucun pointage aujourd'hui</p>
+                  </div>
+                </div>
+              </div>
+            ) : delayMinutes !== null && delayMinutes > 0 ? (
+              <div className="bg-red-50 border-2 border-red-400 rounded-xl p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-red-200 rounded-full flex items-center justify-center">
+                    <span className="text-xl">⚠️</span>
+                  </div>
+                  <div>
+                    <p className="font-bold text-red-700">En retard</p>
+                    <p className="text-xs text-red-600">
+                      {new Date().toLocaleDateString('fr-FR', { 
+                        day: 'numeric', 
+                        month: 'long' 
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-white/60 rounded-lg p-3">
+                  <p className="text-red-800 font-semibold text-center text-2xl">
+                    {Math.floor(delayMinutes / 60)}h{String(delayMinutes % 60).padStart(2, '0')}
+                  </p>
+                  <p className="text-red-600 text-center text-xs mt-1">de retard</p>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-green-50 border-2 border-green-400 rounded-xl p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center">
+                    <span className="text-xl">✅</span>
+                  </div>
+                  <div>
+                    <p className="font-bold text-green-700">À l'heure</p>
+                    <p className="text-xs text-green-600">
+                      {new Date().toLocaleDateString('fr-FR', { 
+                        day: 'numeric', 
+                        month: 'long' 
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-green-700 text-center text-sm">Vous êtes arrivé à l'heure 🎉</p>
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
+    </div>
     </div>
   );
 };
