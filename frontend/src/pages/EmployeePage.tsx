@@ -135,51 +135,6 @@ const EmployeePage: React.FC = () => {
       <Navbar />
 
       <div className="flex flex-col items-center px-4 py-4">
-        
-        {/* Carte Mon Équipe */}
-        {!loadingTeam && myTeam && (
-          <div className="w-full max-w-2xl mb-4">
-            <div className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm">
-              {/* En-tête */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-[#1E2448] mb-1 flex items-center gap-2">
-                    <span>👥</span>
-                    Mon équipe
-                  </h2>
-                  <h3 className="text-xl font-semibold text-[#FFC933] mb-2">
-                    {myTeam.team.name}
-                  </h3>
-                  <p className="text-sm text-[#64748B]">
-                    {myTeam.team.description || 'Aucune description'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Statistiques */}
-              <div className="grid grid-cols-3 gap-4 mt-4">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
-                  <p className="text-xs text-blue-600 font-semibold mb-1">Manager</p>
-                  <p className="text-sm font-bold text-blue-900">
-                    {myTeam.manager.firstName} {myTeam.manager.lastName}
-                  </p>
-                </div>
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
-                  <p className="text-xs text-green-600 font-semibold mb-1">Membres</p>
-                  <p className="text-2xl font-bold text-green-900">
-                    {myTeam.members.length}
-                  </p>
-                </div>
-                <div className="bg-gradient-to-br from-[#FFC933]/20 to-[#FFC933]/40 rounded-lg p-4 border border-[#FFC933]">
-                  <p className="text-xs text-[#1E2448] font-semibold mb-1">Horaires</p>
-                  <p className="text-lg font-bold text-[#1E2448]">
-                    {myTeam.team.startHour}h - {myTeam.team.endHour}h
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Section principale avec bouton et historique */}
         <div className="w-full max-w-7xl">
@@ -367,6 +322,51 @@ const EmployeePage: React.FC = () => {
                   </div>
                 </div>
                 <p className="text-green-700 text-center text-sm">Vous êtes arrivé à l'heure 🎉</p>
+              </div>
+            )}
+
+            {/* Carte Mon Équipe */}
+            {!loadingTeam && myTeam && (
+              <div className="mt-6">
+                <div className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm">
+                  {/* En-tête */}
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-[#1E2448] mb-1 flex items-center gap-2">
+                        <span>👥</span>
+                        Mon équipe
+                      </h3>
+                      <h4 className="text-lg font-semibold text-[#FFC933] mb-1">
+                        {myTeam.team.name}
+                      </h4>
+                      <p className="text-xs text-[#64748B]">
+                        {myTeam.team.description || 'Aucune description'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Statistiques */}
+                  <div className="space-y-2 mt-3">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200">
+                      <p className="text-xs text-blue-600 font-semibold mb-1">Manager</p>
+                      <p className="text-sm font-bold text-blue-900">
+                        {myTeam.manager.firstName} {myTeam.manager.lastName}
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border border-green-200">
+                      <p className="text-xs text-green-600 font-semibold mb-1">Membres</p>
+                      <p className="text-xl font-bold text-green-900">
+                        {myTeam.members.length}
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-[#FFC933]/20 to-[#FFC933]/40 rounded-lg p-3 border border-[#FFC933]">
+                      <p className="text-xs text-[#1E2448] font-semibold mb-1">Horaires</p>
+                      <p className="text-base font-bold text-[#1E2448]">
+                        {myTeam.team.startHour}h - {myTeam.team.endHour}h
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
