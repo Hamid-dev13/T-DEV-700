@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import { clockIn, getUserClocks, getUserTeams } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import type { UserTeam } from '../types';
 
 const EmployeePage: React.FC = () => {
   const { user } = useAuth();
@@ -10,7 +11,7 @@ const EmployeePage: React.FC = () => {
   const [clocks, setClocks] = useState<string[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [teamStartHour, setTeamStartHour] = useState<number | null>(null);
+  const [myTeam, setMyTeam] = useState<UserTeam | null>(null);
   const [loadingTeam, setLoadingTeam] = useState(true);
 
   // Timer qui se met à jour toutes les secondes
@@ -51,7 +52,7 @@ const EmployeePage: React.FC = () => {
       const teams = await getUserTeams();
       // Prend la première équipe de l'utilisateur
       if (teams.length > 0) {
-        setTeamStartHour(teams[0].team.startHour);
+        setMyTeam(teams[0]);
       }
     } catch (error) {
       console.error('Erreur lors du chargement de l\'équipe:', error);
@@ -101,7 +102,7 @@ const EmployeePage: React.FC = () => {
 
   // Calcul du retard (même logique que MemberRow)
   const calculateDelay = (): number | null => {
-    if (todayClocks.length === 0 || !teamStartHour) return null;
+    if (todayClocks.length === 0 || !myTeam) return null;
     
     // Le PREMIER élément du tableau = le DERNIER pointage (le plus récent)
     // On doit donc prendre le DERNIER élément = le PREMIER pointage du jour (arrivée)
@@ -114,7 +115,7 @@ const EmployeePage: React.FC = () => {
     const arrivalMinutes = firstClockOfDay.getMinutes();
     const arrivalTotalMinutes = arrivalHour * 60 + arrivalMinutes;
     
-    const expectedTotalMinutes = teamStartHour * 60;
+    const expectedTotalMinutes = myTeam.team.startHour * 60;
     const delayMinutes = arrivalTotalMinutes - expectedTotalMinutes;
     
     return delayMinutes > 0 ? delayMinutes : 0;
@@ -135,8 +136,53 @@ const EmployeePage: React.FC = () => {
 
       <div className="flex flex-col items-center px-4 py-8">
         
+        {/* Carte Mon Équipe */}
+        {!loadingTeam && myTeam && (
+          <div className="w-full max-w-2xl mb-8">
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-sm">
+              {/* En-tête */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-[#1E2448] mb-1 flex items-center gap-2">
+                    <span>👥</span>
+                    Mon équipe
+                  </h2>
+                  <h3 className="text-xl font-semibold text-[#FFC933] mb-2">
+                    {myTeam.team.name}
+                  </h3>
+                  <p className="text-sm text-[#64748B]">
+                    {myTeam.team.description}
+                  </p>
+                </div>
+              </div>
+
+              {/* Statistiques */}
+              <div className="grid grid-cols-3 gap-4 mt-4">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+                  <p className="text-xs text-blue-600 font-semibold mb-1">Manager</p>
+                  <p className="text-sm font-bold text-blue-900">
+                    {myTeam.manager.firstName} {myTeam.manager.lastName}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                  <p className="text-xs text-green-600 font-semibold mb-1">Membres</p>
+                  <p className="text-2xl font-bold text-green-900">
+                    {myTeam.members.length}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-br from-[#FFC933]/20 to-[#FFC933]/40 rounded-lg p-4 border border-[#FFC933]">
+                  <p className="text-xs text-[#1E2448] font-semibold mb-1">Horaires</p>
+                  <p className="text-lg font-bold text-[#1E2448]">
+                    {myTeam.team.startHour}h - {myTeam.team.endHour}h
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Bouton Pointer */}
-        <div className="flex flex-col items-center justify-center" style={{ minHeight: '60vh' }}>
+        <div className="flex flex-col items-center justify-center" style={{ minHeight: '50vh' }}>
           <button
             onClick={handleClockIn}
             disabled={isLoading}
