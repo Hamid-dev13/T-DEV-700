@@ -134,12 +134,12 @@ const EmployeePage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="flex flex-col items-center px-4 py-8">
+      <div className="flex flex-col items-center px-4 py-4">
         
         {/* Carte Mon Équipe */}
         {!loadingTeam && myTeam && (
-          <div className="w-full max-w-2xl mb-8">
-            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-sm">
+          <div className="w-full max-w-2xl mb-4">
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm">
               {/* En-tête */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
@@ -151,7 +151,7 @@ const EmployeePage: React.FC = () => {
                     {myTeam.team.name}
                   </h3>
                   <p className="text-sm text-[#64748B]">
-                    {myTeam.team.description}
+                    {myTeam.team.description || 'Aucune description'}
                   </p>
                 </div>
               </div>
@@ -181,62 +181,9 @@ const EmployeePage: React.FC = () => {
           </div>
         )}
 
-        {/* Bouton Pointer */}
-        <div className="flex flex-col items-center justify-center" style={{ minHeight: '50vh' }}>
-          <button
-            onClick={handleClockIn}
-            disabled={isLoading}
-            className={`font-bold text-2xl w-64 h-64 rounded-full shadow-2xl
-                       transition-all duration-300 ease-in-out
-                       hover:scale-105 active:scale-95
-                       disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
-                       border-4
-                       ${isClockedIn 
-                         ? 'bg-green-500 hover:bg-green-600 text-white border-green-700' 
-                         : 'bg-[#FFC933] hover:bg-[#FFBF00] text-[#1E2448] border-[#1E2448]'}`}
-          >
-            {isLoading ? (
-              <div className="flex flex-col items-center gap-2">
-                <span className="text-4xl animate-pulse">⏳</span>
-                <span className="text-sm">Envoi...</span>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-3">
-                <span className="text-5xl">{isClockedIn ? '👋' : '🕐'}</span>
-                <div className="flex flex-col items-center">
-                  <span className="text-3xl font-bold">
-                    {isClockedIn ? 'SORTIE' : 'ENTRÉE'}
-                  </span>
-                  {isClockedIn && elapsedTime && (
-                    <span className="text-xs mt-2 opacity-90">
-                      Depuis {elapsedTime.hours}h{String(elapsedTime.minutes).padStart(2, '0')}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-          </button>
-
-          {message && (
-            <div className={`mt-8 px-6 py-4 rounded-lg shadow-md max-w-md text-center
-                            transition-all duration-300
-                            ${message.type === 'success' 
-                              ? 'bg-green-50 border-2 border-green-400 text-green-800' 
-                              : 'bg-red-50 border-2 border-[#FF6B6B] text-[#FF6B6B]'}`}>
-              <p className="font-semibold">{message.text}</p>
-            </div>
-          )}
-
-          <p className="mt-8 text-[#64748B] text-center text-sm">
-            {isClockedIn 
-              ? 'Cliquez pour enregistrer votre sortie'
-              : 'Cliquez pour enregistrer votre entrée'}
-          </p>
-        </div>
-
-        {/* Section en 2 colonnes: Historique + Retards */}
-        <div className="mt-12 w-full max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Section principale avec bouton et historique */}
+        <div className="w-full max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* COLONNE GAUCHE: Historique */}
           <div>
@@ -304,7 +251,60 @@ const EmployeePage: React.FC = () => {
             )}
           </div>
 
-          {/* COLONNE DROITE: Retards */}
+          {/* COLONNE CENTRE: Bouton Pointer */}
+          <div className="flex flex-col items-center justify-start">
+            <button
+              onClick={handleClockIn}
+              disabled={isLoading}
+              className={`font-bold text-2xl w-56 h-56 rounded-full shadow-2xl
+                         transition-all duration-300 ease-in-out
+                         hover:scale-105 active:scale-95
+                         disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
+                         border-4
+                         ${isClockedIn 
+                           ? 'bg-green-500 hover:bg-green-600 text-white border-green-700' 
+                           : 'bg-[#FFC933] hover:bg-[#FFBF00] text-[#1E2448] border-[#1E2448]'}`}
+            >
+              {isLoading ? (
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-4xl animate-pulse">⏳</span>
+                  <span className="text-sm">Envoi...</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-3">
+                  <span className="text-5xl">{isClockedIn ? '👋' : '🕐'}</span>
+                  <div className="flex flex-col items-center">
+                    <span className="text-3xl font-bold">
+                      {isClockedIn ? 'SORTIE' : 'ENTRÉE'}
+                    </span>
+                    {isClockedIn && elapsedTime && (
+                      <span className="text-xs mt-2 opacity-90">
+                        Depuis {elapsedTime.hours}h{String(elapsedTime.minutes).padStart(2, '0')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </button>
+
+            {message && (
+              <div className={`mt-6 px-6 py-4 rounded-lg shadow-md text-center
+                              transition-all duration-300
+                              ${message.type === 'success' 
+                                ? 'bg-green-50 border-2 border-green-400 text-green-800' 
+                                : 'bg-red-50 border-2 border-[#FF6B6B] text-[#FF6B6B]'}`}>
+                <p className="font-semibold">{message.text}</p>
+              </div>
+            )}
+
+            <p className="mt-6 text-[#64748B] text-center text-sm">
+              {isClockedIn 
+                ? 'Cliquez pour enregistrer votre sortie'
+                : 'Cliquez pour enregistrer votre entrée'}
+            </p>
+          </div>
+
+          {/* COLONNE DROITE: Retard */}
           <div>
             <h3 className="text-2xl font-bold text-[#1E2448] mb-6 flex items-center gap-2">
               <span>⏰</span>
@@ -371,9 +371,9 @@ const EmployeePage: React.FC = () => {
             )}
           </div>
 
+          </div>
         </div>
       </div>
-    </div>
     </div>
   );
 };
