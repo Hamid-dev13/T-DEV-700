@@ -1,9 +1,7 @@
-// src/utils/apiClient.js
 import { COOKIE_TOKEN_KEY, getCookie } from "./cookie"
 
-const BASE_URL = import.meta.env.VITE_API_URL || ""
+export const BASE_URL = import.meta.env.VITE_API_URL || ""
 
-// Token côté client (si ton backend ne met pas un cookie httpOnly)
 function getToken() {
   try { return getCookie(document.cookie, COOKIE_TOKEN_KEY) } catch { return null }
 }
@@ -22,7 +20,7 @@ export function clearToken() {
   } catch {}
 }
 
-async function request(path, { method = "GET", headers = {}, body, query } = {}) {
+async function request(path, { method = "GET", headers = {}, payload, query } = {}) {
   if (!BASE_URL) throw new Error("API base URL not configured. Set VITE_API_URL in your env.")
 
   const url = new URL(path.replace(/^\//, ""), BASE_URL.endsWith("/") ? BASE_URL : BASE_URL + "/")
@@ -33,16 +31,14 @@ async function request(path, { method = "GET", headers = {}, body, query } = {})
     }
   }
 
-  //const token = getToken()
   const init = {
     method,
-    credentials: "include", // indispensable si cookie httpOnly côté serveur
+    credentials: "include",
     headers: {
-      //...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(body && typeof body === "object" && !(body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
+      ...payload ? { "Content-Type": "application/json" } : {},
       ...headers,
     },
-    body: body instanceof FormData ? body : (body && typeof body === "object" ? JSON.stringify(body) : body),
+    body: JSON.stringify(payload),
   }
 
   const res = await fetch(url, init)
@@ -62,11 +58,11 @@ async function request(path, { method = "GET", headers = {}, body, query } = {})
 }
 
 export const api = {
-  get: (path, opts) => request(path, { ...opts, method: "GET" }),
-  post: (path, body, opts) => request(path, { ...opts, method: "POST", body }),
-  patch: (path, body, opts) => request(path, { ...opts, method: "PATCH", body }),
-  put: (path, body, opts) => request(path, { ...opts, method: "PUT", body }),
-  delete: (path, opts) => request(path, { ...opts, method: "DELETE" }),
+  get: (path, payload, opts) => request(path, { ...opts, method: "GET", payload: payload }),
+  post: (path, payload, opts) => request(path, { ...opts, method: "POST", payload: payload }),
+  patch: (path, payload, opts) => request(path, { ...opts, method: "PATCH", payload: payload }),
+  put: (path, payload, opts) => request(path, { ...opts, method: "PUT", payload: payload }),
+  delete: (path, payload, opts) => request(path, { ...opts, method: "DELETE", payload: payload }),
 }
 
 export default api

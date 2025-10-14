@@ -1,10 +1,10 @@
 import React from 'react'
 import { navigate } from '../router'
-import { currentUser, signOut } from '../auth'
+import { useAuth } from '../context/AuthContext'
 
 export function Shell({ children }) {
+  const { user, logout } = useAuth()
   function isActive(path){ return location === path }
-  const me = currentUser()
 
   return (
     <div className="min-h-screen">
@@ -14,7 +14,7 @@ export function Shell({ children }) {
         <div className="">
           <div className="header-inner">
             <div className="flex items-center gap-3 md:gap-4"><span className="brand" style={{fontWeight:800,fontSize:"1.05rem"}}>MR5</span>
-              {me && !isActive('/login') ? (
+              {user && !isActive('/login') ? (
                 <>
                   <button onClick={() => navigate('/clock')} className={"nav-pill" + (isActive('/clock') ? ' active' : '')}>Pointage</button>
                   <button onClick={() => navigate('/dashboard')} className={"nav-pill" + (isActive('/dashboard') ? ' active' : '')}>Dashboard</button>
@@ -23,10 +23,10 @@ export function Shell({ children }) {
               ) : null}
             </div>
             <div className="flex items-center gap-2">
-              {me && !isActive('/login') ? (
+              {user && !isActive('/login') ? (
                 <>
                   <button onClick={() => navigate('/account')} className="nav-pill">Mon compte</button>
-                  <button onClick={() => { signOut(); navigate('/login'); }} className="btn-ghost">Se déconnecter</button>
+                  <button onClick={() => { logout(); navigate('/login'); }} className="btn-ghost">Se déconnecter</button>
                 </>
               ) : null}
             </div>

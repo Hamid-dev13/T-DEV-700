@@ -1,32 +1,31 @@
 import React, { useEffect, useState } from 'react'
 import { navigate } from '../router'
-import { signInWithPassword, seedUsers } from '../auth'
 import { Shell, Card } from '../components/Layout'
+import { login } from '../utils/api'
+import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
-  const [email, setEmail] = useState('manager@demo.com')
-  const [password, setPassword] = useState('demo123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const { login, loading } = useAuth()
 
-  useEffect(() => { seedUsers() }, [])
-
-  function quickLogin(role) {
-    const creds = role === 'manager'
-      ? { email: 'manager@demo.com', password: 'demo123' }
-      : { email: 'alice@demo.com', password: 'demo123' };
-    setEmail(creds.email);
-    setPassword(creds.password);
-    setError(''); // clear any previous error
-  }
+  useEffect(() => {}, [])
 
   function onSubmit(e) {
     e.preventDefault()
-    try {
-      signInWithPassword(email, password)
-      setError('')
-      navigate('/clock')
-    } catch (err) {
-      setError(err.message || 'Erreur')
+
+    if (!loading) {
+      login(email, password)
+      .then((user) => {
+        if (user) {
+          setError('')
+          navigate('/clock')
+        } else {
+          setError('Identifiants non valides');
+        }
+      }, (err) => setError('Identifiants non valides'))
     }
   }
 
@@ -65,8 +64,7 @@ export default function Login() {
             </div>
             <div className="flex items-center gap-2">
               <button type="submit" className="btn">Se connecter</button>
-              <button type="button" className="btn-ghost" onClick={()=>quickLogin('manager')}>Manager demo</button>
-              <button type="button" className="btn-ghost" onClick={()=>quickLogin('employee')}>Employé demo</button></div>
+              </div>
           </form>
         </Card>
       </div>

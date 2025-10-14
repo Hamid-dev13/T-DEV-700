@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from 'react'
 import { Shell, Card } from '../components/Layout'
-import { punch, currentUser, entriesForUser } from '../auth'
+import { addClock, getClocks } from '../utils/api'
 
 const RANGES = [
   { key: 'today', label: "Aujourd'hui", days: 1 },
@@ -27,11 +27,11 @@ function groupByDay(entries){
 }
 
 export default function ClockPage() {
+  const { user } = useAuth()
   const [last, setLast] = useState(null)
   const [range, setRange] = useState('7d')
 
-  const me = currentUser()
-  const raw = useMemo(()=> me ? entriesForUser(me.id) : [], [me, last])
+  const raw = useMemo(()=> me ? getClocks(me.id) : [], [me, last])
   const filtered = useMemo(()=>{
     if (!raw.length) return []
     if (range === 'all') return raw
@@ -44,9 +44,9 @@ export default function ClockPage() {
 
   const grouped = useMemo(()=> groupByDay(limited), [limited])
 
-  function act(kind){
-    const entry = punch(kind)
-    setLast(entry)
+  async function act() {
+    const entry = await addClock(kind)
+    setLast(entry.at)
   }
 
   return (
@@ -55,8 +55,7 @@ export default function ClockPage() {
         <div className="grid-2">
           <Card title="Pointer">
             <div className="flex gap-2">
-              <button className="btn-accent" onClick={()=>act('in')}>Arrivée</button>
-              <button className="btn-ghost" onClick={()=>act('out')}>Départ</button>
+              <button className="btn-accent" onClick={()=>act()}>Pointer</button>
             </div>
             {last ? <p className="mt-4 subtle">Dernière action: …{last.kind} @ {new Date(last.time).toLocaleString()}</p> : null}
           </Card>

@@ -28,7 +28,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     setLoading(true)
     try {
-      const u = await api.login({ email, password })
+      const u = await api.login(email, password)
       setUser(u || null)
       return u
     } finally {
@@ -39,7 +39,7 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     setLoading(true)
     try {
-      await api.logout()
+      api.logout()
       setUser(null)
     } finally {
       setLoading(false)

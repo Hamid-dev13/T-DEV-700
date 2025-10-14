@@ -2,79 +2,36 @@
 import apiClient, { clearToken, setToken } from './apiClient.js'
 import * as fake from './fakeApi.js'
 
-const BASE_URL = import.meta.env.VITE_API_URL || ''
-
 export const computeDailyHours = fake.computeDailyHours
 export const aggregateWeekly   = fake.aggregateWeekly
 
-// --- Auth/session ---
 export const bootstrap = () => {}
 
-// getSession : essaie /user puis /me
 export async function getSession() {
   try { return await apiClient.get('/user') } 
-  catch (e1) {
-    if (e1?.code !== 404) return null
-    try { return await apiClient.get('/me') } catch { return null }
-  }
+  catch (e1) { return null }
 }
 
-// helper interne qui tente une route sans faire remonter l'erreur
-async function tryLogin(path, payload) {
-  try {
-    return await apiClient.post(path, payload)
-  } catch (e) {
-    // 404/405 → on re-tentera un autre endpoint
-    if (e?.code === 404 || e?.code === 405) return null
-    // 401 → mauvais creds : on propage (le formulaire gérera)
-    if (e?.code === 401) throw e
-    // autres erreurs : on laisse la chance à un autre endpoint
-    return null
-  }
-}
-
-// login : essaye /user/login, puis /auth/login, puis /login
-export async function login({ email, password }) {
+export async function login(email, password) {
   const payload = { email, password }
 
-  let res = await tryLogin('/user/login', payload)
-  if (!res) res = await tryLogin('/auth/login', payload)
-  if (!res) res = await tryLogin('/login', payload)
-
-  if (!res) {
-    // Aucun endpoint n'existe : on lève une erreur claire
-    const e = new Error('Aucune route de login fonctionnelle (essayé: /user/login, /auth/login, /login)')
-    e.code = 404
-    throw e
-  }
-
-  // Si le backend renvoie un token (non httpOnly), on le stocke
-  if (res?.token) setToken(res.token)
-
-  // Si le backend renvoie directement l'utilisateur
-  if (res?.user) return res.user
-
-  // Sinon on relit la session (cookie httpOnly posé par le serveur)
-  const u = await getSession()
-  return u
+  // this returns the user
+  return apiClient.post("/user/login", payload);
 }
 
-export async function logout() {
-  // On tente gentiment les deux
-  try { await apiClient.post?.('/auth/logout') } catch {}
-  try { await apiClient.post?.('/user/logout') } catch {}
+export function logout() {
   clearToken()
 }
 
 // --- Users ---
 export async function getUsers() {
-  return await apiClient.get('/users')
+  return apiClient.get('/users')
 }
 export async function updateUser(id, updates) {
-  return await apiClient.patch(`/users/${encodeURIComponent(id)}`, updates)
+  return apiClient.patch(`/users/${encodeURIComponent(id)}`, updates)
 }
 export async function deleteUser(id) {
-  return await apiClient.delete(`/users/${encodeURIComponent(id)}`)
+  return apiClient.delete(`/users/${encodeURIComponent(id)}`)
 }
 
 // --- Teams & clocks ---
@@ -95,8 +52,17 @@ export async function getClocks() {
   }
 }
 
-export async function addClock({ userId, timestamp }) {
-  return await apiClient.post('/clocks', { userId, timestamp })
+export async function getClocksForUser(id) {
+  try {
+    const list = await apiClient.get(`/users/${encodeURIComponent(id)}/clocks`)
+    return Array.isArray(list) ? list : (list?.items || [])
+  } catch {
+    return []
+  }
+}
+
+export async function addClock() {
+  return apiClient.post('/clocks')
 }
 
 export async function getUserClocks(userId, from, to) {

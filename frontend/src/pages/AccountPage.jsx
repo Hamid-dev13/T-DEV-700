@@ -1,17 +1,18 @@
 import React, { useState } from 'react'
 import { Shell, Card } from '../components/Layout'
-import { updateAccount, currentUser } from '../auth'
+import { useAuth } from '../context/AuthContext'
+import { updateUser } from '../utils/api'
 
 export default function AccountPage() {
-  const me = currentUser()
+  const { user } = useAuth()
   const [name, setName] = useState(me?.name || '')
   const [email, setEmail] = useState(me?.email || '')
   const [phone, setPhone] = useState(me?.phone || '')
   const [password, setPassword] = useState('')
 
-  function save(e){
+  function save(e) {
     e.preventDefault()
-    updateAccount({ name, email, phone, ...(password ? { password } : {}) })
+    updateUser(user.id, { name, email, phone, ...(password ? { password } : {}) })
     alert('Compte mis à jour.')
     history.back()
   }

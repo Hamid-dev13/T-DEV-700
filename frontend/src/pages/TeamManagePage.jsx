@@ -1,11 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Shell, Card } from '../components/Layout'
-import { currentUser, seedUsers } from '../auth'
 import { navigate } from '../router'
-import { seedTeams, myTeam, teamMembersObjects, createUserInManagerTeam, ensureManagerHasTeam, updateUserInTeam, removeUserFromManagerTeam } from '../teams'
 
 export default function TeamManagePage() {
-  const me = currentUser()
+  const { user } = useAuth()
   const [refresh, setRefresh] = useState(0)
   const [showCreate, setShowCreate] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
@@ -16,8 +14,6 @@ export default function TeamManagePage() {
   const [err, setErr] = useState('')
 
   useEffect(() => {
-    try { seedUsers() } catch {}
-    try { seedTeams() } catch {}
     if (me?.id) ensureManagerHasTeam(me.id)
   }, [])
 

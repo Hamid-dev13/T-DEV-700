@@ -83,7 +83,7 @@ function LineChart({ points, height=100 }){
 }
 
 export default function DashboardPage(){
-  const me = currentUser()
+  const { user } = useAuth()
   const now = new Date()
 
   // EMPLOYEE VIEW
