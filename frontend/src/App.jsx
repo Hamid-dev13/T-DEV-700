@@ -26,7 +26,7 @@ function ProtectedRoute({ children, roles }) {
   const location = useLocation()
   if (loading) return <LoadingScreen />
   if (!user) return <Navigate to="/login" replace state={{ from: location }} />
-  if (roles && !roles.includes(user.role)) return <RoleRedirect />
+  // if (roles && !roles.includes(user.role)) return <RoleRedirect />
   return children
 }
 function RoleRedirect() {
