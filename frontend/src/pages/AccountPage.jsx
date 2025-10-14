@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Shell, Card } from '../components/Layout'
 import { updateAccount, currentUser } from '../auth'
 
-export default function AccountPage({ backTo='/home' }) {
+export default function AccountPage() {
   const me = currentUser()
   const [name, setName] = useState(me?.name || '')
   const [email, setEmail] = useState(me?.email || '')

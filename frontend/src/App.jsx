@@ -1,80 +1,82 @@
+/**
+ * @file App.jsx
+ * @brief Fichier généré avec des commentaires explicatifs (auto-documentation).
+ * @note Ces commentaires sont des points de départ : ajustez la description métier si nécessaire.
+ */
+
 // src/App.jsx
 import React from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
-import { DataProvider } from './context/DataContext.jsx'
-
 import Login from './pages/Login.jsx'
-import EmployeeLayout from './pages/employee/EmployeeLayout.jsx'
-import EmployeeHome from './pages/employee/EmployeeHome.jsx'
-import EmployeeProfile from './pages/employee/EmployeeProfile.jsx'
-import EmployeeClock from './pages/employee/EmployeeClock.jsx'
-import EmployeeDashboards from './pages/employee/EmployeeDashboards.jsx'
-import ManagerLayout from './pages/manager/ManagerLayout.jsx'
-import ManagerHome from './pages/manager/ManagerHome.jsx'
-import ManagerClock from './pages/manager/ManagerClock.jsx'
-import TeamAverages from './pages/manager/TeamAverages.jsx'
-import CollaboratorHours from './pages/manager/CollaboratorHours.jsx'
-import CollaboratorDashboards from './pages/manager/CollaboratorDashboards.jsx'
+import AccountPage from './pages/AccountPage.jsx'
+import ClockPage from './pages/ClockPage.jsx'
+import DashboardPage from './pages/DashboardPage.jsx'
+import TeamManagePage from './pages/TeamManagePage.jsx'
+
+/**
+ * Composant React principal.
+
+ * @returns {any} Valeur de retour.
+ */
 
 function LoadingScreen() {
   return <div className="min-h-screen flex items-center justify-center"><div className="opacity-70">Chargement…</div></div>
 }
+
+/**
+ * Composant React principal.
+ * @param {{any}} { children - Description du paramètre.
+ * @param {{any}} roles } - Description du paramètre.
+ * @returns {any} Valeur de retour.
+ */
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth()
   const location = useLocation()
   if (loading) return <LoadingScreen />
   if (!user) return <Navigate to="/login" replace state={{ from: location }} />
-  // if (roles && !roles.includes(user.role)) return <RoleRedirect />
+  if (roles && !roles.includes(user.role)) return <RoleRedirect />
   return children
 }
+/**
+ * Composant React principal.
+
+ * @returns {any} Valeur de retour.
+ */
 function RoleRedirect() {
   const { user, loading } = useAuth()
   if (loading) return <LoadingScreen />
   if (!user) return <Navigate to="/login" replace />
-  return <Navigate to={user.role === 'manager' ? '/manager/clock' : '/employee/clock'} replace />
+  return <Navigate to='/clock' replace />
 }
+
+/**
+ * Composant React principal.
+
+ * @returns {any} Valeur de retour.
+ */
 
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/" element={<RoleRedirect />} />
-
-      <Route
-        path="/employee"
-        element={
-          <ProtectedRoute roles={['employee','manager']}>
-            <DataProvider><EmployeeLayout /></DataProvider>
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<EmployeeHome />} />
-        <Route path="clock" element={<EmployeeClock />} />
-        <Route path="dashboards" element={<EmployeeDashboards />} />
-        <Route path="profile" element={<EmployeeProfile />} />
-      </Route>
-
-      <Route
-        path="/manager"
-        element={
-          <ProtectedRoute roles={['manager']}>
-            <DataProvider><ManagerLayout /></DataProvider>
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<ManagerHome />} />
-        <Route path="clock" element={<ManagerClock />} />
-        <Route path="team-averages" element={<TeamAverages />} />
-        <Route path="collaborator-hours" element={<CollaboratorHours />} />
-        <Route path="dashboards" element={<CollaboratorDashboards />} />
-      </Route>
-
+      <Route path="/account" element={<AccountPage />} />
+      <Route path="/clock" element={<ClockPage />} />
+      <Route path="/dashboards" element={<DashboardPage />} />
+      <Route path="/team" element={<TeamManagePage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
+
+/**
+ * Composant React principal.
+
+ * @returns {any} Valeur de retour.
+ * @default Export par défaut.
+ */
 
 export default function App() {
   return (

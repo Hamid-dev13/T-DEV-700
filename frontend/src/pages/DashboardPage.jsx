@@ -82,7 +82,7 @@ function LineChart({ points, height=100 }){
   )
 }
 
-export default function DashboardPage({ backTo='/home' }){
+export default function DashboardPage(){
   const me = currentUser()
   const now = new Date()
 

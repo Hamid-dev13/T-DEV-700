@@ -3,9 +3,8 @@ import { navigate } from '../router'
 import { currentUser, signOut } from '../auth'
 
 export function Shell({ children }) {
-  function isActive(path){ return location.hash === '#' + path }
+  function isActive(path){ return location === path }
   const me = currentUser()
-  const base = me ? (me.role === 'manager' ? '/manager' : '/employee') : '/login'
 
   return (
     <div className="min-h-screen">
@@ -15,23 +14,18 @@ export function Shell({ children }) {
         <div className="">
           <div className="header-inner">
             <div className="flex items-center gap-3 md:gap-4"><span className="brand" style={{fontWeight:800,fontSize:"1.05rem"}}>MR5</span>
-              {me && me.role === 'manager' ? (
+              {me && !isActive('/login') ? (
                 <>
-                  <button onClick={() => navigate('/manager/punch')} className={"nav-pill" + (isActive('/manager/punch') ? ' active' : '')}>Pointage</button>
-                  <button onClick={() => navigate('/manager/dashboard')} className={"nav-pill" + (isActive('/manager/dashboard') ? ' active' : '')}>Dashboard</button>
-                  <button onClick={() => navigate('/manager/team')} className={"nav-pill" + (isActive('/manager/team') ? ' active' : '')}>Équipe</button>
+                  <button onClick={() => navigate('/clock')} className={"nav-pill" + (isActive('/clock') ? ' active' : '')}>Pointage</button>
+                  <button onClick={() => navigate('/dashboard')} className={"nav-pill" + (isActive('/dashboard') ? ' active' : '')}>Dashboard</button>
+                  <button onClick={() => navigate('/team')} className={"nav-pill" + (isActive('/team') ? ' active' : '')}>Équipe</button>
                 </>
-              ) : me ? (
-                <>
-                  <button onClick={() => navigate('/employee/punch')} className={"nav-pill" + (isActive('/employee/punch') ? ' active' : '')}>Pointage</button>
-                  <button onClick={() => navigate('/employee/dashboard')} className={"nav-pill" + (isActive('/employee/dashboard') ? ' active' : '')}>Mon dashboard</button>
-                  </>
               ) : null}
             </div>
             <div className="flex items-center gap-2">
-              {me ? (
+              {me && !isActive('/login') ? (
                 <>
-                  <button onClick={() => navigate(base + '/account')} className="nav-pill">Mon compte</button>
+                  <button onClick={() => navigate('/account')} className="nav-pill">Mon compte</button>
                   <button onClick={() => { signOut(); navigate('/login'); }} className="btn-ghost">Se déconnecter</button>
                 </>
               ) : null}

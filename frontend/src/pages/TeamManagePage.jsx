@@ -4,7 +4,7 @@ import { currentUser, seedUsers } from '../auth'
 import { navigate } from '../router'
 import { seedTeams, myTeam, teamMembersObjects, createUserInManagerTeam, ensureManagerHasTeam, updateUserInTeam, removeUserFromManagerTeam } from '../teams'
 
-export default function TeamManagePage({ backTo = '/manager' }) {
+export default function TeamManagePage() {
   const me = currentUser()
   const [refresh, setRefresh] = useState(0)
   const [showCreate, setShowCreate] = useState(false)
@@ -28,9 +28,6 @@ export default function TeamManagePage({ backTo = '/manager' }) {
     return (
       <Shell>
         <div className="login-wrap">
-          <div className="mb-4">
-            <button className="btn-ghost" onClick={() => navigate(backTo)}>&larr; Retour</button>
-          </div>
           <div className="glass p-6">
             <h1 className="text-2xl font-semibold mb-2">Accès réservé</h1>
             <p className="subtle">Cette page est réservée aux managers.</p>

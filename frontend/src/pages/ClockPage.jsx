@@ -26,7 +26,7 @@ function groupByDay(entries){
   return days
 }
 
-export default function PunchPage({ backTo='/home' }) {
+export default function ClockPage() {
   const [last, setLast] = useState(null)
   const [range, setRange] = useState('7d')
 
