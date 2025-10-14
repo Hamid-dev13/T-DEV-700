@@ -1,10 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import { clockIn } from '../services/api';
+import { clockIn, getUserClocks } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const EmployeePage: React.FC = () => {
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [clocks, setClocks] = useState<string[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  // Charger l'historique au montage du composant
+  useEffect(() => {
+    if (user?.id) {
+      loadClockHistory();
+    }
+  }, [user?.id]);
+
+  const loadClockHistory = async () => {
+    if (!user?.id) return;
+    
+    try {
+      // Récupère les pointages des 7 derniers jours
+      const to = new Date().toISOString();
+      const from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      
+      const history = await getUserClocks(user.id, from, to);
+      setClocks(history);
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'historique:', error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
 
   const handleClockIn = async () => {
     setIsLoading(true);
@@ -16,6 +44,9 @@ const EmployeePage: React.FC = () => {
         type: 'success', 
         text: `Pointage enregistré à ${new Date(result.at).toLocaleTimeString('fr-FR')}` 
       });
+      
+      // Ajoute le nouveau pointage à l'historique
+      setClocks(prev => [result.at, ...prev]);
     } catch (error) {
       setMessage({ 
         type: 'error', 
@@ -27,106 +58,120 @@ const EmployeePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
 
       {/* Contenu principal */}
-      <div className="flex flex-col items-center justify-center px-4 relative" 
-           style={{ minHeight: 'calc(100vh - 5rem)' }}>
+      <div className="flex flex-col items-center px-4 py-8">
         
-        {/* Background decorative grid */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
-          <div className="absolute inset-0" 
-               style={{
-                 backgroundImage: `radial-gradient(circle at 2px 2px, #FFD700 1px, transparent 0)`,
-                 backgroundSize: '50px 50px'
-               }}>
-          </div>
-        </div>
-
-        {/* Heure actuelle */}
-        <div className="text-center mb-12 animate-fadeIn">
-          <p className="text-gray-600 text-sm font-medium mb-2 tracking-wider uppercase">
-            Temps actuel
-          </p>
-          <h2 className="text-6xl font-bold text-black tracking-tight">
-            {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-          </h2>
-          <p className="text-[#FFD700] text-lg mt-2">
-            {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
-        </div>
-        
-        {/* Bouton Pointer - Design moderne */}
-        <div className="relative">
-          {/* Glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#FFD700] to-[#FFC107] 
-                          rounded-full blur-3xl opacity-20 animate-pulse-glow"></div>
-          
+        {/* Bouton Pointer - Style WTTJ */}
+        <div className="flex flex-col items-center justify-center" style={{ minHeight: '60vh' }}>
           <button
             onClick={handleClockIn}
             disabled={isLoading}
-            className="relative bg-gradient-to-br from-[#FFD700] to-[#FFC107] 
-                       hover:from-[#FFC107] hover:to-[#FFEB3B]
-                       text-black font-bold text-3xl
-                       w-72 h-72 rounded-full shadow-2xl
-                       transition-all duration-500 ease-out
-                       hover:scale-110 active:scale-95
+            className="bg-[#FFC933] hover:bg-[#FFBF00] 
+                       text-[#1E2448] font-bold text-2xl
+                       w-64 h-64 rounded-full shadow-2xl
+                       transition-all duration-300 ease-in-out
+                       hover:scale-105 active:scale-95
                        disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
-                       border-4 border-white
-                       flex flex-col items-center justify-center gap-4
-                       group overflow-hidden"
+                       border-4 border-[#1E2448]"
           >
-            {/* Inner ring decoration */}
-            <div className="absolute inset-8 border-2 border-black/20 rounded-full 
-                            group-hover:scale-110 transition-transform duration-500"></div>
-            
             {isLoading ? (
-              <div className="flex flex-col items-center gap-4 z-10">
-                <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-xl">Envoi...</span>
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-4xl animate-pulse">⏳</span>
+                <span className="text-sm">Envoi...</span>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-4 z-10">
-                <svg className="w-24 h-24 transform group-hover:rotate-12 transition-transform duration-500" 
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="tracking-wide">POINTER</span>
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-5xl">🕐</span>
+                <span>Pointer</span>
               </div>
             )}
           </button>
-        </div>
 
-        {/* Message de feedback */}
-        {message && (
-          <div className={`mt-12 px-8 py-4 rounded-2xl shadow-xl max-w-md text-center
-                          transition-all duration-500 animate-fadeIn backdrop-blur-sm
-                          border-2
-                          ${message.type === 'success' 
-                            ? 'bg-[#FFD700]/10 border-[#FFD700] text-[#FFD700]' 
-                            : 'bg-red-500/10 border-red-500 text-red-400'}`}>
-            <div className="flex items-center justify-center gap-3">
-              {message.type === 'success' ? (
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              )}
-              <p className="font-semibold text-lg">{message.text}</p>
+          {/* Message de feedback */}
+          {message && (
+            <div className={`mt-8 px-6 py-4 rounded-lg shadow-md max-w-md text-center
+                            transition-all duration-300
+                            ${message.type === 'success' 
+                              ? 'bg-green-50 border-2 border-green-400 text-green-800' 
+                              : 'bg-red-50 border-2 border-[#FF6B6B] text-[#FF6B6B]'}`}>
+              <p className="font-semibold">{message.text}</p>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Instructions subtiles */}
-        <div className="mt-16 text-center animate-fadeIn">
-          <p className="text-gray-600 text-sm">
+          {/* Info */}
+          <p className="mt-8 text-[#64748B] text-center text-sm">
             Cliquez sur le bouton pour enregistrer votre pointage
           </p>
+        </div>
+
+        {/* Historique des pointages */}
+        <div className=" w-full max-w-2xl">
+          <h3 className="text-2xl font-bold text-[#1E2448] text-center flex items-center justify-center gap-2">
+            <span>📋</span>
+            Historique des pointages
+          </h3>
+
+          {loadingHistory ? (
+            <div className="text-center text-[#64748B] bg-white rounded-xl p-8 shadow-sm">
+              Chargement de l'historique...
+            </div>
+          ) : clocks.length === 0 ? (
+            <div className="text-center text-[#64748B] bg-white rounded-xl p-8 shadow-sm">
+              Aucun pointage enregistré ces 7 derniers jours
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {clocks.slice(0, 10).map((clockTime, index) => {
+                const date = new Date(clockTime);
+                const isToday = date.toDateString() === new Date().toDateString();
+                
+                return (
+                  <div 
+                    key={index}
+                    className="bg-white border-2 border-gray-200 rounded-xl p-4 
+                               hover:border-[#FFC933] transition-all duration-300
+                               flex items-center justify-between
+                               shadow-sm hover:shadow-md"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-[#FFC933]/10 rounded-full 
+                                    flex items-center justify-center">
+                        <svg className="w-6 h-6 text-[#FFC933]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-[#1E2448]">
+                          {date.toLocaleDateString('fr-FR', { 
+                            weekday: 'long', 
+                            day: 'numeric', 
+                            month: 'long' 
+                          })}
+                        </p>
+                        <p className="text-[#64748B] text-sm">
+                          {date.toLocaleTimeString('fr-FR', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            second: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    {isToday && (
+                      <span className="bg-[#FFC933] text-[#1E2448] text-xs font-bold 
+                                     px-3 py-1 rounded-full">
+                        Aujourd'hui
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

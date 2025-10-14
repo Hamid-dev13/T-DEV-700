@@ -1,5 +1,5 @@
 import config from '../config/env';
-import type { User, LoginResponse, Clock, AttendanceDelay } from '../types';
+import type { User, LoginResponse, Clock, AttendanceDelay, UserTeam } from '../types';
 
 const API_URL = config.apiUrl;
 
@@ -51,12 +51,22 @@ export const clockIn = async (): Promise<Clock> => {
   return handleResponse<Clock>(response);
 };
 
-export const getUserClocks = async (userId: string): Promise<Clock[]> => {
-  const response = await fetchWithCredentials(`${API_URL}/users/${userId}/clocks`);
-  return handleResponse<Clock[]>(response);
+export const getUserClocks = async (userId: string, from: string, to: string): Promise<string[]> => {
+  const response = await fetchWithCredentials(`${API_URL}/users/${userId}/clocks`, {
+    method: 'POST',
+    body: JSON.stringify({ from, to }),
+  });
+  return handleResponse<string[]>(response);
 };
 
 export const getAttendanceDelay = async (): Promise<AttendanceDelay> => {
   const response = await fetchWithCredentials(`${API_URL}/attendance/delay`);
   return handleResponse<AttendanceDelay>(response);
+};
+
+// ========== TEAMS ==========
+
+export const getUserTeams = async (): Promise<UserTeam[]> => {
+  const response = await fetchWithCredentials(`${API_URL}/user/teams`);
+  return handleResponse<UserTeam[]>(response);
 };

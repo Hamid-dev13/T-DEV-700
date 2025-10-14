@@ -11,7 +11,7 @@ import { getDelayController } from "../controllers/attendance.controller";
 const router = Router();
 
 router.post("/clocks", isAuth, reportTimeController);
-router.get("/users/:id/clocks", isAuth, retrieveReportTimeSummaryController);
+router.post("/users/:id/clocks", isAuth, retrieveReportTimeSummaryController);
 router.get("/attendance/delay", isAuth, getDelayController); 
  
 

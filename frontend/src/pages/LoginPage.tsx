@@ -1,139 +1,101 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-const LoginPage = () => {
-  const navigate = useNavigate();
-  const { login } = useAuth();
-  
-  // État pour stocker l'email tapé par l'utilisateur
+const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
-  
-  // État pour stocker le mot de passe tapé par l'utilisateur
   const [password, setPassword] = useState('');
-  
-  // État pour savoir si on est en train de charger
   const [isLoading, setIsLoading] = useState(false);
-  
-  // État pour stocker les erreurs
-  const [error, setError] = useState('');
+  const { login, error } = useAuth();
+  const navigate = useNavigate();
 
-  // Fonction qui s'exécute quand on soumet le formulaire
-  const handleSubmit = async (e) => {
-    e.preventDefault(); // Empêche le rechargement de la page
-    
-    // Réinitialise l'erreur
-    setError('');
-    
-    // Active le chargement
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
-    
-    try {
-      // Utilise la vraie fonction de connexion
-      const result = await login(email, password);
-      
-      if (result.success) {
-        // Connexion réussie - la redirection se fait automatiquement via PrivateRoute
-        navigate('/employee');
-      } else {
-        // Erreur de connexion
-        setError(result.error || 'Email ou mot de passe incorrect');
-      }
-    } catch (err) {
-      // Erreur inattendue
-      setError('Erreur de connexion');
-    } finally {
-      // Désactive le chargement
-      setIsLoading(false);
+
+    const result = await login(email, password);
+
+    if (result.success) {
+      navigate('/employee');
     }
+    setIsLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      {/* Background decorative grid */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
-        <div className="absolute inset-0" 
-             style={{
-               backgroundImage: `radial-gradient(circle at 2px 2px, #FFD700 1px, transparent 0)`,
-               backgroundSize: '50px 50px'
-             }}>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full">
+        {/* Logo / Titre */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-[#1E2448] mb-2">
+            Time Manager
+          </h1>
+          <p className="text-[#64748B]">
+            Connectez-vous pour pointer
+          </p>
         </div>
-      </div>
 
-      {/* Carte blanche */}
-      <div className="bg-white/95 backdrop-blur-xl p-12 rounded-2xl shadow-2xl max-w-md w-full mx-4 relative border border-white/20">
-      
-        
+        {/* Formulaire */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Champ Email */}
+          {/* Email */}
           <div>
             <label 
-              htmlFor="email"
-              className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide"
+              htmlFor="email" 
+              className="block text-sm font-medium text-[#1E2448] mb-2"
             >
               Email
             </label>
-            <input 
+            <input
               id="email"
-              type="email" 
-              placeholder="votre.email@exemple.com"
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-4 border-0 bg-gray-50/50 rounded-xl focus:ring-2 focus:ring-[#FFD700]/30 focus:bg-white transition-all duration-300 text-black placeholder:text-gray-400 text-base font-medium shadow-sm hover:shadow-md focus:shadow-lg backdrop-blur-sm"
+              required
+               className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                          focus:outline-none focus:ring-2 focus:ring-[#FFC933] 
+                          transition-all text-gray-900"
+              placeholder="votre.email@exemple.com"
             />
           </div>
 
-          {/* Champ Mot de passe */}
+          {/* Password */}
           <div>
             <label 
-              htmlFor="password"
-              className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide"
+              htmlFor="password" 
+              className="block text-sm font-medium text-[#1E2448] mb-2"
             >
               Mot de passe
             </label>
-            <input 
+            <input
               id="password"
-              type="password" 
-              placeholder="••••••••"
+              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-4 border-0 bg-gray-50/50 rounded-xl focus:ring-2 focus:ring-[#FFD700]/30 focus:bg-white transition-all duration-300 text-black placeholder:text-gray-400 text-base font-medium shadow-sm hover:shadow-md focus:shadow-lg backdrop-blur-sm"
+              required
+               className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                          focus:outline-none focus:ring-2 focus:ring-[#FFC933] 
+                          transition-all text-gray-900"
+              placeholder="••••••••"
             />
           </div>
 
-          {/* Affichage de l'erreur si elle existe */}
+          {/* Erreur */}
           {error && (
-            <div className="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded-lg">
+            <div className="bg-red-50 border border-[#FF6B6B] text-[#FF6B6B] 
+                          px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
 
-          {/* Bouton de connexion */}
-          <button 
+          {/* Bouton */}
+          <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold 
-                       bg-[#2A2A2A] border border-[#333333]
-                       text-[#FFD700] hover:bg-[#FFD700] 
-                       hover:text-[#0A0A0A] rounded-xl 
-                       transition-all duration-300 hover:shadow-lg hover:shadow-[#FFD700]/20
-                       transform hover:scale-105 active:scale-95
-                       disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className="w-full bg-[#FFC933] hover:bg-[#FFBF00] 
+                       text-[#1E2448] font-semibold py-3 px-6 rounded-lg 
+                       transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+                       shadow-md hover:shadow-lg"
           >
-            {isLoading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-[#FFD700] border-t-transparent rounded-full animate-spin"></div>
-                Connexion en cours...
-              </>
-            ) : (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                        d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                </svg>
-                Se connecter
-              </>
-            )}
+            {isLoading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
       </div>

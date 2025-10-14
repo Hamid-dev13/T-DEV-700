@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import EmployeePage from './pages/EmployeePage';
+import ManagerPage from './pages/ManagerPage';
 
 // Composant pour protéger les routes
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -10,12 +11,9 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 border-4 border-[#FFD700] border-t-transparent rounded-full animate-spin"></div>
-          <div className="text-[#FFD700] text-xl font-semibold">
-            Chargement...
-          </div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-black text-xl font-semibold animate-pulse">
+          Chargement...
         </div>
       </div>
     );
@@ -30,18 +28,21 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 border-4 border-[#FFD700] border-t-transparent rounded-full animate-spin"></div>
-          <div className="text-[#FFD700] text-xl font-semibold">
-            Chargement...
-          </div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-black text-xl font-semibold animate-pulse">
+          Chargement...
         </div>
       </div>
     );
   }
 
-  return !isAuthenticated ? <>{children}</> : <Navigate to="/employee" replace />;
+  return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" replace />;
+};
+
+// Composant pour rediriger vers la bonne page selon le rôle
+const DashboardRedirect: React.FC = () => {
+  const { isManager } = useAuth();
+  return <Navigate to={isManager ? "/manager" : "/employee"} replace />;
 };
 
 function App() {
@@ -59,7 +60,17 @@ function App() {
             } 
           />
 
-          {/* Route protégée */}
+          {/* Redirection automatique selon le rôle */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <PrivateRoute>
+                <DashboardRedirect />
+              </PrivateRoute>
+            } 
+          />
+
+          {/* Route Employé */}
           <Route 
             path="/employee" 
             element={
@@ -69,8 +80,18 @@ function App() {
             } 
           />
 
+          {/* Route Manager */}
+          <Route 
+            path="/manager" 
+            element={
+              <PrivateRoute>
+                <ManagerPage />
+              </PrivateRoute>
+            } 
+          />
+
           {/* Redirection par défaut */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
