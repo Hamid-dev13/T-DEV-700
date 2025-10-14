@@ -5,9 +5,9 @@ import { updateUser } from '../utils/api'
 
 export default function AccountPage() {
   const { user } = useAuth()
-  const [name, setName] = useState(me?.name || '')
-  const [email, setEmail] = useState(me?.email || '')
-  const [phone, setPhone] = useState(me?.phone || '')
+  const [name, setName] = useState(user?.name || '')
+  const [email, setEmail] = useState(user?.email || '')
+  const [phone, setPhone] = useState(user?.phone || '')
   const [password, setPassword] = useState('')
 
   function save(e) {
