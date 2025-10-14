@@ -12,8 +12,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middlewares
+console.log('CORS origin configuré:', process.env.WEBSITE_URL);
 app.use(cors({
-  origin: process.env.WEBSITE_URL!,
+  origin: `http://localhost:${process.env.FRONTEND_HOST_PORT}`,
   credentials: true,
 }));
 app.use(express.json());
