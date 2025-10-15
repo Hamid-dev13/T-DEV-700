@@ -28,16 +28,37 @@ export default function Login() {
   }
 
   return (
-    <Shell>
-      <div className="login-wrap login-grid">
+    <div className="h-screen flex items-center justify-center bg-gray-50 p-4 overflow-hidden">
+      {/* Logo MR5 en haut à gauche fixe */}
+      <div className="fixed top-8 left-8 z-50">
+        <h1 className="text-5xl md:text-6xl font-black tracking-tighter" 
+            style={{ 
+              background: 'linear-gradient(135deg, #FFD400 0%, #FF8C00 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              letterSpacing: '-0.05em'
+            }}>
+          MR5
+        </h1>
+      </div>
+
+      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        {/* Cadre Bienvenue sur le côté */}
         <div className="login-hero">
           <h1 className="login-title">Bienvenue 👋</h1>
           <p className="login-sub">Connectez-vous pour accéder à votre tableau de bord.</p>
         </div>
 
+        {/* Card de connexion */}
         <Card title="Connexion">
           <form onSubmit={onSubmit} className="login-form">
-            {error ? <div className="subtle" style={{color:'#b42318', marginBottom:12}}>{error}</div> : null}
+            {error && (
+              <div className="subtle mb-3" style={{color:'#b42318'}}>
+                {error}
+              </div>
+            )}
+            
             <div className="mb-4">
               <label className="subtle">Email</label>
               <input
@@ -49,6 +70,7 @@ export default function Login() {
                 required
               />
             </div>
+            
             <div className="mb-4">
               <label className="subtle">Mot de passe</label>
               <input
@@ -60,12 +82,15 @@ export default function Login() {
                 required
               />
             </div>
+            
             <div className="flex items-center gap-2">
-              <button type="submit" className="btn">Se connecter</button>
-              </div>
+              <button type="submit" className="btn" disabled={loading}>
+                {loading ? 'Connexion...' : 'Se connecter'}
+              </button>
+            </div>
           </form>
         </Card>
       </div>
-    </Shell>
+    </div>
   )
 }

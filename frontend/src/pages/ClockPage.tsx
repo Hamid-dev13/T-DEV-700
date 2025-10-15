@@ -23,19 +23,19 @@ function groupByDay(entries: Date[]): [string, Date[]][] {
 
 export default function ClockPage() {
   const { user: me } = useAuth()
-  const [last, setLast] = useState<Date | null>(null)
   const [rawData, setRawData] = useState<Date[]>([])
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => {
     if (!me) return
     getClocks(me.id).then(data => setRawData(data || []))
-  }, [me, last])
+  }, [me?.id, refreshTrigger])
 
   const grouped = useMemo(() => groupByDay(rawData), [rawData])
 
   async function act() {
     const entry: Clock = await addClock()
-    setLast(new Date(entry.at))
+    setRefreshTrigger(prev => prev + 1) // Trigger refresh without causing loop
   }
 
   return (
@@ -51,11 +51,6 @@ export default function ClockPage() {
           >
             🕐 Pointer
           </button>
-          {last ? (
-            <p className="mt-6 text-lg subtle animate-fadeIn">
-              ✅ Pointage effectué à <span className="font-semibold">{last.toLocaleTimeString()}</span>
-            </p>
-          ) : null}
         </div>
 
         {/* Historique en dessous */}

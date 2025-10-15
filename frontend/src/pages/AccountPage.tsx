@@ -79,10 +79,20 @@ export default function AccountPage() {
     }
   }
 
+  async function deleteAccount() {
+    if (!confirm('⚠️ Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
+      return
+    }
+    
+    // TODO: Implémenter la suppression du compte
+    alert('Fonctionnalité de suppression à implémenter')
+  }
+
   return (
-    <Shell>
-      {/* Password Error Popup */}
-      {showPasswordError && (
+    <div className="h-screen overflow-hidden">
+      <Shell>
+        {/* Password Error Popup */}
+        {showPasswordError && (
         <div 
           className="fixed inset-0 flex items-center justify-center z-50 animate-fadeIn" 
           style={{ background: 'rgba(0, 0, 0, 0.15)' }}
@@ -129,7 +139,7 @@ export default function AccountPage() {
         </div>
       )}
 
-      <div className="login-wrap">
+      <div className="px-4 py-4 max-w-4xl mx-auto">
         <Card title="Modifier mon compte">
           <form onSubmit={save} className="grid-2">
             <div>
@@ -176,12 +186,30 @@ export default function AccountPage() {
                 Doit contenir : une majuscule, une minuscule, un chiffre et un caractère spécial
               </div>
             </div>
-            <div className="col-span-2 mt-2">
-              <button className="btn-accent">Enregistrer</button>
+            <div className="col-span-2 mt-4 flex justify-between items-center">
+              <button 
+                type="button"
+                onClick={deleteAccount}
+                className="px-6 py-2 rounded-xl font-semibold transition-all"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.1), rgba(244, 63, 94, 0.05))',
+                  border: '2px solid rgba(244, 63, 94, 0.3)',
+                  color: 'rgb(244 63 94)'
+                }}
+              >
+                Supprimer mon compte
+              </button>
+              <button 
+                type="submit"
+                className="btn-accent"
+              >
+                Enregistrer
+              </button>
             </div>
           </form>
         </Card>
       </div>
     </Shell>
+    </div>
   )
 }

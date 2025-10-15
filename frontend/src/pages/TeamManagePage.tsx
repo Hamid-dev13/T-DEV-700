@@ -21,32 +21,23 @@ export default function TeamManagePage() {
   useEffect(() => {
     if (!me) return
     
-    console.log('Récupération des équipes pour l\'utilisateur:', me.id)
-    
     getUserTeam()
       .then(data => {
-        console.log('✅ Données reçues de /users/team:', data)
-        
         // La réponse peut être un tableau ou un objet unique
         const teams = Array.isArray(data) ? data : (data && data.team ? [data] : [])
-        
-        console.log('Nombre d\'équipes:', teams.length)
         
         if (teams.length > 0) {
           setAllTeams(teams)
           setSelectedTeamIndex(0)
           setError(null)
         } else {
-          console.warn('⚠️ Aucune équipe trouvée')
           setAllTeams([])
           setError('Aucune équipe trouvée pour cet utilisateur')
         }
         setLoading(false)
       })
       .catch(err => {
-        console.error('❌ Erreur lors de la récupération des équipes:', err)
-        console.error('Message d\'erreur:', err.message)
-        console.error('Code d\'erreur:', err.code)
+        console.error('Erreur lors de la récupération des équipes:', err)
         setAllTeams([])
         setError(err.message || 'Erreur lors du chargement des équipes')
         setLoading(false)
