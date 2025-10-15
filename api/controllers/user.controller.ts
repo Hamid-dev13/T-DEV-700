@@ -1,7 +1,5 @@
-import { CookieOptions, Request, Response } from "express";
+import { Request, Response } from "express";
 import { addUser, deleteUser, loginUser, retrieveUser, retrieveUsers, updateUser } from "../services/user.service";
-
-const COOKIE_OPTS: CookieOptions = {secure:false, sameSite:"lax"};    // TODO set cookie options
 
 export async function loginUserController(req: Request, res: Response) {
   try {
