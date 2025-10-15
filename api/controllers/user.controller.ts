@@ -13,7 +13,14 @@ export async function loginUserController(req: Request, res: Response) {
 
     const { token, user } = await loginUser({ email, password });
 
-    return res.status(200).cookie("token", token, COOKIE_OPTS).json(user);
+    return res.status(200)
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000 // 24 heures
+      })
+      .json(user);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Internal server error";
