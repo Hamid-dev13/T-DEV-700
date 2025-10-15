@@ -99,10 +99,9 @@ export async function updateUser(
     last_name,
     email,
     password,
-    phone
+    phone,
   }: UpdateUserInput
 ): Promise<SafeUser> {
-
   if (password) {
     if (!verifyPasswordRequirements(password))
       throw new Error("Password doesn't meet the minimum security requirements");
@@ -111,7 +110,7 @@ export async function updateUser(
 
   const [user] = await db
     .update(users)
-    .set({ firstName: first_name, lastName: last_name, email, password, phone })
+    .set({firstName: first_name, lastName: last_name, email: email, password: password, phone: phone})
     .where(eq(users.id, id))
     .returning();
   
