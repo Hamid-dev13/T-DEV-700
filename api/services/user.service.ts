@@ -94,22 +94,28 @@ export async function addUser({
 
 export async function updateUser(
   id: string,
-  data: UpdateUserInput
+  {
+    first_name,
+    last_name,
+    email,
+    password,
+    phone
+  }: UpdateUserInput
 ): Promise<SafeUser> {
 
-  if (data.password) {
-    if (!verifyPasswordRequirements(data.password))
+  if (password) {
+    if (!verifyPasswordRequirements(password))
       throw new Error("Password doesn't meet the minimum security requirements");
-    data.password = await hashPassword(data.password);
+    password = await hashPassword(password);
   }
 
   const [user] = await db
     .update(users)
-    .set(data)
+    .set({ firstName: first_name, lastName: last_name, email, password, phone })
     .where(eq(users.id, id))
     .returning();
   
-  const { password, ...safeUser } = user;
+  const { password: _, ...safeUser } = user;
   return safeUser;
 }
 
