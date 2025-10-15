@@ -1,5 +1,7 @@
-import { Request, Response } from "express";
+import { CookieOptions, Request, Response } from "express";
 import { addUser, deleteUser, loginUser, retrieveUser, retrieveUsers, updateUser } from "../services/user.service";
+
+const COOKIE_OPTS: CookieOptions = {};    // TODO set cookie options
 
 export async function loginUserController(req: Request, res: Response) {
   try {
@@ -9,16 +11,9 @@ export async function loginUserController(req: Request, res: Response) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const result = await loginUser({ email, password });
+    const { token, user } = await loginUser({ email, password });
 
-    return res.status(200)
-      .cookie("token", result.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 24 * 60 * 60 * 1000 // 24 heures
-      })
-      .json(result.user);
+    return res.status(200).cookie("token", token, COOKIE_OPTS).json(user);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Internal server error";

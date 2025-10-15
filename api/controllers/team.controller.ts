@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { addTeam, addTeamUser, deleteTeam, isTeamManager, removeTeamUser, retrieveTeam, retrieveTeams, retrieveTeamUsers, updateTeam } from "../services/team.service";
+import { addTeam, addTeamUser, deleteTeam, isTeamManager, removeTeamUser, retreiveTeamsForUserWithManager, retrieveTeam, retrieveTeams, retrieveTeamUsers, updateTeam } from "../services/team.service";
 
 export async function retrieveTeamController(req: Request, res: Response) {
   try {
@@ -103,6 +103,17 @@ export async function removeTeamUserController(req: Request, res: Response) {
     
     await removeTeamUser(team_id, user);
     return res.sendStatus(200);
+  } catch (err) {
+    return res.sendStatus(500);
+  }
+}
+
+export async function retrieveMyTeamsController(req: Request, res: Response) {
+  try {
+    const user_id = req.user_id!;
+
+    const teams = await retreiveTeamsForUserWithManager(user_id);
+    return res.status(200).json(teams);
   } catch (err) {
     return res.sendStatus(500);
   }

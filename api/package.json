@@ -21,6 +21,8 @@
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.7.0",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "drizzle-kit": "^0.30.6",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
@@ -28,11 +30,15 @@
   "dependencies": {
     "@types/pg": "^8.15.5",
     "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.36.4",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
-    "postgres": "^3.4.4"
+    "postgres": "^3.4.4",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   }
 }

@@ -1,6 +1,8 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { Request, Response } from "express";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger.config";
 import { db } from "./db/client";
 import userRouter from "./routes/user.routes";
 import teamRouter from "./routes/team.routes";
@@ -13,8 +15,8 @@ const PORT = process.env.PORT || 3000;
 
 // Middlewares
 app.use(cors({
-  origin: 'http://localhost:5173', // L'URL admin
-  credentials: true, // Permet l'envoi de cookies
+  origin: process.env.WEBSITE_URL!,
+  credentials: true,
 }));
 app.use(express.json());
 
@@ -27,7 +29,12 @@ app.use(clockRouter);
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Hello World!" });
 });
-
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// JSON de la spec OpenAPI (optionnel, pour télécharger la spec)
+app.use("/api-docs.json", (req: Request, res: Response) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
 // Route de test de la connexion DB
 app.get("/health", async (req: Request, res: Response) => {
   try {

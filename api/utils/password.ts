@@ -44,3 +44,11 @@ export async function verifyPassword(
   });
   return crypto.timingSafeEqual(derivedKey, expected);
 }
+
+export function verifyPasswordRequirements(password: string) {
+  return /[A-Z]/       .test(password) &&
+          /[a-z]/       .test(password) &&
+          /[0-9]/       .test(password) &&
+          /[^A-Za-z0-9]/.test(password) &&
+          password.length > 4;
+}
