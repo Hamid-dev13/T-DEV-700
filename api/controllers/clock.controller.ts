@@ -8,10 +8,9 @@ export async function reportTimeController(req: Request, res: Response) {
 
     const clock = await reportTime(user_id);
     
-    // Formater la date avec le timezone
     return res.status(200).json({
       ...clock,
-      at: formatWithTimezone(clock.at)  // 👈 AJOUT ICI
+      at: formatWithTimezone(clock.at)
     });
   } catch (err) {
     console.log(err)
@@ -21,7 +20,7 @@ export async function reportTimeController(req: Request, res: Response) {
 
 export async function retrieveReportTimeSummaryController(req: Request, res: Response) {
   try {
-    const user_id = req.user_id!;
+    const user_id = req.params.id!;
     let { from, to } = req.query ?? {};
 
     if (!from || !to) {
@@ -38,7 +37,7 @@ export async function retrieveReportTimeSummaryController(req: Request, res: Res
 
     const results = await retrieveReportTimeSummary(user_id, { from: fromDate, to: toDate });
     
-    // Formater toutes les dates avec date-fns-tz
+    // format dates with date-fns-tz
     const formattedResults = results.map(dateUTC => formatWithTimezone(dateUTC));
     
     return res.status(200).json(formattedResults);
@@ -54,7 +53,7 @@ export async function testDateController(req: Request, res: Response) {
     iso_string: now.toISOString(),
     to_string: now.toString(),
     locale_string: now.toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }),
-    with_date_fns: formatWithTimezone(now),  // 👈 NOUVEAU
+    with_date_fns: formatWithTimezone(now),
     timestamp: now.getTime(),
     hours: now.getHours(),
     timezone_offset: now.getTimezoneOffset()
