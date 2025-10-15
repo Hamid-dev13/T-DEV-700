@@ -26,6 +26,17 @@ export function logout() {
 export async function getUsers() {
   return apiClient.get('/users')
 }
+export async function updateMyProfile(updates: any) {
+  // Convertir camelCase en snake_case pour le backend
+  const payload = {
+    first_name: updates.firstName,
+    last_name: updates.lastName,
+    email: updates.email,
+    phone: updates.phone,
+    ...(updates.password ? { password: updates.password } : {})
+  }
+  return apiClient.put('/user', payload)
+}
 export async function updateUser(id: string, updates: any) {
   return apiClient.put(`/users/${encodeURIComponent(id)}`, updates)
 }

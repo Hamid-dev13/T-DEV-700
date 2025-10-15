@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { COOKIE_TOKEN_KEY } from "./cookie"
 
 export const BASE_URL = import.meta.env.VITE_API_URL || ""
@@ -35,7 +36,15 @@ async function request(path: string, { method = "GET", headers = {}, payload, qu
   if (res.status === 403) { const e: any = new Error("FORBIDDEN");    e.code = 403; throw e }
   if (!res.ok) {
     let msg = ""
-    try { msg = await res.text() } catch {}
+    try {
+      const contentType = res.headers.get("content-type") || ""
+      if (contentType.includes("application/json")) {
+        const json = await res.json()
+        msg = json.error || json.message || JSON.stringify(json)
+      } else {
+        msg = await res.text()
+      }
+    } catch {}
     const e: any = new Error(msg || `HTTP ${res.status}`); e.code = res.status; throw e
   }
 

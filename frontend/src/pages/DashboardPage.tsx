@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Shell, Card } from '../components/Layout'
-import { getClocks } from '../utils/api';
+import { getClocks, computeDailyHours, aggregateWeekly } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
 interface BarData {
@@ -22,8 +22,14 @@ function iso(d: Date){ return d.toISOString().slice(0,10) }
 function startOfWeek(d: Date){
   const x = new Date(d); const day = x.getDay() || 7; x.setHours(0,0,0,0); x.setDate(x.getDate() - (day-1)); return x
 }
-function rangeDays(n: number, endDate=new Date()){
-  const arr=[]; for(let i=n-1;i>=0;i--){ const d=new Date(endDate); d.setDate(d.getDate()-i); arr.push(iso(d)); } return arr
+function rangeDays(n: number, endDate=new Date()): string[] {
+  const arr: string[] = []; for(let i=n-1;i>=0;i--){ const d=new Date(endDate); d.setDate(d.getDate()-i); arr.push(iso(d)); } return arr
+}
+function weekOf(dateStr: string) {
+  const d = new Date(dateStr)
+  const onejan = new Date(d.getFullYear(),0,1)
+  const week = Math.ceil((((d.getTime() - onejan.getTime()) / 86400000) + onejan.getDay()+1)/7)
+  return `${d.getFullYear()}-W${String(week).padStart(2,'0')}`
 }
 
 /** Enhanced Bar Chart (axes, gridlines, value labels) */
@@ -131,7 +137,12 @@ export default function DashboardPage(){
     async function fetchData() {
       const now = new Date()
       const last7Days = rangeDays(7, now)
-      const perDay: PerDayEntry[] = []
+      
+      // Fetch clocks for the last 7 days
+      const from = new Date(now)
+      from.setDate(from.getDate() - 7)
+      const all = await getClocks(me?.id!, from, now)
+      const perDay: PerDayEntry[] = computeDailyHours(all)
       const map = new Map(perDay.map(d => [d.day, d.hours]))
 
       const bars: BarData[] = last7Days.map(day => ({
@@ -143,13 +154,13 @@ export default function DashboardPage(){
       const todays = perDay.find(d => d.day === todayISO)?.hours || 0
 
       const sw = startOfWeek(now)
-      const perWeek: PerDayEntry[] = []
-      const weekTotal = perWeek.reduce((a, b) => a + (b.hours || 0), 0)
+      const perWeek = aggregateWeekly(perDay)
+      const currentWeek = perWeek.find(w => w.week === weekOf(iso(now)))
+      const weekTotal = currentWeek?.hours || 0
       const pct7h = (bars.filter(b => b.value >= 7).length / bars.length) * 100
 
-      const all = await getClocks(me?.id!)
       const last = all[0] || (all.length ? all[all.length - 1] : null)
-      const lastTime = last ? new Date(last.time) : null
+      const lastTime = last ? new Date(last) : null
 
       setEmpData({ bars, todays, weekTotal, pct7h, lastTime })
     }
@@ -161,6 +172,8 @@ export default function DashboardPage(){
     <Shell>
       <div className="login-wrap">
         {false /* FIXME check if team manager */ ? (
+          <ManagerDashboard />
+        ) : (
           <div className="grid-2">
             <Card title="Résumé rapide">
               <div className="grid-3">
@@ -174,8 +187,6 @@ export default function DashboardPage(){
               <BarChart data={empData?.bars || []} height={110} />
             </Card>
           </div>
-        ) : (
-          <ManagerDashboard />
         )}
       </div>
     </Shell>

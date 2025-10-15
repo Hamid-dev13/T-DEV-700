@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState, ReactNode, } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useState, ReactNode, useCallback } from 'react'
 import { User } from '../utils/types'
 import * as api from '../utils/api'
 
@@ -7,6 +7,7 @@ interface AuthContextType {
   loading: boolean
   login: (email: string, password: string) => Promise<User | null>
   logout: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 const AuthCtx = createContext<AuthContextType | null>(null)
@@ -34,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const login = async (email: string, password: string): Promise<User | null> => {
+  const login = useCallback(async (email: string, password: string): Promise<User | null> => {
     setLoading(true)
     try {
       const u = await api.login(email, password)
@@ -43,9 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const logout = async (): Promise<void> => {
+  const logout = useCallback(async (): Promise<void> => {
     setLoading(true)
     try {
       api.logout()
@@ -53,9 +54,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const value = useMemo<AuthContextType>(() => ({ user, loading, login, logout }), [user, loading])
+  const refreshUser = useCallback(async (): Promise<void> => {
+    try {
+      const u = await api.getSession()
+      setUser(u || null)
+    } catch {
+      setUser(null)
+    }
+  }, [])
+
+  const value = useMemo<AuthContextType>(() => ({ user, loading, login, logout, refreshUser }), [user, loading, login, logout, refreshUser])
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>
 }

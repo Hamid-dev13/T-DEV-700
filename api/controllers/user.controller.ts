@@ -71,10 +71,10 @@ export async function addUserController(req: Request, res: Response) {
 
 export async function updateMyUserController(req: Request, res: Response) {
   try {
-    const id = req.params.id!;
+    const id = req.user_id!;
     const body = req.body;
     const { first_name, last_name, email, password, phone } = body ?? {};
-
+    console.log(first_name, last_name, email, password, phone)
     const user = await updateUser(id, { first_name, last_name, email, password, phone });
     return res.status(200).json(user);
   } catch (err) {
