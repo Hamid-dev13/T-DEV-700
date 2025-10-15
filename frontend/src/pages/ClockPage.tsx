@@ -40,53 +40,70 @@ export default function ClockPage() {
 
   return (
     <Shell>
-      <div className="login-wrap">
-        <div className="grid-2">
-          <Card title="Pointer">
-            <div className="flex gap-2">
-              <button className="btn-accent" onClick={() => act()}>Pointer</button>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Bouton de pointage en gros au centre */}
+        <div className="flex flex-col items-center justify-center mb-12">
+          <h1 className="page-title text-center mb-8">Pointage</h1>
+          <button 
+            className="btn-accent text-2xl px-12 py-6 text-xl font-bold shadow-2xl"
+            onClick={() => act()}
+            style={{ fontSize: '1.5rem', padding: '1.5rem 3rem' }}
+          >
+            🕐 Pointer
+          </button>
+          {last ? (
+            <p className="mt-6 text-lg subtle animate-fadeIn">
+              ✅ Pointage effectué à <span className="font-semibold">{last.toLocaleTimeString()}</span>
+            </p>
+          ) : null}
+        </div>
+
+        {/* Historique en dessous */}
+        <Card title="📋 Historique des pointages">
+          {grouped.length === 0 ? (
+            <div className="p-12 text-center text-gray-500">
+              <div className="text-6xl mb-4">📭</div>
+              <p className="text-lg">Aucune entrée dans cette période.</p>
             </div>
-            {last ? <p className="mt-4 subtle">Pointage effectué à {last.toLocaleTimeString()}</p> : null}
-          </Card>
-
-          <Card title="Historique">
-            {grouped.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">
-                Aucune entrée dans cette période.
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {grouped.map(([day, list]) => (
-                  <div key={day}>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="text-sm font-semibold tracking-wide uppercase text-gray-500">
-                        {new Date(day + 'T00:00:00').toLocaleDateString()}
-                      </div>
-                      <div className="flex-1 h-px bg-gray-200"></div>
-                      <div className="text-xs text-gray-400">
-                        {list.length} évènement{list.length > 1 ? 's' : ''}
-                      </div>
+          ) : (
+            <div className="space-y-6">
+              {grouped.map(([day, list]) => (
+                <div key={day}>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="text-sm font-bold tracking-wide uppercase" style={{ color: 'hsl(var(--accent-dark))' }}>
+                      📅 {new Date(day + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </div>
+                    <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, hsl(var(--accent)) 0%, transparent 100%)' }}></div>
+                    <div className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(255, 212, 0, 0.15)', color: 'hsl(var(--ink))' }}>
+                      {list.length} évènement{list.length > 1 ? 's' : ''}
+                    </div>
+                  </div>
 
-                    <ol className="relative border-s border-gray-200 ps-4 ms-2 overflow-y-auto max-h-[40vh]">
-                      {list.map((e, i) => (
-                        <li key={"clock-" + i} className="mb-4 ms-2">
-                          <span className={`absolute -start-3 mt-1 size-2 rounded-full ${i % 2 === 0 ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                          <div className="flex items-center gap-3">
-                            <span className={`text-xs px-2 py-1 rounded-full ${i % 2 === 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                              {i % 2 === 0 ? 'Arrivée ⬆️' : 'Départ ⬇️'}
+                  <ol className="relative border-s-2 ps-6 ms-2 overflow-y-auto max-h-[50vh]" style={{ borderColor: 'rgba(255, 212, 0, 0.3)' }}>
+                    {[...list].reverse().map((e, idx) => {
+                      const originalIndex = list.length - 1 - idx;
+                      const isArrival = originalIndex % 2 === 0;
+                      return (
+                        <li key={"clock-" + idx} className="mb-6 ms-2">
+                          <span 
+                            className={`absolute -start-3 mt-1.5 size-3 rounded-full ${isArrival ? 'bg-green-500' : 'bg-red-500'}`}
+                            style={{ boxShadow: isArrival ? '0 0 0 3px rgba(16,185,129,0.3)' : '0 0 0 3px rgba(244,63,94,0.3)' }}
+                          ></span>
+                          <div className="flex items-center gap-4">
+                            <span className={`text-sm font-semibold px-3 py-1.5 rounded-full ${isArrival ? 'pill-green' : 'pill-red'}`}>
+                              {isArrival ? '⬆️ Arrivée' : '⬇️ Départ'}
                             </span>
-                            <span className="text-sm">{e.toLocaleTimeString()}</span>
+                            <span className="text-base font-medium clock">{e.toLocaleTimeString()}</span>
                           </div>
                         </li>
-                      )).toReversed()}
-                    </ol>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-        </div>
+                      );
+                    })}
+                  </ol>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
     </Shell>
   )

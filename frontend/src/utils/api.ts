@@ -50,6 +50,10 @@ export async function getTeams() {
   return Array.isArray(list) ? list : (list?.items || [])
 }
 
+export async function getUserTeam() {
+  return apiClient.get('/users/team')
+}
+
 export async function getClocks(id: string, from?: Date, to?: Date) {
   try {
     if (!from) from = new Date()
