@@ -1,0 +1,210 @@
+components:
+  schemas:
+    # ============================================
+    # USERS
+    # ============================================
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        admin:
+          type: boolean
+        phone:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    CreateUserRequest:
+      type: object
+      required:
+        - first_name
+        - last_name
+        - email
+        - password
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        phone:
+          type: string
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        phone:
+          type: string
+
+    # ============================================
+    # TEAMS
+    # ============================================
+    Team:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        managerId:
+          type: string
+          format: uuid
+        startHour:
+          type: number
+          format: float
+        endHour:
+          type: number
+          format: float
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateTeamRequest:
+      type: object
+      required:
+        - name
+        - description
+        - manager_id
+        - start_hour
+        - end_hour
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        manager_id:
+          type: string
+          format: uuid
+        start_hour:
+          type: number
+          format: float
+        end_hour:
+          type: number
+          format: float
+
+    UpdateTeamRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        manager_id:
+          type: string
+          format: uuid
+        start_hour:
+          type: number
+          format: float
+        end_hour:
+          type: number
+          format: float
+
+    AddTeamUserRequest:
+      type: object
+      required:
+        - user_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+
+    RemoveTeamUserRequest:
+      type: object
+      required:
+        - user_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+
+    # ============================================
+    # CLOCKS
+    # ============================================
+    Clock:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        at:
+          type: string
+          format: date-time
+
+    ReportTimeSummaryRequest:
+      type: object
+      required:
+        - from
+        - to
+      properties:
+        from:
+          type: string
+          format: date
+          description: Date de début (format YYYY-MM-DD)
+        to:
+          type: string
+          format: date
+          description: Date de fin (format YYYY-MM-DD)
+
+    DelayResponse:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [absent, late, early, on_time]
+        delay_minutes:
+          type: number
+          nullable: true
+

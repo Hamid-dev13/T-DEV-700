@@ -76,8 +76,13 @@ La plupart des endpoints nécessitent un token JWT. Pour l'obtenir :
       },
     ],
   },
-  // Chemins vers vos fichiers contenant les commentaires Swagger
-  apis: ['./routes/*.ts', './controllers/*.ts'],
+  // Chemins vers les fichiers de documentation Swagger
+  apis: [
+    './swagger/schemas.yaml',
+    './swagger/users.yaml',
+    './swagger/teams.yaml',
+    './swagger/clocks.yaml',
+  ],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
