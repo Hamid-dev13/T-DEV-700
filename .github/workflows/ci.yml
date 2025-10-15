@@ -91,9 +91,9 @@ jobs:
   deploy:
     name: 🚀 Déploiement sur VPS
     runs-on: ubuntu-latest
-    # Ce job attend que les images soient buildées et poussées
+
     needs: docker-build-push
-    # Déployer UNIQUEMENT quand on push sur main (pas sur dev ou CICD)
+   
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
@@ -116,11 +116,11 @@ jobs:
             cd /root/T-DEV-700
             
             # Pull les dernières modifications depuis GitHub
-            echo "📥 Récupération des dernières modifications..."
+            echo " Récupération des dernières modifications..."
             git pull origin main
             
             # Se connecter à Docker Hub (pour pouvoir pull les images privées si besoin)
-            echo "🔐 Connexion à Docker Hub..."
+            echo " Connexion à Docker Hub..."
             echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             
             # Pull les nouvelles images Docker depuis Docker Hub
@@ -129,25 +129,25 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/monapp-frontend:main
             
             # Arrêter les anciens containers
-            echo "🛑 Arrêt des anciens containers..."
+            echo " Arrêt des anciens containers..."
             docker-compose -f docker-compose.prod.yml down
             
             # Démarrer les nouveaux containers avec les nouvelles images
-            echo "🚀 Démarrage des nouveaux containers..."
+            echo "Démarrage des nouveaux containers..."
             docker-compose -f docker-compose.prod.yml up -d
             
             # Nettoyer les anciennes images non utilisées (économiser de l'espace)
-            echo "🧹 Nettoyage des anciennes images..."
+            echo " Nettoyage des anciennes images..."
             docker image prune -af
             
             # Vérifier que les containers tournent
-            echo "✅ Vérification des containers..."
+            echo " Vérification des containers..."
             docker-compose -f docker-compose.prod.yml ps
             
-            echo "🎉 Déploiement terminé avec succès !"
+            echo " Déploiement terminé avec succès !"
 
       # Étape 3 : Message de succès
-      - name: ✅ Déploiement réussi !
+      - name:  Déploiement réussi !
         run: |
-          echo "🎉 Application déployée sur le VPS !"
-          echo "🌐 L'application est maintenant accessible sur http://${{ secrets.SSH_HOST }}"
+          echo "Application déployée sur le VPS !"
+          echo " L'application est maintenant accessible sur http://${{ secrets.SSH_HOST }}"
