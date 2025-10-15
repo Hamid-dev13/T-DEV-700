@@ -1,34 +1,38 @@
-import React from 'react'
+import React, { ReactNode } from 'react'
 import { navigate } from '../router'
 import { useAuth } from '../context/AuthContext'
 
-export function Shell({ children }) {
+export function Shell({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
-  function isActive(path){ return location === path }
+
+  const currentPath = window.location.pathname
+  function isActive(path: string): boolean {
+    return currentPath === path
+  }
 
   return (
     <div className="min-h-screen">
       <header className="header">
-      
         <div className="header-bar" />
-        <div className="">
+        <div>
           <div className="header-inner">
-            <div className="flex items-center gap-3 md:gap-4"><span className="brand" style={{fontWeight:800,fontSize:"1.05rem"}}>MR5</span>
-              {user && !isActive('/login') ? (
+            <div className="flex items-center gap-3 md:gap-4">
+              <span className="brand" style={{ fontWeight: 800, fontSize: "1.05rem" }}>MR5</span>
+              {user && !isActive('/login') && (
                 <>
                   <button onClick={() => navigate('/clock')} className={"nav-pill" + (isActive('/clock') ? ' active' : '')}>Pointage</button>
                   <button onClick={() => navigate('/dashboard')} className={"nav-pill" + (isActive('/dashboard') ? ' active' : '')}>Dashboard</button>
                   <button onClick={() => navigate('/team')} className={"nav-pill" + (isActive('/team') ? ' active' : '')}>Équipe</button>
                 </>
-              ) : null}
+              )}
             </div>
             <div className="flex items-center gap-2">
-              {user && !isActive('/login') ? (
+              {user && !isActive('/login') && (
                 <>
                   <button onClick={() => navigate('/account')} className="nav-pill">Mon compte</button>
                   <button onClick={() => { logout(); navigate('/login'); }} className="btn-ghost">Se déconnecter</button>
                 </>
-              ) : null}
+              )}
             </div>
           </div>
         </div>
@@ -41,7 +45,15 @@ export function Shell({ children }) {
   )
 }
 
-export function Card({ title, actions, footer, children }) {
+// Type des props du Card
+interface CardProps {
+  title: string
+  actions?: ReactNode
+  footer?: ReactNode
+  children: ReactNode
+}
+
+export function Card({ title, actions, footer, children }: CardProps) {
   return (
     <div className="glass">
       <div className="card-header flex items-center justify-between">
@@ -49,11 +61,21 @@ export function Card({ title, actions, footer, children }) {
         {actions}
       </div>
       <div className="card-body">{children}</div>
-      {footer ? <div className="card-footer">{footer}</div> : null}
+      {footer && <div className="card-footer">{footer}</div>}
     </div>
   )
 }
 
-export function Link({ to, children }) {
-  return (<button onClick={() => navigate(to)} className="link">{children}</button>)
+// Type des props du Link
+interface LinkProps {
+  to: string
+  children: ReactNode
+}
+
+export function Link({ to, children }: LinkProps) {
+  return (
+    <button onClick={() => navigate(to)} className="link">
+      {children}
+    </button>
+  )
 }

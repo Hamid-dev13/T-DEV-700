@@ -1,19 +1,17 @@
-import React, { useEffect, useState } from 'react'
+import React, { FormEvent, useEffect, useState } from 'react'
 import { navigate } from '../router'
 import { Shell, Card } from '../components/Layout'
-import { login } from '../utils/api'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
+  const [email, setEmail] = useState<string>('')
+  const [password, setPassword] = useState<string>('')
+  const [error, setError] = useState<string>('')
   const { login, loading } = useAuth()
 
   useEffect(() => {}, [])
 
-  function onSubmit(e) {
+  function onSubmit(e: FormEvent) {
     e.preventDefault()
 
     if (!loading) {
