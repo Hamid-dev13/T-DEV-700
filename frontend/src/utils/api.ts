@@ -50,10 +50,6 @@ export async function getTeams() {
   return Array.isArray(list) ? list : (list?.items || [])
 }
 
-export async function getUserTeam() {
-  return apiClient.get('/users/team')
-}
-
 export async function getMyTeams() {
   return apiClient.get('/user/teams')
 }

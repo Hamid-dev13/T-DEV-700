@@ -119,21 +119,3 @@ export async function deleteOtherUserController(req: Request, res: Response) {
     return res.sendStatus(500);
   }
 }
-
-export async function retrieveUserTeamController(req: Request, res: Response) {
-  try {
-    const user_id = req.user_id!;
-    const teams = await retreiveTeamsForUserWithManager(user_id);
-    
-    // Si l'utilisateur n'a pas d'équipe
-    if (!teams || teams.length === 0) {
-      return res.status(404).json({ error: "No team found for this user" });
-    }
-    
-    // Retourner TOUTES les équipes (un utilisateur peut être dans plusieurs équipes)
-    return res.status(200).json(teams);
-  } catch (err) {
-    console.error('Error in retrieveUserTeamController:', err);
-    return res.sendStatus(500);
-  }
-}

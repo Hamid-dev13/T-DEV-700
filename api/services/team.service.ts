@@ -52,21 +52,6 @@ export async function retrieveMainTeamForUser(user_id: string): Promise<Team | n
 }
 
 export async function retreiveTeamsForUserWithManager(user_id: string): Promise<{ team: Team, manager: SafeUser }[]> {
-  // const userTeamsWithTeamsAndManager = await db
-  //   .select({
-  //     team: teams,
-  //     manager: safeUserSelect,
-  //   })
-  //   .from(userTeams)
-  //   .innerJoin(teams, eq(userTeams.team_id, teams.id))
-  //   .innerJoin(users, eq(teams.managerId, users.id))
-  //   .where(eq(userTeams.user_id, user_id));
-  
-  // return userTeamsWithTeamsAndManager.map((row) => ({
-  //   team: row.team,
-  //   manager: row.manager,
-  // }));
-
   const members = alias(users, "members");
 
   const teamIdsSubquery = db
