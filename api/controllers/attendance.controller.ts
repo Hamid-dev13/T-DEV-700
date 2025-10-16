@@ -38,7 +38,6 @@ export async function getDelayController(req: Request, res: Response) {
     });
 
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Erreur serveur" });
+    return res.sendStatus(500);
   }
 }

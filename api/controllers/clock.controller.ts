@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { reportTime, retrieveReportTimeSummary } from "../services/clock.service";
 import { formatWithTimezone } from "../utils/timezone";
+import { sendError } from "../utils/format";
 
 export async function reportTimeController(req: Request, res: Response) {
   try {
@@ -23,11 +24,8 @@ export async function retrieveReportTimeSummaryController(req: Request, res: Res
     const user_id = req.params.id!;
     let { from, to } = req.query ?? {};
 
-    if (!from || !to) {
-      return res.status(400).json({ 
-        error: "Missing required fields 'from', 'to'" 
-      });
-    }
+    if (!from || !to)
+      return sendError(res, "Missing required fields 'from', 'to'", 400);
 
     const fromDate = new Date(from as string);
     fromDate.setHours(0, 0, 0, 0)
@@ -42,7 +40,6 @@ export async function retrieveReportTimeSummaryController(req: Request, res: Res
     
     return res.status(200).json(formattedResults);
   } catch (err) {
-    console.log(err)
     return res.sendStatus(500);
   }
 }

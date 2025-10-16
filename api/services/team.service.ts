@@ -35,6 +35,22 @@ export async function isTeamManager(user_id: string, team_id: string) {
     return result.length > 0
 }
 
+/**
+ * Get the User's main team (where he is a member)
+ */
+export async function retrieveMainTeamForUser(user_id: string): Promise<Team | null> {
+  const result = await db
+    .select({
+      team: teams
+    })
+    .from(userTeams)
+    .innerJoin(teams, eq(userTeams.team_id, teams.id))
+    .where(and(eq(userTeams.user_id, user_id), ne(teams.managerId, user_id)))
+    .limit(1);
+  
+  return result.length > 0 ? result[0].team : null;
+}
+
 export async function retreiveTeamsForUserWithManager(user_id: string): Promise<{ team: Team, manager: SafeUser }[]> {
   // const userTeamsWithTeamsAndManager = await db
   //   .select({
@@ -201,11 +217,14 @@ export async function retrieveTeamUsers(team_id: string): Promise<{ manager: Saf
   return result;
 }
 
-export async function addTeamUser(team_id: string, user_id: string) {
+export async function addTeamMember(team_id: string, user_id: string) {
+  // prevent multiple teams for user (as member)
+  if (await retrieveMainTeamForUser(user_id))
+    throw new Error("User is already a member of a team !");
   return db.insert(userTeams).values({ user_id, team_id });   // may throw error if couple (user_id, team_id) is not unique
 }
 
-export async function removeTeamUser(team_id: string, user_id: string): Promise<boolean> {
+export async function removeTeamMember(team_id: string, user_id: string): Promise<boolean> {
   const [_deleted] = await db
     .delete(userTeams)
     .where(and(eq(userTeams.user_id, user_id), eq(userTeams.team_id, team_id)))

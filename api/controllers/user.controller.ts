@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import { addUser, deleteUser, loginUser, retrieveUser, retrieveUsers, updateUser } from "../services/user.service";
+import { sendError } from "../utils/format";
 
 export async function loginUserController(req: Request, res: Response) {
   try {
     const body = req.body;
     const { email, password } = body ?? {};
     if (!email || !password) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return sendError(res, "Missing required fields", 400)
     }
 
     const { token, user } = await loginUser({ email, password });
@@ -33,7 +34,6 @@ export async function retrieveMyUserController(req: Request, res: Response) {
     const user = await retrieveUser(user_id);
     return res.status(200).json(user);
   } catch (err) {
-    console.log(err)
     return res.sendStatus(500);
   }
 }
@@ -44,7 +44,6 @@ export async function retrieveOtherUserController(req: Request, res: Response) {
     const user = await retrieveUser(user_id);
     return res.status(200).json(user);
   } catch (err) {
-    console.log(err)
     return res.sendStatus(500);
   }
 }
@@ -64,7 +63,7 @@ export async function addUserController(req: Request, res: Response) {
     const body = req.body;
     const { first_name, last_name, email, password, phone } = body ?? {};
     if (!first_name || !last_name || !email || !password) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return sendError(res, "Missing required fields", 400)
     }
 
     const user = await addUser({ first_name, last_name, email, password, phone });
