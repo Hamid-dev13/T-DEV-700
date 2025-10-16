@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { reportTime, retrieveReportTimeSummary } from "../services/clock.service";
+import { reportTime, getClocksForUser } from "../services/clock.service";
 import { formatWithTimezone } from "../utils/timezone";
 import { sendError } from "../utils/format";
 
@@ -33,7 +33,7 @@ export async function retrieveReportTimeSummaryController(req: Request, res: Res
     const toDate = new Date(to as string);
     toDate.setHours(0, 0, 0, 0)
 
-    const results = await retrieveReportTimeSummary(user_id, { from: fromDate, to: toDate });
+    const results = await getClocksForUser(user_id, { from: fromDate, to: toDate });
     
     // format dates with date-fns-tz
     const formattedResults = results.map(dateUTC => formatWithTimezone(dateUTC));
