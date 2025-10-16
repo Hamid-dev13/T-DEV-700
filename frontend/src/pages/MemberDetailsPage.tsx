@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Shell, Card } from '../components/Layout'
-import { getClocks, getTeams } from '../utils/api'
+import { getClocks, getTeamsWithMembers } from '../utils/api'
 
 interface DailySummary {
   day: string
@@ -142,8 +142,12 @@ export default function MemberDetailsPage() {
           setMember(memberData)
         }
         
-        // Récupérer toutes les équipes
-        const allTeams = await getTeams()
+        // Récupérer toutes les équipes avec leurs membres
+        const allTeams = await getTeamsWithMembers()
+        
+        console.log('=== DEBUG ÉQUIPES ===')
+        console.log('Toutes les équipes:', allTeams)
+        console.log('Member ID:', memberId)
         
         // Trouver les équipes du membre
         const userTeams = allTeams.filter((team: Team) => 
@@ -153,8 +157,10 @@ export default function MemberDetailsPage() {
           )
         )
         
-        // Prioriser l'équipe "manager" si le membre en fait partie
-        const managerTeam = userTeams.find((team: Team) => 
+        console.log('Équipes du membre:', userTeams)
+        
+        // Chercher la team "Manager" dans toutes les équipes
+        const managerTeam = allTeams.find((team: Team) => 
           team.name && (
             team.name.toLowerCase() === 'manager' || 
             team.name.toLowerCase() === 'team manager' ||
@@ -162,7 +168,22 @@ export default function MemberDetailsPage() {
           )
         )
         
-        const selectedTeam = managerTeam || userTeams[0]
+        console.log('Team Manager trouvée:', managerTeam)
+        
+        // Vérifier si le membre est dans la team Manager
+        const isManager = managerTeam && managerTeam.members && managerTeam.members.some((m: any) => 
+          (typeof m === 'string' && m === memberId) || 
+          (m && typeof m === 'object' && m.id === memberId)
+        )
+        
+        console.log('Est manager?', isManager)
+        
+        // Si c'est un manager, utiliser les horaires de la team Manager
+        // Sinon, utiliser les horaires de sa propre équipe
+        const selectedTeam = isManager ? managerTeam : (userTeams[0] || null)
+        
+        console.log('Équipe sélectionnée:', selectedTeam)
+        
         setMemberTeam(selectedTeam)
         
         // Récupérer les pointages de la semaine en cours
@@ -200,6 +221,11 @@ export default function MemberDetailsPage() {
   const delays = useMemo(() => {
     const result: { [key: string]: { status: string, minutes: number | null } } = {}
     const expectedHour = memberTeam?.startHour ?? 9
+    
+    console.log('=== DEBUG RETARDS ===')
+    console.log('Équipe utilisée:', memberTeam?.name)
+    console.log('Heure de début attendue:', expectedHour)
+    console.log('memberTeam complet:', memberTeam)
     
     weekDays.forEach(day => {
       result[day] = calculateDelay(timestamps, day, expectedHour)

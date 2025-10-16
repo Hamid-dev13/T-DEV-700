@@ -50,6 +50,40 @@ export async function getTeams() {
   return Array.isArray(list) ? list : (list?.items || [])
 }
 
+export async function getTeamsWithMembers() {
+  try {
+    // Récupérer toutes les équipes
+    const allTeams = await apiClient.get('/teams')
+    const teams = Array.isArray(allTeams) ? allTeams : (allTeams?.items || [])
+    
+    // Récupérer les membres pour chaque équipe en parallèle
+    const teamsWithMembers = await Promise.all(
+      teams.map(async (team: any) => {
+        try {
+          const teamUsers = await getTeamUsers(team.id)
+          // teamUsers contient { manager, members }
+          return {
+            ...team,
+            manager: teamUsers.manager,
+            members: teamUsers.members || []
+          }
+        } catch (err) {
+          console.error(`Erreur lors de la récupération des membres de l'équipe ${team.id}:`, err)
+          return {
+            ...team,
+            members: []
+          }
+        }
+      })
+    )
+    
+    return teamsWithMembers
+  } catch (err) {
+    console.error('Erreur getTeamsWithMembers:', err)
+    return []
+  }
+}
+
 export async function getUserTeam() {
   return apiClient.get('/users/team')
 }
