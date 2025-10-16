@@ -1,8 +1,9 @@
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { db } from "../db/client";
 import { teams } from "../models/team.model";
 import { getClocksForUser } from "./clock.service";
 import { getLocalHour } from "../utils/timezone";
+import { userTeams } from "../models/user_team.model";
 
 export enum ReportType {
   LATENESS = "lateness"
@@ -34,14 +35,16 @@ function workRangeToDate(date: Date, startHour: number, endHour: number) {
   };
 }
 
-export async function getReportForUser(user_id: string, team_id: string, report: ReportType, from: Date, to: Date): Promise<any> {
-  const [workRange] = await db
+export async function getReportForUser(user_id: string, report: ReportType, from: Date, to: Date): Promise<any> {
+  // get main user team
+  const [team] = await db
     .select({
       startHour: teams.startHour,
       endHour: teams.endHour,
     })
-    .from(teams)
-    .where(eq(teams.id, team_id))
+    .from(userTeams)
+    .innerJoin(teams, eq(userTeams.team_id, teams.id))
+    .where(and(eq(userTeams.user_id, user_id), ne(teams.managerId, user_id)))
     .limit(1);
 
   const data = (await getClocksForUser(user_id, { from, to }))
@@ -58,7 +61,7 @@ export async function getReportForUser(user_id: string, team_id: string, report:
 
         if (dates.length > 0) {
           const arrivalHour = getLocalHour(dates[0]);
-          const expectedHour = workRange.startHour;
+          const expectedHour = team.startHour;
           
           const delayInHours = arrivalHour - expectedHour;
           const delayInMinutes = Math.round(delayInHours * 60);
@@ -75,7 +78,6 @@ export async function getReportForUser(user_id: string, team_id: string, report:
 
   return {
     user_id,
-    team_id,
     report,
     from,
     to
