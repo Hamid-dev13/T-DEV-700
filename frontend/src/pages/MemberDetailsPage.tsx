@@ -223,11 +223,25 @@ export default function MemberDetailsPage() {
   const formatDelayText = (delayInfo: { status: string, minutes: number | null }) => {
     if (!delayInfo) return 'N/A'
     
+    const formatMinutesToHM = (totalMinutes: number) => {
+      const absMinutes = Math.abs(totalMinutes)
+      const hours = Math.floor(absMinutes / 60)
+      const minutes = absMinutes % 60
+      
+      if (hours > 0 && minutes > 0) {
+        return `${hours}h${minutes.toString().padStart(2, '0')}`
+      } else if (hours > 0) {
+        return `${hours}h`
+      } else {
+        return `${minutes}min`
+      }
+    }
+    
     switch (delayInfo.status) {
       case 'late':
-        return `En retard de ${delayInfo.minutes} min`
+        return `En retard de ${formatMinutesToHM(delayInfo.minutes || 0)}`
       case 'early':
-        return `En avance de ${Math.abs(delayInfo.minutes || 0)} min`
+        return `En avance de ${formatMinutesToHM(delayInfo.minutes || 0)}`
       case 'on_time':
         return 'À l\'heure'
       case 'absent':
