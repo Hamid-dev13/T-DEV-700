@@ -10,6 +10,13 @@ type TeamData = {
   members: User[]
 }
 
+// Convertit les heures décimales en format HH:MM
+function formatHoursToHHMM(decimalHours: number): string {
+  const hours = Math.floor(decimalHours)
+  const minutes = Math.round((decimalHours - hours) * 60)
+  return `${hours}h${minutes.toString().padStart(2, '0')}`
+}
+
 export default function TeamManagePage() {
   const { user: me } = useAuth()
   const [activeTab, setActiveTab] = useState<'members' | 'manager'>('members')
@@ -218,22 +225,18 @@ export default function TeamManagePage() {
               {/* Informations supplémentaires sur l'équipe */}
               <div className="mt-6 p-6 rounded-2xl border" style={{ borderColor: 'rgba(255, 212, 0, 0.3)' }}>
                 <h3 className="font-bold text-lg mb-4">📊 Informations de l'équipe</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <p className="text-sm font-semibold mb-1">🕐 Heure de début</p>
-                    <p className="text-lg">{team.startHour}h00</p>
+                    <p className="text-lg">{formatHoursToHHMM(team.startHour)}</p>
                   </div>
                   <div>
                     <p className="text-sm font-semibold mb-1">🕔 Heure de fin</p>
-                    <p className="text-lg">{team.endHour}h00</p>
+                    <p className="text-lg">{formatHoursToHHMM(team.endHour)}</p>
                   </div>
                   <div>
                     <p className="text-sm font-semibold mb-1">👥 Nombre de membres</p>
                     <p className="text-lg">{members.length}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold mb-1">🆔 ID de l'équipe</p>
-                    <p className="text-sm font-mono subtle truncate">{team.id}</p>
                   </div>
                 </div>
               </div>

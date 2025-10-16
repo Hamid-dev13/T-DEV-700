@@ -167,10 +167,12 @@ export default function MemberDetailsPage() {
         
         // Récupérer les pointages de la semaine en cours
         const now = new Date()
+        const dayOfWeek = now.getDay() || 7 // Dimanche = 7
         const monday = new Date(now)
-        monday.setDate(now.getDate() - (now.getDay() || 7) + 1)
+        monday.setDate(now.getDate() - (dayOfWeek - 1))
+        monday.setHours(0, 0, 0, 0)
         
-        const clocks = await getClocks(memberId, monday, now)
+        const clocks = await getClocks(memberId!, monday, now)
         setTimestamps(clocks)
         
       } catch (error) {
@@ -240,12 +242,12 @@ export default function MemberDetailsPage() {
   // Couleur du badge de statut
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'late': return 'bg-red-100 text-red-700'
-      case 'early': return 'bg-green-100 text-green-700'
-      case 'on_time': return 'bg-blue-100 text-blue-700'
-      case 'absent': return 'bg-gray-100 text-gray-500'
-      case 'future': return 'bg-gray-50 text-gray-400'
-      default: return 'bg-gray-100 text-gray-500'
+      case 'late': return 'bg-red-500 text-white'
+      case 'early': return 'bg-green-500 text-white'
+      case 'on_time': return 'bg-blue-500 text-white'
+      case 'absent': return 'bg-gray-400 text-white'
+      case 'future': return 'bg-gray-300 text-gray-600'
+      default: return 'bg-gray-400 text-white'
     }
   }
 
@@ -299,38 +301,50 @@ export default function MemberDetailsPage() {
         </div>
 
         {/* Statistiques de présence */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <Card title="✅ À l'heure">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-green-600">{stats.onTime}</div>
-              <div className="text-sm text-gray-500">jours</div>
+        <div className="grid grid-cols-4 gap-3 mb-6">
+          <div className="glass">
+            <div className="px-3 py-2">
+              <div className="text-xs font-medium text-gray-600 mb-2">À l'heure</div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-blue-600">{stats.onTime}</div>
+                <div className="text-xs text-gray-500">jours</div>
+              </div>
             </div>
-          </Card>
+          </div>
           
-          <Card title="⏰ En retard">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-red-600">{stats.late}</div>
-              <div className="text-sm text-gray-500">jours</div>
+          <div className="glass">
+            <div className="px-3 py-2">
+              <div className="text-xs font-medium text-gray-600 mb-2">En retard</div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-red-600">{stats.late}</div>
+                <div className="text-xs text-gray-500">jours</div>
+              </div>
             </div>
-          </Card>
+          </div>
           
-          <Card title="🚀 En avance">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600">{stats.early}</div>
-              <div className="text-sm text-gray-500">jours</div>
+          <div className="glass">
+            <div className="px-3 py-2">
+              <div className="text-xs font-medium text-gray-600 mb-2">En avance</div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-green-600">{stats.early}</div>
+                <div className="text-xs text-gray-500">jours</div>
+              </div>
             </div>
-          </Card>
+          </div>
           
-          <Card title="❌ Absences">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-gray-400">{stats.absent}</div>
-              <div className="text-sm text-gray-500">jours</div>
+          <div className="glass">
+            <div className="px-3 py-2">
+              <div className="text-xs font-medium text-gray-600 mb-2">Absences</div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-gray-400">{stats.absent}</div>
+                <div className="text-xs text-gray-500">jours</div>
+              </div>
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Détail par jour */}
-        <Card title="📅 Détail de la semaine">
+        <Card title="Détail de la semaine">
           <div className="space-y-3">
             {weekDays.map(day => {
               const dayData = dailyHours.find(d => d.day === day)
@@ -369,8 +383,7 @@ export default function MemberDetailsPage() {
                     <div className="w-px h-12 bg-gray-300"></div>
                     
                     <div className="min-w-[180px]">
-                      <div className="text-xs text-gray-500 mb-1">Statut</div>
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeClass(delayInfo?.status)}`}>
+                      <span className={`inline-block px-3 py-1.5 rounded text-xs font-medium ${getStatusBadgeClass(delayInfo?.status)}`}>
                         {formatDelayText(delayInfo)}
                       </span>
                     </div>
