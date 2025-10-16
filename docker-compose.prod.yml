@@ -1,73 +1,32 @@
 version: '3.8'
-
 services:
   
-  # ============================================
-  # FRONTEND PRODUCTION (Nginx)
-  # ============================================
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      # On va jusqu'à l'étape finale (nginx)
-      target: production
-    
-    # Nom d'image pour le push vers un registry
-    image: monregistry/monapp-frontend:latest
-    
+    image: hamidledev/monapp-frontend:main
     container_name: prod-frontend
-    
     ports:
-      - "80:80"
-    
-    # PAS de volumes en prod (tout est dans l'image)
-    
+      - "3001:80"
     environment:
-      
       - VITE_API_URL=${API_URL}
-    
-    # Politique de redémarrage automatique
     restart: unless-stopped
-    
-   
-    
     networks:
       - app-network
-    
     depends_on:
       - backend
-    
-    # Healthcheck Nginx
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # ============================================
-  # BACKEND PRODUCTION
-  # ============================================
   backend:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-      target: production
-    
-    image: monregistry/monapp-backend:latest
-    
+    image: hamidledev/monapp-backend:main
     container_name: prod-backend
-    
     ports:
-      - "3000:3000"
-    
-    # Variables d'environnement depuis fichier
+      - "5001:3000"
     env_file:
-      - .env.prod
-    
-   
-    
+      - .env
     restart: unless-stopped
-    
     deploy:
       resources:
         limits:
@@ -76,20 +35,27 @@ services:
         reservations:
           cpus: '0.5'
           memory: 512M
-    
     networks:
       - app-network
-    
- 
 
+  admin:
+    image: hamidledev/monapp-admin:main
+    container_name: prod-admin
+    ports:
+      - "3002:80"
+    environment:
+      - VITE_API_URL=${API_URL}
+    restart: unless-stopped
+    networks:
+      - app-network
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   app-network:
     driver: bridge
-
-# Secrets Docker (optionnel, plus sécurisé que .env)
-# secrets:
-#   db_url:
-#     external: true
-#   supabase_key:
-#     external: true

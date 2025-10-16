@@ -29,7 +29,7 @@ export type UpdateUserInput = {
 export async function loginUser({
   email,
   password,
-}: LoginInput): Promise<{token: string, user: SafeUser}> {
+}: LoginInput): Promise<{ token: string; user: SafeUser }> {
   if (!email || !password) {
     throw new Error("Missing required fields: email, password");
   }

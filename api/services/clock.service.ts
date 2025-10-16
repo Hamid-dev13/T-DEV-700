@@ -15,7 +15,7 @@ export async function reportTime(user_id: string): Promise<Clock> {
   return clock;
 }
 
-export async function retrieveReportTimeSummary(
+export async function getClocksForUser(
   user_id: string,
   {
     from,

@@ -1,0 +1,65 @@
+name: CD - Déploiement Production
+
+on:
+  # Se déclenche après le succès du workflow CI
+  workflow_run:
+    workflows: ["CI - Build et Push Docker Images"]
+    branches: [main]
+    types: [completed]
+  
+  # Permet aussi de déclencher manuellement depuis l'interface GitHub
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name:  Déploiement sur VPS Production
+    runs-on: ubuntu-latest
+    # Ne déploie que si le build précédent a réussi
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name:  Checkout du code
+        uses: actions/checkout@v4
+
+      - name:  Déploiement via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            echo " Début du déploiement sur le VPS..."
+            
+            cd /root/T-DEV-700
+            
+            echo " Récupération des dernières modifications..."
+            git pull origin main
+            
+            echo " Connexion à Docker Hub..."
+            echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            
+            echo " Téléchargement des nouvelles images Docker..."
+            docker pull ${{ secrets.DOCKER_USERNAME }}/monapp-backend:main
+            docker pull ${{ secrets.DOCKER_USERNAME }}/monapp-frontend:main
+            
+            echo " Arrêt des anciens containers..."
+            docker-compose -f docker-compose.prod.yml down
+            
+            echo " Démarrage des nouveaux containers..."
+            docker-compose -f docker-compose.prod.yml up -d
+            
+            echo " Nettoyage des anciennes images..."
+            docker image prune -af
+            
+            echo " Vérification des containers..."
+            docker-compose -f docker-compose.prod.yml ps
+            
+            echo " Déploiement terminé avec succès !"
+
+      - name:  Déploiement réussi !
+        run: |
+          echo " Application déployée sur le VPS !"
+          echo " L'application est maintenant accessible"
+
+

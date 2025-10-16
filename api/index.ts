@@ -1,21 +1,35 @@
-import cors from "cors";
+import cors, { CorsOptions } from "cors";
 import dotenv from "dotenv";
-import express, { NextFunction, Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger.config";
 import { db } from "./db/client";
 import userRouter from "./routes/user.routes";
 import teamRouter from "./routes/team.routes";
 import clockRouter from "./routes/clock.routes";
+import reportRouter from "./routes/report.routes";
 
 dotenv.config({ path: "../.env" });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middlewares
-app.use(cors({
-  origin: process.env.WEBSITE_URL!,
+// Configure CORS
+const ALLOWED_ORIGINS = [process.env.WEBSITE_URL, process.env.ADMIN_WEBSITE_URL].filter((it) => it);
+
+const corsOptions: CorsOptions = {
+  origin: (requestOrigin, callback) => {
+    if (!requestOrigin || ALLOWED_ORIGINS.includes(requestOrigin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin \"${requestOrigin}\" not allowed`));
+    }
+  },
   credentials: true,
-}));
+};
+
+// Middlewares
+app.use(cors(corsOptions));
 app.use(express.json());
 // 1) Désactive l'ETag par défaut d'Express
 app.set('etag', false)
@@ -38,12 +52,18 @@ app.use(['/user', '/me', '/user/login', '/user/logout', '/auth/login', '/auth/lo
 app.use(userRouter);
 app.use(teamRouter);
 app.use(clockRouter);
+app.use(reportRouter);
 
 // Route hello world
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Hello World!" });
 });
-
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// JSON de la spec OpenAPI (optionnel, pour télécharger la spec)
+app.use("/api-docs.json", (req: Request, res: Response) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
 // Route de test de la connexion DB
 app.get("/health", async (req: Request, res: Response) => {
   try {

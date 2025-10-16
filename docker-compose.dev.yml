@@ -48,6 +48,30 @@ services:
     networks:
       - app-network
 
+  # ============================================
+  # ADMIN
+  # ============================================
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      target: builder
+    container_name: dev-admin
+    ports:
+      - "${ADMIN_HOST_PORT}:${ADMIN_CONTAINER_PORT}"
+    volumes:
+      - ./admin:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    command: npm run dev -- --host 0.0.0.0
+    networks:
+      - app-network
+    depends_on:
+      - backend
+
 
 
 networks:

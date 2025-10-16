@@ -1,20 +1,26 @@
-import { CookieOptions, Request, Response } from "express";
+import { Request, Response } from "express";
 import { addUser, deleteUser, loginUser, retrieveUser, retrieveUsers, updateUser } from "../services/user.service";
+import { sendError } from "../utils/format";
 import { retreiveTeamsForUserWithManager } from "../services/team.service";
-
-const COOKIE_OPTS: CookieOptions = {secure:false, sameSite:"lax"};    // TODO set cookie options
 
 export async function loginUserController(req: Request, res: Response) {
   try {
     const body = req.body;
     const { email, password } = body ?? {};
     if (!email || !password) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return sendError(res, "Missing required fields", 400)
     }
 
     const { token, user } = await loginUser({ email, password });
 
-    return res.status(200).cookie("token", token, COOKIE_OPTS).json(user);    // TODO set cookie options
+    return res.status(200)
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000 // 24 heures
+      })
+      .json(user);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Internal server error";
@@ -29,7 +35,6 @@ export async function retrieveMyUserController(req: Request, res: Response) {
     const user = await retrieveUser(user_id);
     return res.status(200).json(user);
   } catch (err) {
-    console.log(err)
     return res.sendStatus(500);
   }
 }
@@ -40,7 +45,6 @@ export async function retrieveOtherUserController(req: Request, res: Response) {
     const user = await retrieveUser(user_id);
     return res.status(200).json(user);
   } catch (err) {
-    console.log(err)
     return res.sendStatus(500);
   }
 }
@@ -60,7 +64,7 @@ export async function addUserController(req: Request, res: Response) {
     const body = req.body;
     const { first_name, last_name, email, password, phone } = body ?? {};
     if (!first_name || !last_name || !email || !password) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return sendError(res, "Missing required fields", 400)
     }
 
     const user = await addUser({ first_name, last_name, email, password, phone });
