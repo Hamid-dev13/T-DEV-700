@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Shell, Card } from '../components/Layout'
 import { getClocks, getMyTeams, getTeamUsers } from '../utils/api'
 import { useAuth } from '../context/AuthContext'
@@ -78,6 +79,7 @@ interface TeamWithMembers {
 
 export default function DashboardPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [summary, setSummary] = useState<{
     dailyHours: DailySummary[]
     totalWeek: number
@@ -91,6 +93,14 @@ export default function DashboardPage() {
     avgHoursWeek: number
   } | null>(null)
   const [loading, setLoading] = useState(true)
+  
+  // Fonction pour naviguer vers les détails d'un membre
+  const handleMemberClick = (member: User) => {
+    // Sauvegarder les infos du membre dans sessionStorage
+    sessionStorage.setItem(`member_${member.id}`, JSON.stringify(member))
+    // Naviguer vers la page de détails
+    navigate(`/member/${member.id}`)
+  }
 
   useEffect(() => {
     if (!user?.id) return
@@ -281,12 +291,19 @@ export default function DashboardPage() {
                 <h3 className="text-sm font-semibold mb-3">Membres de l'équipe</h3>
                 <div className="space-y-2">
                   {managedTeam.members.map(member => (
-                    <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                    <button
+                      key={member.id}
+                      onClick={() => handleMemberClick(member)}
+                      className="w-full flex items-center justify-between p-3 bg-gray-50 rounded hover:bg-yellow-50 hover:border-yellow-300 border border-transparent transition-all cursor-pointer text-left"
+                    >
                       <div>
                         <div className="text-sm font-medium">{member.firstName} {member.lastName}</div>
                         <div className="text-xs text-gray-500">{member.email}</div>
                       </div>
-                    </div>
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
                   ))}
                 </div>
               </div>
