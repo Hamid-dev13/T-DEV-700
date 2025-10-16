@@ -13,6 +13,5 @@ const router = Router();
 router.post("/clocks", isAuth, reportTimeController);
 router.get("/users/:id/clocks", isAuth, retrieveReportTimeSummaryController);
 router.get("/attendance/delay", isAuth, getDelayController); 
- 
 
 export default router;

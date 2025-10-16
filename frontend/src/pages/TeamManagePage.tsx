@@ -103,11 +103,6 @@ export default function TeamManagePage() {
           {team.description && (
             <p className="text-lg subtle mt-2">{team.description}</p>
           )}
-          {allTeams.length > 1 && (
-            <p className="text-sm subtle mt-2">
-              Équipe {selectedTeamIndex + 1} sur {allTeams.length}
-            </p>
-          )}
         </div>
 
         {/* Onglets */}

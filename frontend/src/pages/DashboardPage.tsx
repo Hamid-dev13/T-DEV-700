@@ -1,200 +1,300 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Shell, Card } from '../components/Layout'
-import { getClocks, computeDailyHours, aggregateWeekly } from '../utils/api';
-import { useAuth } from '../context/AuthContext';
+import { getClocks, getMyTeams, getTeamUsers } from '../utils/api'
+import { useAuth } from '../context/AuthContext'
+import { Team, User } from '../utils/types'
 
-interface BarData {
-  label: string
-  value: number
-}
-
-interface LinePoint {
-  x: string | number
-  y: number
-}
-
-interface PerDayEntry {
+interface DailySummary {
   day: string
   hours: number
 }
 
-function iso(d: Date){ return d.toISOString().slice(0,10) }
-function startOfWeek(d: Date){
-  const x = new Date(d); const day = x.getDay() || 7; x.setHours(0,0,0,0); x.setDate(x.getDate() - (day-1)); return x
-}
-function rangeDays(n: number, endDate=new Date()): string[] {
-  const arr: string[] = []; for(let i=n-1;i>=0;i--){ const d=new Date(endDate); d.setDate(d.getDate()-i); arr.push(iso(d)); } return arr
-}
-function weekOf(dateStr: string) {
-  const d = new Date(dateStr)
-  const onejan = new Date(d.getFullYear(),0,1)
-  const week = Math.ceil((((d.getTime() - onejan.getTime()) / 86400000) + onejan.getDay()+1)/7)
-  return `${d.getFullYear()}-W${String(week).padStart(2,'0')}`
-}
-
-/** Enhanced Bar Chart (axes, gridlines, value labels) */
-function BarChart({
-  data,
-  height = 100,
-  maxY,
-  showValues = true
-}: {
-  data: BarData[]
-  height?: number
-  maxY?: number
-  showValues?: boolean
-}){
-  const values = data.map(d => d.value)
-  const max = maxY || Math.max(1, ...values) * 1.2
-  const bw = 100 / Math.max(1, data.length)
-  const top = 14, left = 6, bottom = 16, right = 4
-  const H = height
-  return (
-    <svg viewBox={`0 0 100 ${H}`} className="w-full" role="img" aria-label="Bar chart">
-      {/* gridlines */}
-      {[0.25,0.5,0.75,1].map((g,i)=>{
-        const y = top + (H - top - bottom) * g
-        return <line key={'g'+i} x1={left} y1={y} x2={100-right} y2={y} stroke="rgba(0,0,0,.08)" strokeWidth="0.6" />
-      })}
-      {/* x-axis baseline */}
-      <line x1={left} y1={H-bottom} x2={100-right} y2={H-bottom} stroke="rgba(0,0,0,.25)" strokeWidth="0.8" />
-      {data.map((d,i)=>{
-        const h = (d.value / max) * (H - top - bottom)
-        const x = left + i*bw + 2
-        const y = (H - bottom) - h
-        return (
-          <g key={d.label}>
-            <rect x={x} y={y} width={bw-4} height={Math.max(0,h)} rx="3"
-              fill="hsl(var(--accent))" stroke="#111" strokeWidth="0.6" />
-            {showValues && h>6 ? (
-              <text x={x + (bw-4)/2} y={y-2} fontSize="4" textAnchor="middle" fill="#111" fontWeight="700">
-                {Number.isFinite(d.value) ? d.value.toFixed(1) : d.value}
-              </text>
-            ) : null}
-            <text x={x + (bw-4)/2} y={H-4} fontSize="3.4" textAnchor="middle" fill="#333">
-              {d.label.slice(5)}
-            </text>
-          </g>
-        )
-      })}
-    </svg>
-  )
+// Calcule les heures travaillées par jour à partir des timestamps de pointage
+function computeDailyHours(timestamps: Date[]): DailySummary[] {
+  const byDay: { [key: string]: Date[] } = {}
+  
+  // Grouper les timestamps par jour
+  for (const ts of timestamps) {
+    const day = ts.toISOString().slice(0, 10)
+    if (!byDay[day]) byDay[day] = []
+    byDay[day].push(ts)
+  }
+  
+  const result: DailySummary[] = []
+  
+  // Calculer les heures pour chaque jour
+  for (const [day, times] of Object.entries(byDay)) {
+    const sorted = times.sort((a, b) => a.getTime() - b.getTime())
+    let totalHours = 0
+    
+    // Paires de pointages: in/out, in/out, etc.
+    for (let i = 0; i < sorted.length - 1; i += 2) {
+      const clockIn = sorted[i]
+      const clockOut = sorted[i + 1]
+      if (clockOut) {
+        const diff = clockOut.getTime() - clockIn.getTime()
+        totalHours += diff / (1000 * 60 * 60) // Convertir ms en heures
+      }
+    }
+    
+    result.push({ day, hours: parseFloat(totalHours.toFixed(2)) })
+  }
+  
+  return result.sort((a, b) => a.day.localeCompare(b.day))
 }
 
-/** Enhanced Line Chart (grid, baseline, area) */
-function LineChart({
-  points,
-  height = 100
-}: {
-  points: LinePoint[]
-  height?: number
-}){
-  const max = Math.max(1, ...points.map(p=>p.y)) * 1.2
-  const step = 100 / Math.max(1, points.length-1)
-  const top = 14, left = 6, bottom = 16, right = 4
-  const H = height
-  const path = points.map((p,i)=> {
-    const x = left + i*step
-    const y = (H - bottom) - (p.y/max)*(H - top - bottom)
-    return `${i===0?'M':'L'} ${x} ${y}`
-  }).join(' ')
-  const area = path + ` L ${100-right} ${H-bottom} L ${left} ${H-bottom} Z`
-  return (
-    <svg viewBox={`0 0 100 ${H}`} className="w-full" role="img" aria-label="Line chart">
-      {[0.25,0.5,0.75,1].map((g,i)=>{
-        const y = top + (H - top - bottom) * g
-        return <line key={'g'+i} x1={left} y1={y} x2={100-right} y2={y} stroke="rgba(0,0,0,.08)" strokeWidth="0.6" />
-      })}
-      <line x1={left} y1={H-bottom} x2={100-right} y2={H-bottom} stroke="rgba(0,0,0,.25)" strokeWidth="0.8" />
-      <path d={area} fill="rgba(255, 212, 0, .20)" stroke="none" />
-      <path d={path} fill="none" strokeWidth="2" stroke="hsl(var(--accent))" />
-      {points.map((p,i)=>{
-        const x = left + i*step
-        const y = (H - bottom) - (p.y/max)*(H - top - bottom)
-        return <circle key={'c'+i} cx={x} cy={y} r="2.2" fill="#111" stroke="hsl(var(--accent))" strokeWidth="1" />
-      })}
-      {points.map((p,i)=> (
-        <text key={'t'+i} x={left + i*step} y={H-4} fontSize="3.4" textAnchor="middle" fill="#333">{(p.x||'').toString().slice(5)}</text>
-      ))}
-    </svg>
-  )
+// Convertit les heures décimales en format HH:MM
+function formatHoursToHHMM(decimalHours: number): string {
+  const hours = Math.floor(decimalHours)
+  const minutes = Math.round((decimalHours - hours) * 60)
+  return `${hours}:${minutes.toString().padStart(2, '0')}`
 }
 
-export default function DashboardPage(){
-  const { user: me } = useAuth()
-  const now = new Date()
-  const [empData, setEmpData] = useState<{
-    bars: BarData[]
-    todays: number
-    weekTotal: number
-    pct7h: number
-    lastTime: Date | null
+// Génère un tableau de dates pour la semaine en cours (lundi à vendredi seulement)
+function getCurrentWeekDays(): string[] {
+  const days: string[] = []
+  const today = new Date()
+  
+  // Trouver le lundi de la semaine en cours
+  const dayOfWeek = today.getDay() || 7 // Lundi = 1, Dimanche = 7
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - (dayOfWeek - 1))
+  
+  // Générer les 5 jours de lundi à vendredi (pas de weekend)
+  for (let i = 0; i < 5; i++) {
+    const date = new Date(monday)
+    date.setDate(monday.getDate() + i)
+    days.push(date.toISOString().slice(0, 10))
+  }
+  
+  return days
+}
+
+interface TeamWithMembers {
+  team: Team
+  manager: User
+  members: User[]
+}
+
+export default function DashboardPage() {
+  const { user } = useAuth()
+  const [summary, setSummary] = useState<{
+    dailyHours: DailySummary[]
+    totalWeek: number
+    todayHours: number
+    last7Days: string[]
   } | null>(null)
+  const [managedTeam, setManagedTeam] = useState<TeamWithMembers | null>(null)
+  const [teamSummary, setTeamSummary] = useState<{
+    totalMembers: number
+    avgHoursToday: number
+    avgHoursWeek: number
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!me) return
+    if (!user?.id) return
 
     async function fetchData() {
-      const now = new Date()
-      const last7Days = rangeDays(7, now)
-      
-      // Fetch clocks for the last 7 days
-      const from = new Date(now)
-      from.setDate(from.getDate() - 7)
-      const all = await getClocks(me?.id!, from, now)
-      const perDay: PerDayEntry[] = computeDailyHours(all)
-      const map = new Map(perDay.map(d => [d.day, d.hours]))
-
-      const bars: BarData[] = last7Days.map(day => ({
-        label: day,
-        value: +(map.get(day) || 0).toFixed(2)
-      }))
-
-      const todayISO = iso(now)
-      const todays = perDay.find(d => d.day === todayISO)?.hours || 0
-
-      const sw = startOfWeek(now)
-      const perWeek = aggregateWeekly(perDay)
-      const currentWeek = perWeek.find(w => w.week === weekOf(iso(now)))
-      const weekTotal = currentWeek?.hours || 0
-      const pct7h = (bars.filter(b => b.value >= 7).length / bars.length) * 100
-
-      const last = all[0] || (all.length ? all[all.length - 1] : null)
-      const lastTime = last ? new Date(last) : null
-
-      setEmpData({ bars, todays, weekTotal, pct7h, lastTime })
+      try {
+        setLoading(true)
+        
+        const now = new Date()
+        
+        // Calculer le lundi de la semaine en cours
+        const dayOfWeek = now.getDay() || 7 // Lundi = 1, Dimanche = 7
+        const monday = new Date(now)
+        monday.setDate(now.getDate() - (dayOfWeek - 1))
+        
+        // Récupérer les pointages depuis le lundi de la semaine en cours
+        const timestamps = await getClocks(user!.id, monday, now)
+        
+        // Calculer les heures par jour
+        const dailyHours = computeDailyHours(timestamps)
+        
+        // Calculer le total de la semaine en cours (utilise le même lundi calculé plus haut)
+        const weekStart = monday.toISOString().slice(0, 10)
+        
+        const totalWeek = dailyHours
+          .filter(d => d.day >= weekStart)
+          .reduce((sum, d) => sum + d.hours, 0)
+        
+        // Heures d'aujourd'hui
+        const today = now.toISOString().slice(0, 10)
+        const todayHours = dailyHours.find(d => d.day === today)?.hours || 0
+        
+        const last7Days = getCurrentWeekDays()
+        
+        setSummary({ dailyHours, totalWeek, todayHours, last7Days })
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error)
+      } finally {
+        setLoading(false)
+      }
     }
 
-  fetchData()
-}, [me])
+    fetchData()
+    fetchTeamData()
+  }, [user])
+
+  // Récupérer les données de l'équipe si l'utilisateur est manager
+  async function fetchTeamData() {
+    if (!user?.id) return
+
+    try {
+      const teams = await getMyTeams() as TeamWithMembers[]
+      // Trouver l'équipe où l'utilisateur est manager
+      const myManagedTeam = teams.find(t => t.manager.id === user.id)
+      
+      if (myManagedTeam) {
+        setManagedTeam(myManagedTeam)
+        
+        // Calculer les stats de l'équipe
+        const now = new Date()
+        
+        // Calculer le lundi de la semaine en cours
+        const dayOfWeek = now.getDay() || 7
+        const monday = new Date(now)
+        monday.setDate(now.getDate() - (dayOfWeek - 1))
+        const weekStart = monday.toISOString().slice(0, 10)
+        
+        let totalHoursToday = 0
+        let totalHoursWeek = 0
+        const today = now.toISOString().slice(0, 10)
+        
+        // Récupérer les heures de tous les membres
+        for (const member of myManagedTeam.members) {
+          const timestamps = await getClocks(member.id, monday, now)
+          const dailyHours = computeDailyHours(timestamps)
+          
+          // Heures d'aujourd'hui
+          const memberToday = dailyHours.find(d => d.day === today)?.hours || 0
+          totalHoursToday += memberToday
+          
+          // Heures de la semaine
+          const memberWeek = dailyHours
+            .filter(d => d.day >= weekStart)
+            .reduce((sum, d) => sum + d.hours, 0)
+          totalHoursWeek += memberWeek
+        }
+        
+        const memberCount = myManagedTeam.members.length || 1
+        setTeamSummary({
+          totalMembers: myManagedTeam.members.length,
+          avgHoursToday: totalHoursToday / memberCount,
+          avgHoursWeek: totalHoursWeek / memberCount
+        })
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des données de l\'équipe:', error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <Shell>
+        <div className="login-wrap">
+          <Card title="Chargement...">
+            <p className="text-gray-500">Récupération de vos données...</p>
+          </Card>
+        </div>
+      </Shell>
+    )
+  }
 
   return (
     <Shell>
-      <div className="login-wrap">
-        {false /* FIXME check if team manager */ ? (
-          <ManagerDashboard />
-        ) : (
-          <div className="grid-2">
-            <Card title="Résumé rapide">
-              <div className="grid-3">
-                <div><div className="subtle">Heures aujourd'hui</div><div className="text-2xl font-semibold">{empData?.todays?.toFixed(2) || '0.00'} h</div></div>
-                <div><div className="subtle">Total semaine</div><div className="text-2xl font-semibold">{empData?.weekTotal?.toFixed(2) || '0.00'} h</div></div>
-                <div><div className="subtle">% jours ≥ 7h (7j)</div><div className="text-2xl font-semibold">{empData ? Math.round(empData!.pct7h) : 0}%</div></div>
+      <div className="p-6">
+        <div className={managedTeam ? "grid grid-cols-2 gap-6" : ""}>
+        <Card title="Résumé de vos heures - Semaine en cours">
+          <div className="grid grid-cols-3 gap-6 mb-6">
+            <div>
+              <div className="text-sm text-gray-500 mb-1">Aujourd'hui</div>
+              <div className="text-3xl font-bold">{summary ? formatHoursToHHMM(summary.todayHours) : '0:00'}</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500 mb-1">Cette semaine</div>
+              <div className="text-3xl font-bold">{summary ? formatHoursToHHMM(summary.totalWeek) : '0:00'}</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500 mb-1">Moyenne/jour (semaine)</div>
+              <div className="text-3xl font-bold">
+                {summary ? formatHoursToHHMM(summary.dailyHours.reduce((sum, d) => sum + d.hours, 0) / 5) : '0:00'}
               </div>
-              <div className="mt-3 subtle">Dernier pointage: {empData ? empData!.lastTime?.toLocaleString() : '—'}</div>
-            </Card>
-            <Card title="Mes 7 derniers jours">
-              <BarChart data={empData?.bars || []} height={110} />
-            </Card>
+            </div>
           </div>
+          
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold mb-3">Détail par jour</h3>
+            <div className="space-y-2">
+                {summary?.last7Days.map(day => {
+                  const dayData = summary.dailyHours.find(d => d.day === day)
+                  const hours = dayData?.hours || 0
+                  const date = new Date(day)
+                  const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' })
+                  const dayMonth = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+                  
+                  return (
+                    <div key={day} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium capitalize">{dayName}</span>
+                        <span className="text-sm text-gray-500">{dayMonth}</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="w-48 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-yellow-400 h-2 rounded-full" 
+                            style={{ width: `${Math.min((hours / 8) * 100, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-semibold w-16 text-right">
+                          {formatHoursToHHMM(hours)}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+            </div>
+          </div>
+        </Card>
+        
+        {managedTeam && (
+          <Card title={`Résumé de l'équipe - ${managedTeam.team.name}`}>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Membres</div>
+                  <div className="text-3xl font-bold">{teamSummary?.totalMembers || 0}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Moyenne aujourd'hui</div>
+                  <div className="text-3xl font-bold">{teamSummary ? formatHoursToHHMM(teamSummary.avgHoursToday) : '0:00'}</div>
+                </div>
+              </div>
+              
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Moyenne cette semaine</div>
+                <div className="text-3xl font-bold">{teamSummary ? formatHoursToHHMM(teamSummary.avgHoursWeek) : '0:00'}</div>
+              </div>
+              
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold mb-3">Membres de l'équipe</h3>
+                <div className="space-y-2">
+                  {managedTeam.members.map(member => (
+                    <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                      <div>
+                        <div className="text-sm font-medium">{member.firstName} {member.lastName}</div>
+                        <div className="text-xs text-gray-500">{member.email}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Card>
         )}
+        </div>
       </div>
     </Shell>
-  )
-}
-
-function ManagerDashboard(){
-  return (
-    <div className="p-6 text-gray-500">TODO</div>
   )
 }

@@ -54,6 +54,14 @@ export async function getUserTeam() {
   return apiClient.get('/users/team')
 }
 
+export async function getMyTeams() {
+  return apiClient.get('/user/teams')
+}
+
+export async function getTeamUsers(teamId: string) {
+  return apiClient.get(`/teams/${encodeURIComponent(teamId)}/users`)
+}
+
 export async function getClocks(id: string, from?: Date, to?: Date) {
   try {
     if (!from) from = new Date()
