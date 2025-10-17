@@ -82,10 +82,9 @@ export async function updateClockForMemberController(req: Request, res: Response
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
       return sendError(res, "Insufficient permissions", 401);
 
-    // expect input dates to not be in UTC format
-    const fromDate = convertToUTC(new Date(from));
+    const fromDate = new Date(from);
     if (isNaN(fromDate.getTime())) return sendError(res, "Invalid Date", 400);
-    const toDate = convertToUTC(new Date(to));
+    const toDate = new Date(to);
     if (isNaN(toDate.getTime())) return sendError(res, "Invalid Date", 400);
 
     const clock = await updateClock(user_id, fromDate, toDate);
@@ -108,8 +107,7 @@ export async function deleteClockForMemberController(req: Request, res: Response
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
       return sendError(res, "Insufficient permissions", 401);
 
-    // expect input date to not be in UTC format
-    const atDate = convertToUTC(new Date(at));
+    const atDate = new Date(at);
 
     if (isNaN(atDate.getTime())) return sendError(res, "Invalid Date", 400);
     
