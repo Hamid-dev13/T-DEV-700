@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Shell, Card } from '../components/Layout'
-import { getClocks, getTeams } from '../utils/api'
+import { getClocks, getTeamsWithMembers } from '../utils/api'
 
 interface DailySummary {
   day: string
@@ -142,8 +142,12 @@ export default function MemberDetailsPage() {
           setMember(memberData)
         }
         
-        // Récupérer toutes les équipes
-        const allTeams = await getTeams()
+        // Récupérer toutes les équipes avec leurs membres
+        const allTeams = await getTeamsWithMembers()
+        
+        console.log('=== DEBUG ÉQUIPES ===')
+        console.log('Toutes les équipes:', allTeams)
+        console.log('Member ID:', memberId)
         
         // Trouver les équipes du membre
         const userTeams = allTeams.filter((team: Team) => 
@@ -153,8 +157,10 @@ export default function MemberDetailsPage() {
           )
         )
         
-        // Prioriser l'équipe "manager" si le membre en fait partie
-        const managerTeam = userTeams.find((team: Team) => 
+        console.log('Équipes du membre:', userTeams)
+        
+        // Chercher la team "Manager" dans toutes les équipes
+        const managerTeam = allTeams.find((team: Team) => 
           team.name && (
             team.name.toLowerCase() === 'manager' || 
             team.name.toLowerCase() === 'team manager' ||
@@ -162,15 +168,32 @@ export default function MemberDetailsPage() {
           )
         )
         
-        const selectedTeam = managerTeam || userTeams[0]
+        console.log('Team Manager trouvée:', managerTeam)
+        
+        // Vérifier si le membre est dans la team Manager
+        const isManager = managerTeam && managerTeam.members && managerTeam.members.some((m: any) => 
+          (typeof m === 'string' && m === memberId) || 
+          (m && typeof m === 'object' && m.id === memberId)
+        )
+        
+        console.log('Est manager?', isManager)
+        
+        // Si c'est un manager, utiliser les horaires de la team Manager
+        // Sinon, utiliser les horaires de sa propre équipe
+        const selectedTeam = isManager ? managerTeam : (userTeams[0] || null)
+        
+        console.log('Équipe sélectionnée:', selectedTeam)
+        
         setMemberTeam(selectedTeam)
         
         // Récupérer les pointages de la semaine en cours
         const now = new Date()
+        const dayOfWeek = now.getDay() || 7 // Dimanche = 7
         const monday = new Date(now)
-        monday.setDate(now.getDate() - (now.getDay() || 7) + 1)
+        monday.setDate(now.getDate() - (dayOfWeek - 1))
+        monday.setHours(0, 0, 0, 0)
         
-        const clocks = await getClocks(memberId, monday, now)
+        const clocks = await getClocks(memberId!, monday, now)
         setTimestamps(clocks)
         
       } catch (error) {
@@ -199,6 +222,11 @@ export default function MemberDetailsPage() {
     const result: { [key: string]: { status: string, minutes: number | null } } = {}
     const expectedHour = memberTeam?.startHour ?? 9
     
+    console.log('=== DEBUG RETARDS ===')
+    console.log('Équipe utilisée:', memberTeam?.name)
+    console.log('Heure de début attendue:', expectedHour)
+    console.log('memberTeam complet:', memberTeam)
+    
     weekDays.forEach(day => {
       result[day] = calculateDelay(timestamps, day, expectedHour)
     })
@@ -221,11 +249,25 @@ export default function MemberDetailsPage() {
   const formatDelayText = (delayInfo: { status: string, minutes: number | null }) => {
     if (!delayInfo) return 'N/A'
     
+    const formatMinutesToHM = (totalMinutes: number) => {
+      const absMinutes = Math.abs(totalMinutes)
+      const hours = Math.floor(absMinutes / 60)
+      const minutes = absMinutes % 60
+      
+      if (hours > 0 && minutes > 0) {
+        return `${hours}h${minutes.toString().padStart(2, '0')}`
+      } else if (hours > 0) {
+        return `${hours}h`
+      } else {
+        return `${minutes}min`
+      }
+    }
+    
     switch (delayInfo.status) {
       case 'late':
-        return `En retard de ${delayInfo.minutes} min`
+        return `En retard de ${formatMinutesToHM(delayInfo.minutes || 0)}`
       case 'early':
-        return `En avance de ${Math.abs(delayInfo.minutes || 0)} min`
+        return `En avance de ${formatMinutesToHM(delayInfo.minutes || 0)}`
       case 'on_time':
         return 'À l\'heure'
       case 'absent':
@@ -240,12 +282,12 @@ export default function MemberDetailsPage() {
   // Couleur du badge de statut
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'late': return 'bg-red-100 text-red-700'
-      case 'early': return 'bg-green-100 text-green-700'
-      case 'on_time': return 'bg-blue-100 text-blue-700'
-      case 'absent': return 'bg-gray-100 text-gray-500'
-      case 'future': return 'bg-gray-50 text-gray-400'
-      default: return 'bg-gray-100 text-gray-500'
+      case 'late': return 'bg-red-500 text-white'
+      case 'early': return 'bg-green-500 text-white'
+      case 'on_time': return 'bg-blue-500 text-white'
+      case 'absent': return 'bg-gray-400 text-white'
+      case 'future': return 'bg-gray-300 text-gray-600'
+      default: return 'bg-gray-400 text-white'
     }
   }
 
@@ -299,38 +341,50 @@ export default function MemberDetailsPage() {
         </div>
 
         {/* Statistiques de présence */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <Card title="✅ À l'heure">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-green-600">{stats.onTime}</div>
-              <div className="text-sm text-gray-500">jours</div>
+        <div className="grid grid-cols-4 gap-3 mb-6">
+          <div className="glass">
+            <div className="px-3 py-2">
+              <div className="text-xs font-medium text-gray-600 mb-2">À l'heure</div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-blue-600">{stats.onTime}</div>
+                <div className="text-xs text-gray-500">jours</div>
+              </div>
             </div>
-          </Card>
+          </div>
           
-          <Card title="⏰ En retard">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-red-600">{stats.late}</div>
-              <div className="text-sm text-gray-500">jours</div>
+          <div className="glass">
+            <div className="px-3 py-2">
+              <div className="text-xs font-medium text-gray-600 mb-2">En retard</div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-red-600">{stats.late}</div>
+                <div className="text-xs text-gray-500">jours</div>
+              </div>
             </div>
-          </Card>
+          </div>
           
-          <Card title="🚀 En avance">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600">{stats.early}</div>
-              <div className="text-sm text-gray-500">jours</div>
+          <div className="glass">
+            <div className="px-3 py-2">
+              <div className="text-xs font-medium text-gray-600 mb-2">En avance</div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-green-600">{stats.early}</div>
+                <div className="text-xs text-gray-500">jours</div>
+              </div>
             </div>
-          </Card>
+          </div>
           
-          <Card title="❌ Absences">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-gray-400">{stats.absent}</div>
-              <div className="text-sm text-gray-500">jours</div>
+          <div className="glass">
+            <div className="px-3 py-2">
+              <div className="text-xs font-medium text-gray-600 mb-2">Absences</div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-gray-400">{stats.absent}</div>
+                <div className="text-xs text-gray-500">jours</div>
+              </div>
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Détail par jour */}
-        <Card title="📅 Détail de la semaine">
+        <Card title="Détail de la semaine">
           <div className="space-y-3">
             {weekDays.map(day => {
               const dayData = dailyHours.find(d => d.day === day)
@@ -369,8 +423,7 @@ export default function MemberDetailsPage() {
                     <div className="w-px h-12 bg-gray-300"></div>
                     
                     <div className="min-w-[180px]">
-                      <div className="text-xs text-gray-500 mb-1">Statut</div>
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeClass(delayInfo?.status)}`}>
+                      <span className={`inline-block px-3 py-1.5 rounded text-xs font-medium ${getStatusBadgeClass(delayInfo?.status)}`}>
                         {formatDelayText(delayInfo)}
                       </span>
                     </div>

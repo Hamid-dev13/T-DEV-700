@@ -50,12 +50,79 @@ export async function getTeams() {
   return Array.isArray(list) ? list : (list?.items || [])
 }
 
+export async function getTeamsWithMembers() {
+  try {
+    // Récupérer toutes les équipes
+    const allTeams = await apiClient.get('/teams')
+    const teams = Array.isArray(allTeams) ? allTeams : (allTeams?.items || [])
+    
+    // Récupérer les membres pour chaque équipe en parallèle
+    const teamsWithMembers = await Promise.all(
+      teams.map(async (team: any) => {
+        try {
+          const teamUsers = await getTeamUsers(team.id)
+          // teamUsers contient { manager, members }
+          return {
+            ...team,
+            manager: teamUsers.manager,
+            members: teamUsers.members || []
+          }
+        } catch (err) {
+          console.error(`Erreur lors de la récupération des membres de l'équipe ${team.id}:`, err)
+          return {
+            ...team,
+            members: []
+          }
+        }
+      })
+    )
+    
+    return teamsWithMembers
+  } catch (err) {
+    console.error('Erreur getTeamsWithMembers:', err)
+    return []
+  }
+}
+
+export async function getUserTeam() {
+  return apiClient.get('/users/team')
+}
+
 export async function getMyTeams() {
   return apiClient.get('/user/teams')
 }
 
 export async function getTeamUsers(teamId: string) {
   return apiClient.get(`/teams/${encodeURIComponent(teamId)}/users`)
+}
+
+export async function getUserTeamById(userId: string) {
+  try {
+    // Récupérer toutes les équipes
+    const allTeams = await apiClient.get('/teams')
+    const teams = Array.isArray(allTeams) ? allTeams : (allTeams?.items || [])
+    
+    // Pour chaque équipe, récupérer les membres et trouver celle qui contient l'utilisateur
+    for (const team of teams) {
+      try {
+        const members = await getTeamUsers(team.id)
+        const isMember = members.some((m: any) => 
+          (typeof m === 'string' && m === userId) || 
+          (m && typeof m === 'object' && m.id === userId)
+        )
+        if (isMember) {
+          return { ...team, members }
+        }
+      } catch (err) {
+        // Ignorer les erreurs pour les équipes sans accès
+        continue
+      }
+    }
+    return null
+  } catch (err) {
+    console.error('Erreur getUserTeamById:', err)
+    return null
+  }
 }
 
 export async function getClocks(id: string, from?: Date, to?: Date) {
