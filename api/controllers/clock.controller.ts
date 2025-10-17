@@ -66,7 +66,7 @@ export async function addClockForMemberController(req: Request, res: Response) {
     const clock = await addClock(user_id, atDate);
     return res.status(200).json(clock);
   } catch (err) {
-    return sendError(res, err, 500);
+    return sendError(res, err);
   }
 }
 
@@ -92,7 +92,7 @@ export async function updateClockForMemberController(req: Request, res: Response
     
     return res.status(200).json(clock);
   } catch (err) {
-    return sendError(res, err, 500);
+    return sendError(res, err);
   }
 }
 
@@ -117,7 +117,7 @@ export async function deleteClockForMemberController(req: Request, res: Response
     
     return res.sendStatus(200);
   } catch (err) {
-    return sendError(res, err, 500);
+    return sendError(res, err);
   }
 }
 
