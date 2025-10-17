@@ -1,6 +1,6 @@
 import cors, { CorsOptions } from "cors";
 import dotenv from "dotenv";
-import express, { Request, Response, NextFunction } from "express";
+import express, { Request, Response } from "express";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger.config";
 import { db } from "./db/client";
@@ -9,8 +9,9 @@ import teamRouter from "./routes/team.routes";
 import clockRouter from "./routes/clock.routes";
 import reportRouter from "./routes/report.routes";
 import passwordRouter from "./routes/password.route";
+import leavePeriodsRouter from "./routes/leave_period.route";
 import { transporter } from "./services/mail.service";
-import nocache from "nocache";
+// import nocache from "nocache";
 
 dotenv.config({ path: "../.env" });
 
@@ -45,6 +46,7 @@ app.use(teamRouter);
 app.use(clockRouter);
 app.use(reportRouter);
 app.use(passwordRouter);
+app.use(leavePeriodsRouter);
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // JSON swagger
