@@ -117,3 +117,14 @@ export async function retrieveMyTeamsController(req: Request, res: Response) {
     return res.sendStatus(500);
   }
 }
+
+export async function retrieveUserTeamsController(req: Request, res: Response) {
+  try {
+    const user_id = req.params.id!;
+
+    const teams = await retreiveTeamsForUserWithManager(user_id);
+    return res.status(200).json(teams);
+  } catch (err) {
+    return res.sendStatus(500);
+  }
+}

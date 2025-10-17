@@ -26,13 +26,24 @@ export function checkWorkHours(start: number, end: number) {
 }
 
 export async function isTeamManager(user_id: string, team_id: string) {
-  const result = await db.
-    select()
+  const result = await db
+    .select()
     .from(teams)
     .where(and(eq(teams.managerId, user_id), eq(teams.id, team_id)))
     .limit(1);
   
     return result.length > 0
+}
+
+export async function isManagerOfUser(manager_id: string, user_id: string) {
+  const result = await db
+    .select()
+    .from(userTeams)
+    .innerJoin(teams, eq(userTeams.team_id, teams.id))
+    .where(and(eq(userTeams.user_id, user_id), eq(teams.managerId, manager_id)))
+    .limit(1);
+  
+  return result.length > 0;
 }
 
 /**
@@ -52,21 +63,6 @@ export async function retrieveMainTeamForUser(user_id: string): Promise<Team | n
 }
 
 export async function retreiveTeamsForUserWithManager(user_id: string): Promise<{ team: Team, manager: SafeUser }[]> {
-  // const userTeamsWithTeamsAndManager = await db
-  //   .select({
-  //     team: teams,
-  //     manager: safeUserSelect,
-  //   })
-  //   .from(userTeams)
-  //   .innerJoin(teams, eq(userTeams.team_id, teams.id))
-  //   .innerJoin(users, eq(teams.managerId, users.id))
-  //   .where(eq(userTeams.user_id, user_id));
-  
-  // return userTeamsWithTeamsAndManager.map((row) => ({
-  //   team: row.team,
-  //   manager: row.manager,
-  // }));
-
   const members = alias(users, "members");
 
   const teamIdsSubquery = db

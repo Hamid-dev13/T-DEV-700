@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Shell, Card } from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
-import { getUserTeam } from '../utils/api'
+import { getMyTeams } from '../utils/api'
 import { Team, User } from '../utils/types'
 
 type TeamData = {
@@ -28,7 +28,7 @@ export default function TeamManagePage() {
   useEffect(() => {
     if (!me) return
     
-    getUserTeam()
+    getMyTeams()
       .then(data => {
         // La réponse peut être un tableau ou un objet unique
         const teams = Array.isArray(data) ? data : (data && data.team ? [data] : [])
