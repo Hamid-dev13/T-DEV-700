@@ -26,13 +26,24 @@ export function checkWorkHours(start: number, end: number) {
 }
 
 export async function isTeamManager(user_id: string, team_id: string) {
-  const result = await db.
-    select()
+  const result = await db
+    .select()
     .from(teams)
     .where(and(eq(teams.managerId, user_id), eq(teams.id, team_id)))
     .limit(1);
   
     return result.length > 0
+}
+
+export async function isManagerOfUser(manager_id: string, user_id: string) {
+  const result = await db
+    .select()
+    .from(userTeams)
+    .innerJoin(teams, eq(userTeams.team_id, teams.id))
+    .where(and(eq(userTeams.user_id, user_id), eq(teams.managerId, manager_id)))
+    .limit(1);
+  
+  return result.length > 0;
 }
 
 /**

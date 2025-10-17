@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { getReportForUser, ReportType } from "../services/report.service";
-import { isTeamManager, retrieveMainTeamForUser } from "../services/team.service";
+import { retrieveMainTeamForUser } from "../services/team.service";
 import { sendError } from "../utils/format";
 
 export async function getReportsForUserController(req: Request, res: Response) {
@@ -12,8 +12,10 @@ export async function getReportsForUserController(req: Request, res: Response) {
     const user_id = user as string;
     const report_type = report as ReportType;
     const fromDate = new Date(from as string);
+    if (isNaN(fromDate.getTime())) return sendError(res, "Invalid Date \"from\"", 400);
     fromDate.setHours(0, 0, 0, 0)
     const toDate = new Date(to as string);
+    if (isNaN(toDate.getTime())) return sendError(res, "Invalid Date \"to\"", 400);
     toDate.setHours(0, 0, 0, 0)
 
     const sender_id = req.user_id!;
