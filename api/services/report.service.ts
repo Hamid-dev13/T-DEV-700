@@ -5,9 +5,10 @@ import { getClocksForUserFiltered } from "./clock.service";
 import { getLocalHour } from "../utils/timezone";
 import { userTeams } from "../models/user_team.model";
 
-export enum ReportType {
-  LATENESS = "lateness"
-}
+const REPORT_FUNC_MAP = new Map<string, (groupedData: [string, Date[]][], startHour: number, endHour: number) => any>([
+  ['lateness', calculateLatenessKPI],
+  ['pause_times', calculatePauseTimesKPI]
+])
 
 function groupByDay(entries: Date[]): [string, Date[]][] {
   const map = new Map<string, Date[]>()
@@ -35,7 +36,23 @@ function workRangeToDate(date: Date, startHour: number, endHour: number) {
   };
 }
 
-export async function getReportForUser(user_id: string, report: ReportType, from: Date, to: Date): Promise<any> {
+/**
+ * Sum of date pairs (periods) in minutes.
+ * Expect dates to be sorted and have an even number of items.
+ */
+function sumPeriods(dates: Date[]): number {
+  let sum = 0;
+
+  for (let i = 0; i < dates.length; i+=2)
+    sum += dates[i+1].getTime() - dates[i].getTime();
+
+  return sum / 60000;
+}
+
+export async function getReportForUser(user_id: string, report_type: string, from: Date, to: Date): Promise<any> {
+  if (!REPORT_FUNC_MAP.has(report_type))
+    throw new Error(`Invalid report type \"${report_type}\"`);
+
   // get main user team
   const [team] = await db
     .select({
@@ -52,34 +69,42 @@ export async function getReportForUser(user_id: string, report: ReportType, from
   
   const groupedData = groupByDay(data);
 
-  switch (report) {
-    case ReportType.LATENESS:
-      const latenessMap: any[] = [];
+  return REPORT_FUNC_MAP.get(report_type)!(groupedData, team.startHour, team.endHour);
+}
 
-      for (let i = 0; i < groupedData.length; i++) {
-        const [ day, dates ] = groupedData[i];
+function calculateLatenessKPI(groupedData: [string, Date[]][], startHour: number, endHour: number): any {
+  const latenessMap: any[] = [];
 
-        if (dates.length > 0) {
-          const arrivalHour = getLocalHour(dates[0]);
-          const expectedHour = team.startHour;
-          
-          const delayInHours = arrivalHour - expectedHour;
-          const delayInMinutes = Math.round(delayInHours * 60);
+  for (let i = 0; i < groupedData.length; i++) {
+    const [ day, dates ] = groupedData[i];
 
-          latenessMap.push({ day, lateness: delayInMinutes > 0 ? delayInMinutes : 0 });
-        }
-      }
+    if (dates.length > 0) {
+      const arrivalHour = getLocalHour(dates[0]);
+      const expectedHour = startHour;
+      
+      const delayInHours = arrivalHour - expectedHour;
+      const delayInMinutes = Math.round(delayInHours * 60);
 
-      return latenessMap;
-  
-    default:
-      throw new Error(`Invalid report type \"${report}\"`);
+      latenessMap.push({ day, lateness: delayInMinutes > 0 ? delayInMinutes : 0 });
+    }
   }
 
-  return {
-    user_id,
-    report,
-    from,
-    to
+  return latenessMap;
+}
+
+function calculatePauseTimesKPI(groupedData: [string, Date[]][], startHour: number, endHour: number): any {
+  const pauseTimesMap: any[] = [];
+
+  for (let i = 0; i < groupedData.length; i++) {
+    const [ day, dates ] = groupedData[i];
+
+    if (dates.length > 0 && dates.length % 2 == 0) {
+      const totalMinutes = (dates[dates.length-1].getTime() - dates[0].getTime()) / 60000;
+      const workingMinutes = sumPeriods(dates);
+
+      pauseTimesMap.push({ day, pause: totalMinutes - workingMinutes });
+    }
   }
+
+  return pauseTimesMap;
 }

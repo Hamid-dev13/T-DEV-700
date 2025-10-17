@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getReportForUser, ReportType } from "../services/report.service";
+import { getReportForUser } from "../services/report.service";
 import { retrieveMainTeamForUser } from "../services/team.service";
 import { sendError } from "../utils/format";
 
@@ -10,7 +10,7 @@ export async function getReportsForUserController(req: Request, res: Response) {
       throw new Error("Missing required fields: user, report, from, to");
 
     const user_id = user as string;
-    const report_type = report as ReportType;
+    const report_type = report as string;
     const fromDate = new Date(from as string);
     if (isNaN(fromDate.getTime())) return sendError(res, "Invalid Date \"from\"", 400);
     fromDate.setHours(0, 0, 0, 0)
