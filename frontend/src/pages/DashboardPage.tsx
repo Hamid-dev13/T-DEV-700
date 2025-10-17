@@ -203,10 +203,11 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <Shell>
-        <div className="login-wrap">
-          <Card title="Chargement...">
-            <p className="text-gray-500">Récupération de vos données...</p>
-          </Card>
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="spinner mb-4"></div>
+            <p className="subtle">Récupération de vos données...</p>
+          </div>
         </div>
       </Shell>
     )
@@ -254,7 +255,7 @@ export default function DashboardPage() {
                         <div className="w-48 bg-gray-200 rounded-full h-2">
                           <div 
                             className="bg-yellow-400 h-2 rounded-full" 
-                            style={{ width: `${Math.min((hours / 8) * 100, 100)}%` }}
+                            style={{ width: `${Math.min((hours / 7) * 100, 100)}%` }}
                           />
                         </div>
                         <span className="text-sm font-semibold w-16 text-right">

@@ -11,7 +11,10 @@ import MemberDetailsPage from './pages/MemberDetailsPage'
 function LoadingScreen() {
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="opacity-70">Chargement…</div>
+      <div className="flex flex-col items-center justify-center">
+        <div className="spinner mb-4"></div>
+        <p className="subtle">Chargement…</p>
+      </div>
     </div>
   )
 }
