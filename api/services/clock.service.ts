@@ -7,15 +7,31 @@ export type ReportTimeSummaryInput = {
   to: Date,
 };
 
-export async function reportTime(user_id: string): Promise<Clock> {
+export async function addClock(user_id: string, at?: Date): Promise<Clock> {
   const [clock] = await db
     .insert(clocks)
-    .values({ user_id })
+    .values({ user_id, at })
     .returning();
   return clock;
 }
 
-export async function retrieveReportTimeSummary(
+export async function updateClock(user_id: string, from: Date, to: Date): Promise<Clock> {
+  const [clock] = await db
+    .update(clocks)
+    .set({ at: to })
+    .where(and(eq(clocks.user_id, user_id), eq(clocks.at, from)))
+    .returning();
+  return clock;
+}
+
+export async function removeClock(user_id: string, at: Date): Promise<Clock[]> {
+  return db
+    .delete(clocks)
+    .where(and(eq(clocks.user_id, user_id), eq(clocks.at, at)))
+    .returning();
+}
+
+export async function getClocksForUser(
   user_id: string,
   {
     from,

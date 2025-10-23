@@ -1,53 +1,73 @@
-import cors from "cors";
+import cors, { CorsOptions } from "cors";
 import dotenv from "dotenv";
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger.config";
 import { db } from "./db/client";
 import userRouter from "./routes/user.routes";
 import teamRouter from "./routes/team.routes";
 import clockRouter from "./routes/clock.routes";
+import reportRouter from "./routes/report.routes";
+import passwordRouter from "./routes/password.route";
+import { transporter } from "./services/mail.service";
+import nocache from "nocache";
 
 dotenv.config({ path: "../.env" });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middlewares
-app.use(cors({
-  origin: process.env.WEBSITE_URL!,
+// Configure CORS
+const ALLOWED_ORIGINS = [process.env.WEBSITE_URL, process.env.ADMIN_WEBSITE_URL].filter((it) => it);
+
+const corsOptions: CorsOptions = {
+  origin: (requestOrigin, callback) => {
+    if (!requestOrigin || ALLOWED_ORIGINS.includes(requestOrigin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin \"${requestOrigin}\" not allowed`));
+    }
+  },
   credentials: true,
-}));
+};
+
+// Middlewares
+app.use(cors(corsOptions));
 app.use(express.json());
+
+// prevent default caching mechanism
+// app.set('etag', false)
+// app.use(['/user', '/user/login'], nocache())
 
 // Routers
 app.use(userRouter);
 app.use(teamRouter);
 app.use(clockRouter);
+app.use(reportRouter);
+app.use(passwordRouter);
 
-// Route hello world
-app.get("/", (req: Request, res: Response) => {
-  res.json({ message: "Hello World!" });
-});
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-// JSON de la spec OpenAPI (optionnel, pour télécharger la spec)
+// JSON swagger
 app.use("/api-docs.json", (req: Request, res: Response) => {
   res.setHeader("Content-Type", "application/json");
   res.send(swaggerSpec);
 });
-// Route de test de la connexion DB
+
+// Test Route for DB connection + Mail transporter
 app.get("/health", async (req: Request, res: Response) => {
-  try {
-    // Test simple de connexion
-    await db.execute("SELECT 1");
-    res.json({ status: "ok", database: "connected" });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ status: "error", database: "disconnected", error: error });
-  }
+  let database_ok = false;
+
+  try { await db.execute("SELECT 1"); database_ok = true; }
+  catch (err) { console.log(err); }
+
+  let mail_ok = transporter != undefined;
+
+  res.status(database_ok && mail_ok ? 200 : 500).json({
+    database: database_ok ? "connected" : "disconnected",
+    mail: mail_ok ? "available" : "not available"
+  })
 });
 
-// Démarrage du serveur
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

@@ -180,21 +180,6 @@ components:
           type: string
           format: date-time
 
-    ReportTimeSummaryRequest:
-      type: object
-      required:
-        - from
-        - to
-      properties:
-        from:
-          type: string
-          format: date
-          description: Date de début (format YYYY-MM-DD)
-        to:
-          type: string
-          format: date
-          description: Date de fin (format YYYY-MM-DD)
-
     DelayResponse:
       type: object
       properties:

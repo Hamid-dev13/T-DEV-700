@@ -33,12 +33,20 @@ paths:
             type: string
             format: uuid
           description: ID de l'utilisateur
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ReportTimeSummaryRequest'
+        - in: query
+          name: from
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Date de début (format YYYY-MM-DD)
+        - in: query
+          name: to
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Date de fin (format YYYY-MM-DD)
       responses:
         200:
           description: Liste des pointages
