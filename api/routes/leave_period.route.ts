@@ -4,13 +4,13 @@ import { addLeavePeriodForMyUserController, addLeavePeriodForUserController, del
 
 const router = Router();
 
-router.get("/user/leave_periods", isAuth, retrieveLeavePeriodsForMyUserController);
-router.post("/user/leave_periods", isAuth, addLeavePeriodForMyUserController);
-router.delete("/user/leave_periods/:id", isAuth, deleteLeavePeriodForMyUserController);
+router.get("/user/leave-periods", isAuth, retrieveLeavePeriodsForMyUserController);
+router.post("/user/leave-periods", isAuth, addLeavePeriodForMyUserController);
+router.delete("/user/leave-periods/:id", isAuth, deleteLeavePeriodForMyUserController);
 
-router.get("/users/:id/leave_periods", isAuth, retrieveLeavePeriodsForUserController);
-router.post("/users/:id/leave_periods", isAuth, addLeavePeriodForUserController);
-router.put("/users/:user_id/leave_periods/:leave_id", isAuth, updateLeavePeriodForUserController);
-router.delete("/users/:user_id/leave_periods/:leave_id", isAuth, deleteLeavePeriodForUserController);
+router.get("/users/:id/leave-periods", isAuth, retrieveLeavePeriodsForUserController);
+router.post("/users/:id/leave-periods", isAuth, addLeavePeriodForUserController);
+router.put("/users/:user_id/leave-periods/:leave_id", isAuth, updateLeavePeriodForUserController);
+router.delete("/users/:user_id/leave-periods/:leave_id", isAuth, deleteLeavePeriodForUserController);
 
 export default router;
