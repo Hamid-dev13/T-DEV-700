@@ -11,14 +11,14 @@ interface DailySummary {
 }
 
 // Calcule les heures travaillées par jour à partir des timestamps de pointage
-function computeDailyHours(timestamps: Date[]): DailySummary[] {
+function computeDailyHours(timestamps: Array<{ date: Date, iso: string }>): DailySummary[] {
   const byDay: { [key: string]: Date[] } = {}
   
   // Grouper les timestamps par jour
   for (const ts of timestamps) {
-    const day = ts.toISOString().slice(0, 10)
+    const day = ts.date.toISOString().slice(0, 10)
     if (!byDay[day]) byDay[day] = []
-    byDay[day].push(ts)
+    byDay[day].push(ts.date)
   }
   
   const result: DailySummary[] = []
@@ -217,50 +217,127 @@ export default function DashboardPage() {
     <Shell>
       <div className="p-6">
         <div className={managedTeam ? "grid grid-cols-2 gap-6" : ""}>
-        <Card title="Résumé de vos heures - Semaine en cours">
-          <div className="grid grid-cols-3 gap-6 mb-6">
-            <div>
-              <div className="text-sm text-gray-500 mb-1">Aujourd'hui</div>
-              <div className="text-3xl font-bold">{summary ? formatHoursToHHMM(summary.todayHours) : '0:00'}</div>
+        <Card title="📊 Résumé de vos heures">
+          {/* Cartes de statistiques principales */}
+          <div className="grid grid-cols-3 gap-6 mb-10">
+            {/* Aujourd'hui */}
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm font-medium text-blue-700">Aujourd'hui</div>
+                <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-4xl font-bold text-blue-900">
+                {summary ? formatHoursToHHMM(summary.todayHours) : '0:00'}
+              </div>
+              <div className="text-xs text-blue-600 mt-2">Heures travaillées</div>
             </div>
-            <div>
-              <div className="text-sm text-gray-500 mb-1">Cette semaine</div>
-              <div className="text-3xl font-bold">{summary ? formatHoursToHHMM(summary.totalWeek) : '0:00'}</div>
+
+            {/* Cette semaine */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm font-medium text-green-700">Cette semaine</div>
+                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-4xl font-bold text-green-900">
+                {summary ? formatHoursToHHMM(summary.totalWeek) : '0:00'}
+              </div>
+              <div className="text-xs text-green-600 mt-2">Total hebdomadaire</div>
             </div>
-            <div>
-              <div className="text-sm text-gray-500 mb-1">Moyenne/jour (semaine)</div>
-              <div className="text-3xl font-bold">
+
+            {/* Moyenne par jour */}
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm font-medium text-purple-700">Moyenne/jour</div>
+                <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-4xl font-bold text-purple-900">
                 {summary ? formatHoursToHHMM(summary.dailyHours.reduce((sum, d) => sum + d.hours, 0) / 5) : '0:00'}
               </div>
+              <div className="text-xs text-purple-600 mt-2">Sur la semaine</div>
             </div>
           </div>
           
-          <div className="mt-6">
-            <h3 className="text-sm font-semibold mb-3">Détail par jour</h3>
-            <div className="space-y-2">
+          {/* Détail par jour */}
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Détail par jour
+            </h3>
+            <div className="space-y-4">
                 {summary?.last7Days.map(day => {
                   const dayData = summary.dailyHours.find(d => d.day === day)
                   const hours = dayData?.hours || 0
                   const date = new Date(day)
-                  const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' })
-                  const dayMonth = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+                  const dayName = date.toLocaleDateString('fr-FR', { weekday: 'long' })
+                  const dayMonth = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+                  const isToday = day === new Date().toISOString().slice(0, 10)
+                  const isWeekend = date.getDay() === 0 || date.getDay() === 6
                   
                   return (
-                    <div key={day} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium capitalize">{dayName}</span>
-                        <span className="text-sm text-gray-500">{dayMonth}</span>
-                      </div>
+                    <div 
+                      key={day} 
+                      className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
+                        isToday 
+                          ? 'bg-yellow-50 border-yellow-300 shadow-md' 
+                          : 'bg-white border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
                       <div className="flex items-center gap-4">
-                        <div className="w-48 bg-gray-200 rounded-full h-2">
+                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center font-bold text-sm ${
+                          isToday 
+                            ? 'bg-yellow-400 text-yellow-900' 
+                            : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {dayName.substring(0, 3).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className={`font-semibold capitalize ${isToday ? 'text-yellow-900' : 'text-gray-900'}`}>
+                            {dayName}
+                          </div>
+                          <div className="text-sm text-gray-500">{dayMonth}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        {/* Barre de progression */}
+                        <div className="w-64 bg-gray-200 rounded-full h-3 overflow-hidden">
                           <div 
-                            className="bg-yellow-400 h-2 rounded-full" 
-                            style={{ width: `${Math.min((hours / 7) * 100, 100)}%` }}
+                            className={`h-3 rounded-full transition-all duration-500 ${
+                              hours === 0 ? 'bg-gray-300' :
+                              hours < 6 ? 'bg-red-400' :
+                              hours < 7.5 ? 'bg-orange-400' :
+                              'bg-green-400'
+                            }`}
+                            style={{ width: `${Math.min((hours / 8) * 100, 100)}%` }}
                           />
                         </div>
-                        <span className="text-sm font-semibold w-16 text-right">
-                          {formatHoursToHHMM(hours)}
-                        </span>
+                        {/* Heures */}
+                        <div className="flex items-center gap-2 min-w-[100px]">
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className={`text-xl font-bold ${
+                            hours === 0 ? 'text-gray-400' :
+                            hours < 6 ? 'text-red-600' :
+                            hours < 7.5 ? 'text-orange-600' :
+                            'text-green-600'
+                          }`}>
+                            {formatHoursToHHMM(hours)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   )
