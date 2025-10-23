@@ -125,12 +125,18 @@ export async function getUserTeamById(userId: string) {
   }
 }
 
-export async function getClocks(id: string, from?: Date, to?: Date) {
+export async function getClocks(id: string, from?: Date, to?: Date): Promise<Array<{ date: Date, iso: string }>> {
   try {
     if (!from) from = new Date()
     if (!to) to = new Date()
     const list = await apiClient.get(`/users/${encodeURIComponent(id)}/clocks`, { query: { from, to } })
-    return list.map((item: string) => new Date(item))
+    console.log('[API] getClocks raw data:', list)
+    const dates = list.map((item: string) => {
+      const date = new Date(item)
+      console.log('[API] Date conversion:', item, '->', date.toISOString())
+      return { date, iso: item } // Retourner à la fois la date et le string original
+    })
+    return dates
   } catch (err: any) {
     console.log("Error getting clocks: %s", err.message)
     return []
@@ -139,6 +145,60 @@ export async function getClocks(id: string, from?: Date, to?: Date) {
 
 export async function addClock() {
   return apiClient.post('/clocks')
+}
+
+export async function addClockForMember(userId: string, at: Date | string) {
+  const payload = {
+    at: typeof at === 'string' ? at : at.toISOString()
+  }
+  console.log('[API] addClockForMember:', { userId, payload })
+  try {
+    const result = await apiClient.post(`/users/${encodeURIComponent(userId)}/clocks`, payload)
+    console.log('[API] addClockForMember réussi, résultat:', result)
+    return result
+  } catch (error) {
+    console.error('[API] addClockForMember erreur:', error)
+    throw error
+  }
+}
+
+export async function updateClockForMember(userId: string, from: Date | string, to: Date | string) {
+  const payload = {
+    from: typeof from === 'string' ? from : from.toISOString(),
+    to: typeof to === 'string' ? to : to.toISOString()
+  }
+  console.log('[API] updateClockForMember:', { userId, payload })
+  console.log('[API] Dates envoyées - from:', payload.from, 'to:', payload.to)
+  try {
+    const result = await apiClient.patch(`/users/${encodeURIComponent(userId)}/clocks`, payload)
+    console.log('[API] updateClockForMember réussi, résultat:', result)
+    if (!result) {
+      console.warn('[API] ATTENTION: Le backend a renvoyé undefined/null - l\'enregistrement n\'a probablement pas été trouvé')
+    }
+    return result
+  } catch (error) {
+    console.error('[API] updateClockForMember erreur:', error)
+    throw error
+  }
+}
+
+export async function deleteClockForMember(userId: string, at: Date | string) {
+  const payload = {
+    at: typeof at === 'string' ? at : at.toISOString()
+  }
+  console.log('[API] deleteClockForMember:', { userId, payload })
+  console.log('[API] Date à supprimer:', payload.at)
+  try {
+    const result = await apiClient.delete(`/users/${encodeURIComponent(userId)}/clocks`, payload)
+    console.log('[API] deleteClockForMember réussi, résultat:', result)
+    if (!result) {
+      console.warn('[API] ATTENTION: Le backend a renvoyé undefined/null - l\'enregistrement n\'a probablement pas été trouvé')
+    }
+    return result
+  } catch (error) {
+    console.error('[API] deleteClockForMember erreur:', error)
+    throw error
+  }
 }
 
 export async function teamAverages(teamId: string, from?: Date, to?: Date) {

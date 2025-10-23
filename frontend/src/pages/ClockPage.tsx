@@ -4,12 +4,12 @@ import { addClock, getClocks } from '../utils/api'
 import { useAuth } from '../context/AuthContext'
 import { Clock } from '../utils/types'
 
-function groupByDay(entries: Date[]): [string, Date[]][] {
+function groupByDay(entries: Array<{ date: Date, iso: string }>): [string, Date[]][] {
   const map = new Map<string, Date[]>()
   for (const e of entries) {
-    const day = e.toISOString().slice(0, 10)
+    const day = e.date.toISOString().slice(0, 10)
     const arr = map.get(day) || []
-    arr.push(e)
+    arr.push(e.date)
     map.set(day, arr)
   }
 
@@ -23,7 +23,7 @@ function groupByDay(entries: Date[]): [string, Date[]][] {
 
 export default function ClockPage() {
   const { user: me } = useAuth()
-  const [rawData, setRawData] = useState<Date[]>([])
+  const [rawData, setRawData] = useState<Array<{ date: Date, iso: string }>>([])
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => {

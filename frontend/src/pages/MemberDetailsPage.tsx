@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Shell, Card } from '../components/Layout'
-import { getClocks, getTeamsWithMembers } from '../utils/api'
+import { getClocks, getTeamsWithMembers, updateClockForMember, deleteClockForMember, addClockForMember } from '../utils/api'
 
 interface DailySummary {
   day: string
@@ -13,6 +13,16 @@ interface MemberInfo {
   firstName: string
   lastName: string
   email: string
+}
+
+interface ClockPair {
+  clockIn: Date
+  clockOut: Date | null
+  day: string
+  clockInOriginal?: Date  // Pour stocker la date originale exacte
+  clockOutOriginal?: Date // Pour stocker la date originale exacte
+  clockInISO?: string     // Pour stocker le string ISO original
+  clockOutISO?: string    // Pour stocker le string ISO original
 }
 
 interface Team {
@@ -123,9 +133,13 @@ export default function MemberDetailsPage() {
   const { memberId } = useParams<{ memberId: string }>()
   const navigate = useNavigate()
   const [member, setMember] = useState<MemberInfo | null>(null)
-  const [timestamps, setTimestamps] = useState<Date[]>([])
+  const [timestamps, setTimestamps] = useState<Array<{ date: Date, iso: string }>>([])
   const [memberTeam, setMemberTeam] = useState<Team | null>(null)
   const [loading, setLoading] = useState(true)
+  const [editingClock, setEditingClock] = useState<ClockPair | null>(null)
+  const [deletingClock, setDeletingClock] = useState<Date | null>(null)
+  const [editClockInTime, setEditClockInTime] = useState('')
+  const [editClockOutTime, setEditClockOutTime] = useState('')
 
   // Charger les données du membre
   useEffect(() => {
@@ -207,7 +221,7 @@ export default function MemberDetailsPage() {
   }, [memberId])
   
   // Calculer les heures travaillées par jour
-  const dailyHours = useMemo(() => computeDailyHours(timestamps), [timestamps])
+  const dailyHours = useMemo(() => computeDailyHours(timestamps.map(t => t.date)), [timestamps])
   
   // Calculer le total de la semaine
   const weekTotal = useMemo(() => {
@@ -216,6 +230,168 @@ export default function MemberDetailsPage() {
   
   // Jours de la semaine en cours
   const weekDays = useMemo(getCurrentWeekDays, [])
+  
+  // Regrouper les pointages par paires (arrivée/départ)
+  const clockPairsByDay = useMemo(() => {
+    const byDay: { [key: string]: Array<{ date: Date, iso: string }> } = {}
+    
+    for (const ts of timestamps) {
+      const day = ts.date.toISOString().slice(0, 10)
+      if (!byDay[day]) byDay[day] = []
+      byDay[day].push(ts)
+    }
+    
+    const result: { [key: string]: ClockPair[] } = {}
+    
+    for (const [day, times] of Object.entries(byDay)) {
+      const sorted = times.sort((a, b) => a.date.getTime() - b.date.getTime())
+      const pairs: ClockPair[] = []
+      
+      for (let i = 0; i < sorted.length; i += 2) {
+        pairs.push({
+          clockIn: sorted[i].date,
+          clockOut: sorted[i + 1]?.date || null,
+          day,
+          clockInOriginal: sorted[i].date,
+          clockOutOriginal: sorted[i + 1]?.date || null,
+          clockInISO: sorted[i].iso,
+          clockOutISO: sorted[i + 1]?.iso || undefined
+        })
+      }
+      
+      result[day] = pairs
+    }
+    
+    return result
+  }, [timestamps])
+  
+  // Fonction pour recharger les données
+  const reloadClocks = async () => {
+    if (!memberId) return
+    try {
+      const now = new Date()
+      const dayOfWeek = now.getDay() || 7
+      const monday = new Date(now)
+      monday.setDate(now.getDate() - (dayOfWeek - 1))
+      monday.setHours(0, 0, 0, 0)
+      
+      const clocks = await getClocks(memberId, monday, now)
+      setTimestamps(clocks)
+    } catch (error) {
+      console.error('Erreur lors du rechargement des pointages:', error)
+    }
+  }
+  
+  // Fonction pour modifier un pointage
+  const handleUpdateClock = async () => {
+    if (!editingClock || !memberId) return
+    
+    try {
+      const [inHours, inMinutes] = editClockInTime.split(':').map(Number)
+      const originalDate = new Date(editingClock.clockIn)
+      const year = originalDate.getFullYear()
+      const month = originalDate.getMonth()
+      const day = originalDate.getDate()
+      const newClockIn = new Date(year, month, day, inHours, inMinutes, 0, 0)
+      
+      // Vérifier si c'est un nouveau pointage (pas encore en base) ou une modification
+      const dayString = editingClock.day
+      const existingPairs = clockPairsByDay[dayString] || []
+      const isNewClock = existingPairs.length === 0
+      
+      if (isNewClock) {
+        // Créer un nouveau pointage
+        await addClockForMember(memberId, newClockIn)
+        
+        if (editClockOutTime) {
+          const [outHours, outMinutes] = editClockOutTime.split(':').map(Number)
+          const newClockOut = new Date(year, month, day, outHours, outMinutes, 0, 0)
+          await addClockForMember(memberId, newClockOut)
+        }
+      } else {
+        // Modifier un pointage existant
+        await updateClockForMember(memberId, editingClock.clockIn.toISOString(), newClockIn)
+        
+        if (editingClock.clockOut && editClockOutTime) {
+          const [outHours, outMinutes] = editClockOutTime.split(':').map(Number)
+          const originalOutDate = new Date(editingClock.clockOut)
+          const outYear = originalOutDate.getFullYear()
+          const outMonth = originalOutDate.getMonth()
+          const outDay = originalOutDate.getDate()
+          const newClockOut = new Date(outYear, outMonth, outDay, outHours, outMinutes, 0, 0)
+          
+          await updateClockForMember(memberId, editingClock.clockOut.toISOString(), newClockOut)
+        }
+      }
+      
+      await reloadClocks()
+      setEditingClock(null)
+      setEditClockInTime('')
+      setEditClockOutTime('')
+      alert(isNewClock ? '✅ Pointage créé avec succès !' : '✅ Pointage modifié avec succès !')
+    } catch (error) {
+      console.error('Erreur:', error)
+      alert('Erreur: ' + (error as Error).message)
+    }
+  }
+  
+  // Fonction pour supprimer un pointage
+  const handleDeleteClock = async (clockToDelete: Date) => {
+    if (!memberId) return
+    
+    try {
+      await deleteClockForMember(memberId, clockToDelete)
+      await reloadClocks()
+      setDeletingClock(null)
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error)
+      alert('Erreur lors de la suppression du pointage')
+    }
+  }
+  
+  // Fonction pour supprimer une paire complète
+  const handleDeletePair = async (pair: ClockPair) => {
+    if (!memberId) return
+    
+    if (!confirm('Supprimer ce pointage ?')) return
+    
+    try {
+      await deleteClockForMember(memberId, pair.clockIn.toISOString())
+      if (pair.clockOut) {
+        await deleteClockForMember(memberId, pair.clockOut.toISOString())
+      }
+      await reloadClocks()
+      alert('✅ Pointage supprimé')
+    } catch (error) {
+      console.error('Erreur:', error)
+      alert('❌ Erreur lors de la suppression')
+    }
+  }
+  
+  // Fonction pour ouvrir le modal d'édition
+  const openEditModal = (pair: ClockPair) => {
+    console.log('openEditModal appelé', pair)
+    console.log('clockInISO:', pair.clockInISO)
+    console.log('clockOutISO:', pair.clockOutISO)
+    setEditingClock(pair)
+    const clockInTime = pair.clockIn.toLocaleTimeString('fr-FR', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false
+    })
+    setEditClockInTime(clockInTime)
+    
+    if (pair.clockOut) {
+      const clockOutTime = pair.clockOut.toLocaleTimeString('fr-FR', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false
+      })
+      setEditClockOutTime(clockOutTime)
+    } else {
+      setEditClockOutTime('')
+    }
+  }
   
   // Calculer les retards pour chaque jour
   const delays = useMemo(() => {
@@ -228,7 +404,7 @@ export default function MemberDetailsPage() {
     console.log('memberTeam complet:', memberTeam)
     
     weekDays.forEach(day => {
-      result[day] = calculateDelay(timestamps, day, expectedHour)
+      result[day] = calculateDelay(timestamps.map(t => t.date), day, expectedHour)
     })
     
     return result
@@ -397,45 +573,186 @@ export default function MemberDetailsPage() {
               const dayMonth = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
               const delayInfo = delays[day]
               const isToday = day === new Date().toISOString().split('T')[0]
+              const pairs = clockPairsByDay[day] || []
               
               return (
-                <div 
-                  key={day} 
-                  className={`flex items-center justify-between p-4 rounded-lg border ${
-                    isToday ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold ${
-                      isToday ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
-                    }`}>
-                      {dayName.substring(0, 3).toUpperCase()}
+                <div key={day} className="space-y-2">
+                  <div 
+                    className={`flex items-center justify-between p-4 rounded-lg border ${
+                      isToday ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold ${
+                        isToday ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        {dayName.substring(0, 3).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-900 capitalize">{dayName}</div>
+                        <div className="text-sm text-gray-500">{dayMonth}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-semibold text-gray-900 capitalize">{dayName}</div>
-                      <div className="text-sm text-gray-500">{dayMonth}</div>
+                    
+                    <div className="flex items-center gap-6">
+                      <div className="text-right">
+                        <div className="text-xs text-gray-500 mb-1">Heures travaillées</div>
+                        <div className="text-lg font-bold text-gray-900">{formatHoursToHHMM(hours)}</div>
+                      </div>
+                      
+                      <div className="w-px h-12 bg-gray-300"></div>
+                      
+                      <div className="min-w-[180px]">
+                        <span className={`inline-block px-3 py-1.5 rounded text-xs font-medium ${getStatusBadgeClass(delayInfo?.status)}`}>
+                          {formatDelayText(delayInfo)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <div className="text-xs text-gray-500 mb-1">Heures travaillées</div>
-                      <div className="text-lg font-bold text-gray-900">{formatHoursToHHMM(hours)}</div>
+                  {/* Afficher les paires de pointages */}
+                  {pairs.length > 0 ? (
+                    <div className="ml-16 space-y-2">
+                      {pairs.map((pair, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3">
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                              </svg>
+                              <span className="font-medium text-gray-900">
+                                {pair.clockIn.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                              </span>
+                            </div>
+                            
+                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                            
+                            <div className="flex items-center gap-2">
+                              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                              </svg>
+                              <span className="font-medium text-gray-900">
+                                {pair.clockOut ? pair.clockOut.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }) : 'En cours...'}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(pair)}
+                              className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Modifier
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePair(pair)}
+                              className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Supprimer
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    
-                    <div className="w-px h-12 bg-gray-300"></div>
-                    
-                    <div className="min-w-[180px]">
-                      <span className={`inline-block px-3 py-1.5 rounded text-xs font-medium ${getStatusBadgeClass(delayInfo?.status)}`}>
-                        {formatDelayText(delayInfo)}
-                      </span>
+                  ) : (
+                    <div className="ml-16">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentDay = day
+                          const date = new Date(currentDay)
+                          const defaultClockIn = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 9, 0, 0, 0)
+                          const defaultClockOut = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 17, 0, 0, 0)
+                          openEditModal({
+                            clockIn: defaultClockIn,
+                            clockOut: defaultClockOut,
+                            day: currentDay,
+                            clockInOriginal: defaultClockIn,
+                            clockOutOriginal: defaultClockOut,
+                            clockInISO: defaultClockIn.toISOString(),
+                            clockOutISO: defaultClockOut.toISOString()
+                          })
+                        }}
+                        className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Ajouter un pointage
+                      </button>
                     </div>
-                  </div>
+                  )}
                 </div>
               )
             })}
           </div>
         </Card>
+        
+        {/* Modal d'édition */}
+        {editingClock && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Modifier les horaires</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Heure d'arrivée
+                  </label>
+                  <input
+                    type="time"
+                    value={editClockInTime}
+                    onChange={(e) => setEditClockInTime(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                
+                {editingClock.clockOut && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Heure de départ
+                    </label>
+                    <input
+                      type="time"
+                      value={editClockOutTime}
+                      onChange={(e) => setEditClockOutTime(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setEditingClock(null)
+                    setEditClockInTime('')
+                    setEditClockOutTime('')
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleUpdateClock}
+                  className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                >
+                  Enregistrer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Shell>
   )

@@ -30,6 +30,12 @@ async function request(path: string, { method = "GET", headers = {}, payload, qu
     body: payload ? JSON.stringify(payload) : undefined,
   }
 
+  if (method === "PATCH" || method === "DELETE") {
+    console.log(`[apiClient] ${method} ${url.toString()}`)
+    console.log('[apiClient] Payload:', payload)
+    console.log('[apiClient] Body:', init.body)
+  }
+
   const res = await fetch(url, init)
 
   if (res.status === 401) { const e: any = new Error("UNAUTHORIZED"); e.code = 401; throw e }
@@ -48,8 +54,16 @@ async function request(path: string, { method = "GET", headers = {}, payload, qu
     const e: any = new Error(msg || `HTTP ${res.status}`); e.code = res.status; throw e
   }
 
+  // Gérer les réponses vides (204, 200 sans body)
+  if (res.status === 204 || res.headers.get("content-length") === "0") {
+    return null
+  }
+
   const ct = res.headers.get("content-type") || ""
-  if (ct.includes("application/json")) return res.json()
+  if (ct.includes("application/json")) {
+    const text = await res.text()
+    return text ? JSON.parse(text) : null
+  }
   if (ct.includes("text/")) return res.text()
   return null
 }
