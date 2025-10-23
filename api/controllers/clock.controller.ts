@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { addClock, getClocksForUser, removeClock, updateClock } from "../services/clock.service";
+import { addClock, getClocksForUserFiltered, removeClock, updateClock } from "../services/clock.service";
 import { convertToUTC, formatWithTimezone } from "../utils/timezone";
 import { sendError } from "../utils/format";
 import { isManagerOfUser } from "../services/team.service";
@@ -36,7 +36,7 @@ export async function retrieveReportTimeSummaryController(req: Request, res: Res
     if (isNaN(toDate.getTime())) return sendError(res, "Invalid Date \"to\"", 400);
     toDate.setHours(0, 0, 0, 0)
 
-    const results = await getClocksForUser(user_id, { from: fromDate, to: toDate });
+    const results = await getClocksForUserFiltered(user_id, { from: fromDate, to: toDate });
     
     // format dates with date-fns-tz
     const formattedResults = results.map(dateUTC => formatWithTimezone(dateUTC));

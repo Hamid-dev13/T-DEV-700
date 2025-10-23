@@ -8,13 +8,11 @@ import {
   updateClockForMemberController,
 
 } from "../controllers/clock.controller";
-import { getDelayController } from "../controllers/attendance.controller"; 
 
 const router = Router();
 
 router.post("/clocks", isAuth, reportTimeController);
 router.get("/users/:id/clocks", isAuth, retrieveReportTimeSummaryController);
-router.get("/attendance/delay", isAuth, getDelayController);
 
 router.post("/users/:id/clocks", isAuth, addClockForMemberController);
 router.patch("/users/:id/clocks", isAuth, updateClockForMemberController);

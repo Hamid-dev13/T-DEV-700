@@ -1,7 +1,7 @@
 import { and, eq, ne } from "drizzle-orm";
 import { db } from "../db/client";
 import { teams } from "../models/team.model";
-import { getClocksForUser } from "./clock.service";
+import { getClocksForUserFiltered } from "./clock.service";
 import { getLocalHour } from "../utils/timezone";
 import { userTeams } from "../models/user_team.model";
 
@@ -47,7 +47,7 @@ export async function getReportForUser(user_id: string, report: ReportType, from
     .where(and(eq(userTeams.user_id, user_id), ne(teams.managerId, user_id)))
     .limit(1);
 
-  const data = (await getClocksForUser(user_id, { from, to }))
+  const data = (await getClocksForUserFiltered(user_id, { from, to }))
     .map((dateUTC => new Date(dateUTC)));
   
   const groupedData = groupByDay(data);
