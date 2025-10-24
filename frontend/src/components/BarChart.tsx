@@ -20,8 +20,6 @@ export default function BarChart({
   unit = '',
   height = 400 
 }: BarChartProps) {
-  console.log('BarChart data:', data)
-  
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
@@ -34,9 +32,6 @@ export default function BarChart({
   const displayData = data.length > 14 ? data.slice(-14) : data
   const max = maxValue || Math.max(...displayData.map(d => d.value), 1)
   
-  console.log('Max value:', max)
-  console.log('Display data:', displayData)
-
   const chartHeight = height - 100
 
   return (
@@ -63,8 +58,6 @@ export default function BarChart({
           } else {
             displayValue = Math.round(point.value).toString() + unit
           }
-          
-          console.log(`Bar ${index}: value=${point.value}, height=${barHeightPx}px, display=${displayValue}`)
           
           return (
             <div key={index} className="flex flex-col items-center flex-1 max-w-[100px]">

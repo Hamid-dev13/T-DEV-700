@@ -91,7 +91,7 @@ function getCurrentWeekDays(): string[] {
 }
 
 // Calcule le retard basé sur l'heure de premier pointage
-function calculateDelay(timestamps: Date[], targetDay: string, expectedHour: number): { status: string, minutes: number | null } {
+function calculateDelay(timestamps: Date[], targetDay: string, expectedHour: number, daysOff: string[] = []): { status: string, minutes: number | null } {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const targetDate = new Date(targetDay)
@@ -99,6 +99,11 @@ function calculateDelay(timestamps: Date[], targetDay: string, expectedHour: num
   
   if (targetDate > today) {
     return { status: 'future', minutes: null }
+  }
+  
+  // Vérifier si c'est un jour de congé
+  if (daysOff.includes(targetDay)) {
+    return { status: 'day_off', minutes: null }
   }
   
   const dayTimestamps = timestamps.filter(ts => ts.toISOString().slice(0, 10) === targetDay)
@@ -163,10 +168,6 @@ export default function MemberDetailsPage() {
         // Récupérer toutes les équipes avec leurs membres
         const allTeams = await getTeamsWithMembers()
         
-        console.log('=== DEBUG ÉQUIPES ===')
-        console.log('Toutes les équipes:', allTeams)
-        console.log('Member ID:', memberId)
-        
         // Trouver les équipes du membre
         const userTeams = allTeams.filter((team: Team) => 
           team.members && team.members.some((m: any) => 
@@ -174,8 +175,6 @@ export default function MemberDetailsPage() {
             (m && typeof m === 'object' && m.id === memberId)
           )
         )
-        
-        console.log('Équipes du membre:', userTeams)
         
         // Chercher la team "Manager" dans toutes les équipes
         const managerTeam = allTeams.find((team: Team) => 
@@ -186,21 +185,15 @@ export default function MemberDetailsPage() {
           )
         )
         
-        console.log('Team Manager trouvée:', managerTeam)
-        
         // Vérifier si le membre est dans la team Manager
         const isManager = managerTeam && managerTeam.members && managerTeam.members.some((m: any) => 
           (typeof m === 'string' && m === memberId) || 
           (m && typeof m === 'object' && m.id === memberId)
         )
         
-        console.log('Est manager?', isManager)
-        
         // Si c'est un manager, utiliser les horaires de la team Manager
         // Sinon, utiliser les horaires de sa propre équipe
         const selectedTeam = isManager ? managerTeam : (userTeams[0] || null)
-        
-        console.log('Équipe sélectionnée:', selectedTeam)
         
         setMemberTeam(selectedTeam)
         
@@ -402,9 +395,6 @@ export default function MemberDetailsPage() {
   
   // Fonction pour ouvrir le modal d'édition
   const openEditModal = (pair: ClockPair) => {
-    console.log('openEditModal appelé', pair)
-    console.log('clockInISO:', pair.clockInISO)
-    console.log('clockOutISO:', pair.clockOutISO)
     setEditingClock(pair)
     const clockInTime = pair.clockIn.toLocaleTimeString('fr-FR', { 
       hour: '2-digit', 
@@ -430,17 +420,12 @@ export default function MemberDetailsPage() {
     const result: { [key: string]: { status: string, minutes: number | null } } = {}
     const expectedHour = memberTeam?.startHour ?? 9
     
-    console.log('=== DEBUG RETARDS ===')
-    console.log('Équipe utilisée:', memberTeam?.name)
-    console.log('Heure de début attendue:', expectedHour)
-    console.log('memberTeam complet:', memberTeam)
-    
-    weekDays.forEach(day => {
-      result[day] = calculateDelay(timestamps.map(t => t.date), day, expectedHour)
-    })
+    for (const day of weekDays) {
+      result[day] = calculateDelay(timestamps.map(t => t.date), day, expectedHour, daysOff)
+    }
     
     return result
-  }, [timestamps, weekDays, memberTeam])
+  }, [timestamps, weekDays, memberTeam, daysOff])
   
   // Calculer les statistiques
   const stats = useMemo(() => {
@@ -482,6 +467,8 @@ export default function MemberDetailsPage() {
         return 'Absent'
       case 'future':
         return 'À venir'
+      case 'day_off':
+        return 'Jour de repos'
       default:
         return 'N/A'
     }
@@ -495,6 +482,7 @@ export default function MemberDetailsPage() {
       case 'on_time': return 'bg-blue-500 text-white'
       case 'absent': return 'bg-gray-400 text-white'
       case 'future': return 'bg-gray-300 text-gray-600'
+      case 'day_off': return 'bg-purple-500 text-white'
       default: return 'bg-gray-400 text-white'
     }
   }

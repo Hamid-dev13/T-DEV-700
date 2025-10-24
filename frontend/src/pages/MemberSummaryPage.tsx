@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Shell, Card } from '../components/Layout'
-import { getReports } from '../utils/api'
+import { getReports, getDaysOffForUser } from '../utils/api'
 import BarChart from '../components/BarChart'
 
 interface MemberInfo {
@@ -28,6 +28,7 @@ export default function MemberSummaryPage() {
   const [loading, setLoading] = useState(true)
   const [presenceData, setPresenceData] = useState<PresenceData[]>([])
   const [latenessData, setLatenessData] = useState<LatenessData[]>([])
+  const [daysOff, setDaysOff] = useState<string[]>([])
 
   useEffect(() => {
     if (!memberId) return
@@ -35,7 +36,6 @@ export default function MemberSummaryPage() {
     async function loadData() {
       try {
         setLoading(true)
-        console.log('🔄 LOADING MEMBER SUMMARY PAGE - CODE VERSION 4.0 - USING KPI ROUTES')
         
         // Récupérer les infos du membre depuis sessionStorage
         const memberDataStr = sessionStorage.getItem(`member_${memberId}`)
@@ -67,13 +67,6 @@ export default function MemberSummaryPage() {
         friday.setDate(monday.getDate() + 4)
         friday.setHours(23, 59, 59, 999)
         
-        console.log('=== WEEK CALCULATION ===')
-        console.log('Today is:', today.toLocaleDateString('fr-FR', { weekday: 'long' }), today.toLocaleDateString('fr-FR'))
-        console.log('Day of week number:', today.getDay())
-        console.log('Days to subtract:', daysToSubtract)
-        console.log('Monday is:', monday.toLocaleDateString('fr-FR', { weekday: 'long' }), monday.toLocaleDateString('fr-FR'))
-        console.log('Friday is:', friday.toLocaleDateString('fr-FR', { weekday: 'long' }), friday.toLocaleDateString('fr-FR'))
-        
         const from = monday
         const to = friday
         
@@ -85,22 +78,14 @@ export default function MemberSummaryPage() {
           return `${year}-${month}-${day}`
         }
         
-        console.log('Week period:', {
-          from: formatLocalDate(from),
-          to: formatLocalDate(to),
-          fromDay: from.toLocaleDateString('fr-FR', { weekday: 'long' }),
-          toDay: to.toLocaleDateString('fr-FR', { weekday: 'long' })
-        })
-        
-        // Récupérer les KPI via les routes backend
-        console.log('Fetching KPI data from backend...')
-        const [presenceKPI, latenessKPI] = await Promise.all([
+        // Récupérer les KPI et les jours de repos via les routes backend
+        const [presenceKPI, latenessKPI, daysOffData] = await Promise.all([
           getReports(memberId, 'presence', from, to),
-          getReports(memberId, 'lateness', from, to)
+          getReports(memberId, 'lateness', from, to),
+          getDaysOffForUser(memberId, formatLocalDate(from), formatLocalDate(to))
         ])
         
-        console.log('Presence KPI:', presenceKPI)
-        console.log('Lateness KPI:', latenessKPI)
+        setDaysOff(daysOffData)
         
         // Convertir en Map pour faciliter l'accès
         const presenceMap = new Map<string, number>()
@@ -123,8 +108,6 @@ export default function MemberSummaryPage() {
           weekDays.push(dayStr)
         }
         
-        console.log('Generated week days:', weekDays)
-        
         // Créer les tableaux avec tous les jours (0 si pas de données)
         const presenceArray = weekDays.map(day => ({
           day,
@@ -135,9 +118,6 @@ export default function MemberSummaryPage() {
           day,
           lateness: latenessMap.get(day) || 0
         }))
-        
-        console.log('Presence data:', presenceArray)
-        console.log('Lateness data:', latenessArray)
         
         setPresenceData(presenceArray)
         setLatenessData(latenessArray)
@@ -202,20 +182,33 @@ export default function MemberSummaryPage() {
           {/* Graphique 1 - Heures travaillées par jour */}
           <Card title="📊 Heures travaillées cette semaine">
             {presenceData.length > 0 ? (
-              <BarChart 
-                data={presenceData.map(d => {
-                  const date = new Date(d.day)
-                  const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' })
-                  const dayNum = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
-                  return {
-                    label: `${dayName} ${dayNum}`,
-                    value: d.time
-                  }
-                })}
-                color="#10b981"
-                unit="h"
-                height={400}
-              />
+              <div>
+                <BarChart 
+                  data={presenceData.map(d => {
+                    const date = new Date(d.day)
+                    const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' })
+                    const dayNum = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+                    const isDayOff = daysOff.includes(d.day)
+                    return {
+                      label: `${dayName} ${dayNum}${isDayOff ? ' 🏖️' : ''}`,
+                      value: d.time
+                    }
+                  })}
+                  color="#10b981"
+                  unit="h"
+                  height={400}
+                />
+                <div className="mt-4 flex justify-center gap-6 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-green-500 rounded"></div>
+                    <span>Heures travaillées</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>🏖️</span>
+                    <span>Jour de repos</span>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                 <div className="text-center">
@@ -278,11 +271,14 @@ export default function MemberSummaryPage() {
           <Card title="Moyenne d'heure par jour">
             <div className="flex flex-col items-center justify-center py-8">
               <div className="text-5xl font-bold text-blue-600 mb-2">
-                {presenceData.length > 0 ? (
-                  `${Math.floor((presenceData.reduce((sum, d) => sum + d.time, 0) / presenceData.length) / 60)}h${Math.round((presenceData.reduce((sum, d) => sum + d.time, 0) / presenceData.length) % 60).toString().padStart(2, '0')}`
-                ) : '0h00'}
+                {(() => {
+                  const workingDays = presenceData.filter(d => !daysOff.includes(d.day)).length
+                  const totalMinutes = presenceData.reduce((sum, d) => sum + d.time, 0)
+                  const avgMinutes = workingDays > 0 ? totalMinutes / workingDays : 0
+                  return `${Math.floor(avgMinutes / 60)}h${Math.round(avgMinutes % 60).toString().padStart(2, '0')}`
+                })()}
               </div>
-              <div className="text-sm text-gray-500">Heures/jour</div>
+              <div className="text-sm text-gray-500">Heures/jour (hors repos)</div>
             </div>
           </Card>
 
