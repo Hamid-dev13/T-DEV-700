@@ -249,3 +249,60 @@ export async function getReports(userId: string, reportType: string, from: Date,
     return []
   }
 }
+
+// --- Leave Periods ---
+export async function getMyLeavePeriods() {
+  return apiClient.get('/user/leave-periods')
+}
+
+export async function getUserLeavePeriods(userId: string) {
+  return apiClient.get(`/users/${encodeURIComponent(userId)}/leave-periods`)
+}
+
+export async function createLeavePeriod(startDate: Date, endDate: Date) {
+  const payload = {
+    start_date: startDate.toISOString(),
+    end_date: endDate.toISOString()
+  }
+  return apiClient.post('/user/leave-periods', payload)
+}
+
+export async function updateLeavePeriodStatus(userId: string, leaveId: string, accepted: boolean) {
+  const payload = { accepted }
+  return apiClient.put(`/users/${encodeURIComponent(userId)}/leave-periods/${encodeURIComponent(leaveId)}`, payload)
+}
+
+export async function deleteLeavePeriod(leaveId: string) {
+  return apiClient.delete(`/user/leave-periods/${encodeURIComponent(leaveId)}`)
+}
+
+export async function deleteUserLeavePeriod(userId: string, leaveId: string) {
+  return apiClient.delete(`/users/${encodeURIComponent(userId)}/leave-periods/${encodeURIComponent(leaveId)}`)
+}
+
+export async function getTeamMembersLeavePeriods(teamId: string) {
+  try {
+    const teamData = await getTeamUsers(teamId)
+    const members = teamData.members || []
+    
+    const allPeriods = await Promise.all(
+      members.map(async (member: any) => {
+        try {
+          const periods = await getUserLeavePeriods(member.id)
+          return periods.map((period: any) => ({
+            ...period,
+            user: member
+          }))
+        } catch (err) {
+          console.error(`Erreur lors de la récupération des périodes pour ${member.id}:`, err)
+          return []
+        }
+      })
+    )
+    
+    return allPeriods.flat()
+  } catch (err) {
+    console.error('Erreur getTeamMembersLeavePeriods:', err)
+    return []
+  }
+}

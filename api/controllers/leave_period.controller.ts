@@ -42,6 +42,19 @@ export async function addLeavePeriodForMyUserController(req: Request, res: Respo
     if (endDate.getTime() - startDate.getTime() < 360000 * 24)
       return sendError(res, "Invalid Dates", 400);
     
+    // Vérifier les chevauchements avec les demandes existantes
+    const existingPeriods = await retrieveLeavePeriods(user_id);
+    const hasOverlap = existingPeriods.some(period => {
+      const periodStart = new Date(period.startDate);
+      const periodEnd = new Date(period.endDate);
+      // Vérifier si les périodes se chevauchent
+      return (startDate < periodEnd && endDate > periodStart);
+    });
+
+    if (hasOverlap) {
+      return sendError(res, "Ces dates se chevauchent avec une demande existante", 400);
+    }
+    
     const period = await addLeavePeriod(user_id, startDate, endDate);
     return res.status(200).json(period);
   } catch (err) {

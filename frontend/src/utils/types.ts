@@ -21,3 +21,12 @@ export interface Clock {
     user_id: string
     at: string
 }
+
+export interface LeavePeriod {
+    id: string
+    user_id: string
+    startDate: string
+    endDate: string
+    accepted: boolean
+    createdAt: string
+}

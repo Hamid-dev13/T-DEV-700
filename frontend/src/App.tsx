@@ -8,6 +8,8 @@ import DashboardPage from './pages/DashboardPage'
 import TeamManagePage from './pages/TeamManagePage'
 import MemberDetailsPage from './pages/MemberDetailsPage'
 import MemberSummaryPage from './pages/MemberSummaryPage'
+import LeaveRequestPage from './pages/LeaveRequestPage'
+import LeaveValidationPage from './pages/LeaveValidationPage'
 
 function LoadingScreen() {
   return (
@@ -47,6 +49,8 @@ function AppRoutes() {
       <Route path="/team" element={<TeamManagePage />} />
       <Route path="/member/:memberId" element={<MemberDetailsPage />} />
       <Route path="/member/:memberId/summary" element={<MemberSummaryPage />} />
+      <Route path="/leave-request" element={<LeaveRequestPage />} />
+      <Route path="/leave-validation" element={<LeaveValidationPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Shell, Card } from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { getMyTeams } from '../utils/api'
@@ -19,6 +20,7 @@ function formatHoursToHHMM(decimalHours: number): string {
 
 export default function TeamManagePage() {
   const { user: me } = useAuth()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'members' | 'manager'>('members')
   const [allTeams, setAllTeams] = useState<TeamData[]>([])
   const [selectedTeamIndex, setSelectedTeamIndex] = useState(0)
@@ -82,6 +84,15 @@ export default function TeamManagePage() {
   }
 
   const { team, manager, members } = teamData
+  const isManager = me?.id === manager.id
+
+  function handleLeaveRequest() {
+    if (isManager) {
+      navigate('/leave-validation')
+    } else {
+      navigate('/leave-request')
+    }
+  }
 
   return (
     <Shell>
@@ -105,11 +116,25 @@ export default function TeamManagePage() {
         )}
 
         {/* Nom de l'équipe en haut au centre */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="page-title">👥 {team.name}</h1>
           {team.description && (
             <p className="text-lg subtle mt-2">{team.description}</p>
           )}
+        </div>
+
+        {/* Bouton de gestion des vacances */}
+        <div className="flex justify-center mb-8">
+          <button
+            onClick={handleLeaveRequest}
+            className="btn-primary px-8 py-4 text-lg font-semibold rounded-xl shadow-lg transition-all hover:scale-105"
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(255, 212, 0, 0.3), rgba(255, 212, 0, 0.15))',
+              border: '2px solid rgba(255, 212, 0, 0.4)'
+            }}
+          >
+            {isManager ? '👔 Valider les demandes de vacances' : '🏖️ Faire une demande de vacances'}
+          </button>
         </div>
 
         {/* Onglets */}
