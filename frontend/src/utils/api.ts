@@ -233,3 +233,19 @@ export async function teamAverages(teamId: string, from?: Date, to?: Date) {
 
   return { daily, weekly }
 }
+
+// --- Reports ---
+export async function getReports(userId: string, reportType: string, from: Date, to: Date) {
+  try {
+    const params = new URLSearchParams({
+      user: userId,
+      report: reportType,
+      from: from.toISOString(),
+      to: to.toISOString()
+    })
+    return await apiClient.get(`/reports?${params.toString()}`)
+  } catch (err) {
+    console.error('Erreur getReports:', err)
+    return []
+  }
+}

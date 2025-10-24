@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Shell, Card } from '../components/Layout'
+import { getReports } from '../utils/api'
+import BarChart from '../components/BarChart'
 
 interface MemberInfo {
   id: string
@@ -9,11 +11,23 @@ interface MemberInfo {
   email: string
 }
 
+interface PresenceData {
+  day: string
+  time: number
+}
+
+interface LatenessData {
+  day: string
+  lateness: number
+}
+
 export default function MemberSummaryPage() {
   const { memberId } = useParams<{ memberId: string }>()
   const navigate = useNavigate()
   const [member, setMember] = useState<MemberInfo | null>(null)
   const [loading, setLoading] = useState(true)
+  const [presenceData, setPresenceData] = useState<PresenceData[]>([])
+  const [latenessData, setLatenessData] = useState<LatenessData[]>([])
 
   useEffect(() => {
     if (!memberId) return
@@ -21,6 +35,7 @@ export default function MemberSummaryPage() {
     async function loadData() {
       try {
         setLoading(true)
+        console.log('🔄 LOADING MEMBER SUMMARY PAGE - CODE VERSION 4.0 - USING KPI ROUTES')
         
         // Récupérer les infos du membre depuis sessionStorage
         const memberDataStr = sessionStorage.getItem(`member_${memberId}`)
@@ -28,6 +43,104 @@ export default function MemberSummaryPage() {
           const memberData = JSON.parse(memberDataStr)
           setMember(memberData)
         }
+        
+        // Vérifier que memberId existe
+        if (!memberId) {
+          console.error('Member ID is undefined')
+          return
+        }
+        
+        // Calculer la période (semaine en cours - lundi à vendredi)
+        const today = new Date()
+        
+        // Trouver le lundi de la semaine en cours
+        const dayOfWeek = today.getDay() // 0 = Dimanche, 1 = Lundi, ..., 6 = Samedi
+        // Calculer combien de jours on doit reculer pour arriver à lundi
+        // Dimanche (0) -> reculer de 6 jours, Lundi (1) -> 0 jours, Mardi (2) -> 1 jour, etc.
+        const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+        const monday = new Date(today)
+        monday.setDate(today.getDate() - daysToSubtract)
+        monday.setHours(0, 0, 0, 0)
+        
+        // Vendredi de la semaine en cours  
+        const friday = new Date(monday)
+        friday.setDate(monday.getDate() + 4)
+        friday.setHours(23, 59, 59, 999)
+        
+        console.log('=== WEEK CALCULATION ===')
+        console.log('Today is:', today.toLocaleDateString('fr-FR', { weekday: 'long' }), today.toLocaleDateString('fr-FR'))
+        console.log('Day of week number:', today.getDay())
+        console.log('Days to subtract:', daysToSubtract)
+        console.log('Monday is:', monday.toLocaleDateString('fr-FR', { weekday: 'long' }), monday.toLocaleDateString('fr-FR'))
+        console.log('Friday is:', friday.toLocaleDateString('fr-FR', { weekday: 'long' }), friday.toLocaleDateString('fr-FR'))
+        
+        const from = monday
+        const to = friday
+        
+        // Formater les dates en YYYY-MM-DD sans conversion UTC
+        const formatLocalDate = (date: Date) => {
+          const year = date.getFullYear()
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          const day = String(date.getDate()).padStart(2, '0')
+          return `${year}-${month}-${day}`
+        }
+        
+        console.log('Week period:', {
+          from: formatLocalDate(from),
+          to: formatLocalDate(to),
+          fromDay: from.toLocaleDateString('fr-FR', { weekday: 'long' }),
+          toDay: to.toLocaleDateString('fr-FR', { weekday: 'long' })
+        })
+        
+        // Récupérer les KPI via les routes backend
+        console.log('Fetching KPI data from backend...')
+        const [presenceKPI, latenessKPI] = await Promise.all([
+          getReports(memberId, 'presence', from, to),
+          getReports(memberId, 'lateness', from, to)
+        ])
+        
+        console.log('Presence KPI:', presenceKPI)
+        console.log('Lateness KPI:', latenessKPI)
+        
+        // Convertir en Map pour faciliter l'accès
+        const presenceMap = new Map<string, number>()
+        const latenessMap = new Map<string, number>()
+        
+        presenceKPI.forEach((item: any) => {
+          presenceMap.set(item.day, item.time)
+        })
+        
+        latenessKPI.forEach((item: any) => {
+          latenessMap.set(item.day, item.lateness)
+        })
+        
+        // Générer tous les jours de lundi à vendredi de la semaine en cours
+        const weekDays: string[] = []
+        for (let i = 0; i < 5; i++) { // Lundi à Vendredi
+          const day = new Date(monday)
+          day.setDate(monday.getDate() + i)
+          const dayStr = formatLocalDate(day)
+          weekDays.push(dayStr)
+        }
+        
+        console.log('Generated week days:', weekDays)
+        
+        // Créer les tableaux avec tous les jours (0 si pas de données)
+        const presenceArray = weekDays.map(day => ({
+          day,
+          time: presenceMap.get(day) || 0
+        }))
+        
+        const latenessArray = weekDays.map(day => ({
+          day,
+          lateness: latenessMap.get(day) || 0
+        }))
+        
+        console.log('Presence data:', presenceArray)
+        console.log('Lateness data:', latenessArray)
+        
+        setPresenceData(presenceArray)
+        setLatenessData(latenessArray)
         
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error)
@@ -73,6 +186,7 @@ export default function MemberSummaryPage() {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 Résumés - {member?.firstName} {member?.lastName}
               </h1>
+              <p className="text-sm text-gray-500">Semaine en cours</p>
               <p className="text-gray-600">{member?.email}</p>
             </div>
             <div className="text-right">
@@ -83,82 +197,109 @@ export default function MemberSummaryPage() {
           </div>
         </div>
 
-        {/* Section des graphiques - Placeholder */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Graphique 1 - Heures travaillées par semaine */}
-          <Card title="Heures travaillées par semaine">
-            <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
-              <div className="text-center text-gray-500">
-                <svg className="w-16 h-16 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                </svg>
-                <p className="font-medium">Graphique à venir</p>
-                <p className="text-sm">Les données seront affichées ici</p>
+        {/* Section des graphiques - GROS GRAPHIQUES */}
+        <div className="space-y-6 mb-6">
+          {/* Graphique 1 - Heures travaillées par jour */}
+          <Card title="📊 Heures travaillées cette semaine">
+            {presenceData.length > 0 ? (
+              <BarChart 
+                data={presenceData.map(d => {
+                  const date = new Date(d.day)
+                  const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' })
+                  const dayNum = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+                  return {
+                    label: `${dayName} ${dayNum}`,
+                    value: d.time
+                  }
+                })}
+                color="#10b981"
+                unit="h"
+                height={400}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <div className="text-center">
+                  <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <p className="text-gray-600 font-medium mb-2">Aucune donnée disponible</p>
+                  <p className="text-gray-500 text-sm">Les heures travaillées apparaîtront ici</p>
+                </div>
               </div>
+            )}
+          </Card>
+
+          {/* Graphique 2 - Retards par jour */}
+          <Card title="⏰ Retards cette semaine">
+            {latenessData.length > 0 ? (
+              <BarChart 
+                data={latenessData.map(d => {
+                  const date = new Date(d.day)
+                  const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' })
+                  const dayNum = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+                  return {
+                    label: `${dayName} ${dayNum}`,
+                    value: d.lateness
+                  }
+                })}
+                color="#ef4444"
+                unit="min"
+                height={400}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <div className="text-center">
+                  <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-gray-600 font-medium mb-2">Aucune donnée disponible</p>
+                  <p className="text-gray-500 text-sm">Les retards apparaîtront ici</p>
+                </div>
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* Section des statistiques récapitulatives */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Stat 1 - Total heures */}
+          <Card title="Total heures travaillées">
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="text-5xl font-bold text-green-600 mb-2">
+                {presenceData.length > 0 ? (
+                  `${Math.floor(presenceData.reduce((sum, d) => sum + d.time, 0) / 60)}h${Math.round(presenceData.reduce((sum, d) => sum + d.time, 0) % 60).toString().padStart(2, '0')}`
+                ) : '0h00'}
+              </div>
+              <div className="text-sm text-gray-500">Cette semaine</div>
             </div>
           </Card>
 
-          {/* Graphique 2 - Ponctualité */}
-          <Card title="Statistiques de ponctualité">
-            <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
-              <div className="text-center text-gray-500">
-                <svg className="w-16 h-16 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-                </svg>
-                <p className="font-medium">Graphique à venir</p>
-                <p className="text-sm">Les données seront affichées ici</p>
+          {/* Stat 2 - Moyenne journalière */}
+          <Card title="Moyenne d'heure par jour">
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="text-5xl font-bold text-blue-600 mb-2">
+                {presenceData.length > 0 ? (
+                  `${Math.floor((presenceData.reduce((sum, d) => sum + d.time, 0) / presenceData.length) / 60)}h${Math.round((presenceData.reduce((sum, d) => sum + d.time, 0) / presenceData.length) % 60).toString().padStart(2, '0')}`
+                ) : '0h00'}
               </div>
+              <div className="text-sm text-gray-500">Heures/jour</div>
+            </div>
+          </Card>
+
+          {/* Stat 3 - Retard de la semaine */}
+          <Card title="Retard de la semaine">
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="text-5xl font-bold text-red-600 mb-2">
+                {latenessData.length > 0 ? (
+                  `${Math.round(latenessData.reduce((sum, d) => sum + d.lateness, 0))}`
+                ) : '0'}
+                <span className="text-2xl ml-1">min</span>
+              </div>
+              <div className="text-sm text-gray-500">Total cette semaine</div>
             </div>
           </Card>
         </div>
 
-        {/* Section des graphiques - Ligne 2 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Graphique 3 - Tendance mensuelle */}
-          <Card title="Tendance mensuelle">
-            <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
-              <div className="text-center text-gray-500">
-                <svg className="w-16 h-16 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                <p className="font-medium">Graphique à venir</p>
-                <p className="text-sm">Les données seront affichées ici</p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Graphique 4 - Performance globale */}
-          <Card title="Performance globale">
-            <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
-              <div className="text-center text-gray-500">
-                <svg className="w-16 h-16 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <p className="font-medium">Graphique à venir</p>
-                <p className="text-sm">Les données seront affichées ici</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Section récapitulative */}
-        <Card title="Récapitulatif">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <div className="flex items-start gap-3">
-              <svg className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <h3 className="font-semibold text-blue-900 mb-2">Page en construction</h3>
-                <p className="text-blue-800 text-sm">
-                  Cette page affichera prochainement des graphiques détaillés sur les performances de l'employé, 
-                  incluant les heures travaillées, la ponctualité, les tendances et d'autres métriques importantes.
-                </p>
-              </div>
-            </div>
-          </div>
-        </Card>
       </div>
     </Shell>
   )
