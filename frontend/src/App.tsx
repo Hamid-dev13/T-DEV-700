@@ -7,6 +7,7 @@ import ClockPage from './pages/ClockPage'
 import DashboardPage from './pages/DashboardPage'
 import TeamManagePage from './pages/TeamManagePage'
 import MemberDetailsPage from './pages/MemberDetailsPage'
+import MemberSummaryPage from './pages/MemberSummaryPage'
 
 function LoadingScreen() {
   return (
@@ -45,6 +46,7 @@ function AppRoutes() {
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/team" element={<TeamManagePage />} />
       <Route path="/member/:memberId" element={<MemberDetailsPage />} />
+      <Route path="/member/:memberId/summary" element={<MemberSummaryPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
