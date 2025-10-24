@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { addClock, getClocksForUserFiltered, removeClock, updateClock } from "../services/clock.service";
+import { addClock, getClocksForUserFiltered, getDaysOffForUser, removeClock, updateClock } from "../services/clock.service";
 import { convertToUTC, formatWithTimezone } from "../utils/timezone";
 import { sendError } from "../utils/format";
 import { isManagerOfUser } from "../services/team.service";
@@ -114,6 +114,34 @@ export async function deleteClockForMemberController(req: Request, res: Response
     await removeClock(user_id, atDate);
     
     return res.sendStatus(200);
+  } catch (err) {
+    return sendError(res, err);
+  }
+}
+
+export async function getDaysOffForUserController(req: Request, res: Response) {
+  try {
+    const user_id = req.params.id!;
+    const { from, to } = req.query ?? {};
+
+    if (!from || !to)
+      return sendError(res, "Missing required fields 'from', 'to'", 400);
+
+    const fromDate = new Date(from as string);
+    if (isNaN(fromDate.getTime())) return sendError(res, "Invalid Date \"from\"", 400);
+    fromDate.setHours(0, 0, 0, 0)
+
+    const toDate = new Date(to as string);
+    if (isNaN(toDate.getTime())) return sendError(res, "Invalid Date \"to\"", 400);
+    toDate.setHours(0, 0, 0, 0)
+
+    const days_off = await getDaysOffForUser(user_id, { from: fromDate, to: toDate });
+    
+    return res.status(200).json({
+      from,
+      to,
+      days_off
+    });
   } catch (err) {
     return sendError(res, err);
   }

@@ -7,7 +7,9 @@ import { userTeams } from "../models/user_team.model";
 
 const REPORT_FUNC_MAP = new Map<string, (groupedData: [string, Date[]][], startHour: number, endHour: number) => any>([
   ['lateness', calculateLatenessKPI],
-  ['pause_times', calculatePauseTimesKPI]
+  ['pause_times', calculatePauseTimesKPI],
+  ['presence', calculatePresenceKPI],
+  ['earlyness', calculateEarlynessKPI],
 ])
 
 function groupByDay(entries: Date[]): [string, Date[]][] {
@@ -107,4 +109,38 @@ function calculatePauseTimesKPI(groupedData: [string, Date[]][], startHour: numb
   }
 
   return pauseTimesMap;
+}
+
+function calculatePresenceKPI(groupedData: [string, Date[]][], startHour: number, endHour: number): any {
+  const presenceMap: any[] = [];
+
+  for (let i = 0; i < groupedData.length; i++) {
+    const [ day, dates ] = groupedData[i];
+
+    if (dates.length > 0 && dates.length % 2 == 0) {
+      presenceMap.push({ day, time: sumPeriods(dates) });
+    }
+  }
+
+  return presenceMap;
+}
+
+function calculateEarlynessKPI(groupedData: [string, Date[]][], startHour: number, endHour: number): any {
+  const earlynessMap: any[] = [];
+
+  for (let i = 0; i < groupedData.length; i++) {
+    const [ day, dates ] = groupedData[i];
+
+    if (dates.length > 0) {
+      const arrivalHour = getLocalHour(dates[0]);
+      const expectedHour = startHour;
+      
+      const delayInHours = expectedHour - arrivalHour;
+      const delayInMinutes = Math.round(delayInHours * 60);
+
+      earlynessMap.push({ day, earlyness: delayInMinutes > 0 ? delayInMinutes : 0 });
+    }
+  }
+
+  return earlynessMap;
 }

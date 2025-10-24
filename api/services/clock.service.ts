@@ -1,9 +1,10 @@
-import { and, between, eq, gte, isNull, lt, notExists, sql } from "drizzle-orm";
+import { and, between, eq, gte, lt, lte, notExists, or, sql } from "drizzle-orm";
 import { db } from "../db/client";
 import { Clock, clocks } from "../models/clock.model";
 import { leavePeriods } from "../models/leave_period.model";
+import { publicHolidays } from "../models/public_holiday.model";
 
-export type ReportTimeSummaryInput = {
+export type TimePeriodInput = {
   from: Date,
   to: Date,
 };
@@ -54,7 +55,7 @@ export async function getClocksForUser(
   {
     from,
     to,
-  }: ReportTimeSummaryInput
+  }: TimePeriodInput
 ): Promise<Date[]> {
   const dateOffset = new Date(0);
   dateOffset.setDate(2);  // 1 based, next day is 2
@@ -81,7 +82,7 @@ export async function getClocksForUserFiltered(
   {
     from,
     to,
-  }: ReportTimeSummaryInput
+  }: TimePeriodInput
 ): Promise<Date[]> {
   const dateOffset = new Date(0);
   dateOffset.setDate(2);  // 1 based, next day is 2
@@ -99,8 +100,67 @@ export async function getClocksForUserFiltered(
           eq(leavePeriods.user_id, clocks.user_id),
           eq(leavePeriods.accepted, true),
           between(clocks.at, leavePeriods.startDate, leavePeriods.endDate)))
-      )))
+      ),
+      notExists(
+        db.select()
+          .from(publicHolidays)
+          .where(eq(publicHolidays.date, sql`date(${clocks.at})`))
+      )
+    ))
     .orderBy(clocks.at);
 
   return results.map((row) => row.at);
+}
+
+export async function getDaysOffForUser(
+  user_id: string,
+  {
+    from,
+    to,
+  }: TimePeriodInput
+): Promise<any> {
+  const dateOffset = new Date(0);
+  dateOffset.setDate(2);  // 1 based, next day is 2
+
+  const toNext = new Date(to.getTime() + dateOffset.getTime());
+  const fromDateStr = from.toISOString().substring(0, 10);
+  const toNextDateStr = toNext.toISOString().substring(0, 10);
+
+  const holidays = await db
+    .select()
+    .from(publicHolidays)
+    .where(between(publicHolidays.date, fromDateStr, toNextDateStr))
+    .then(rows => rows.map(row => row.date));
+  
+  const leaveDays = await db
+    .select()
+    .from(leavePeriods)
+    .where(and(
+      eq(leavePeriods.user_id, user_id),
+      or(
+        gte(leavePeriods.startDate, from),
+        lte(leavePeriods.endDate, toNext),
+        or(and(
+          lte(leavePeriods.startDate, from),
+          gte(leavePeriods.endDate, toNext)
+        ))
+      )
+    ));
+  
+  const leaveDates: string[] = [];
+  
+  // fill with dates from leave periods
+  for (const leave of leaveDays) {
+    let current = leave.startDate;
+    const end = leave.endDate;
+
+    while (current <= end) {
+      if (current >= from && current <= toNext) {
+        leaveDates.push(current.toISOString().substring(0, 10));
+      }
+      current.setUTCDate(current.getUTCDate() + 1);
+    }
+  }
+
+  return Array.from(new Set([...holidays, ...leaveDates])).sort();
 }
