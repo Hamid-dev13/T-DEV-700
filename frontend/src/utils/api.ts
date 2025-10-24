@@ -201,6 +201,10 @@ export async function deleteClockForMember(userId: string, at: Date | string) {
   }
 }
 
+export async function getDaysOffForUser(userId: string, from: string, to: string): Promise<string[]> {
+  return apiClient.get(`/users/${encodeURIComponent(userId)}/days-off?`, { query: { from, to } }).then((res: any) => res.days_off || [])
+}
+
 export async function teamAverages(teamId: string, from?: Date, to?: Date) {
   try {
     return await apiClient.get(`/teams/${encodeURIComponent(teamId)}/averages`, { query: { from, to } })

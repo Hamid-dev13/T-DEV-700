@@ -7,10 +7,10 @@ export async function retrieveLeavePeriods(user_id: string): Promise<LeavePeriod
     .where(eq(leavePeriods.user_id, user_id));
 }
 
-export async function addLeavePeriod(user_id: string, startDate: Date, endDate: Date): Promise<LeavePeriod> {
+export async function addLeavePeriod(user_id: string, startDate: Date, endDate: Date, accepted?: boolean): Promise<LeavePeriod> {
   const [period] = await db
     .insert(leavePeriods)
-    .values({ user_id, startDate, endDate })
+    .values({ user_id, startDate, endDate, accepted: accepted ?? false })
     .returning();
   
   return period;

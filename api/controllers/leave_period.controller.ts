@@ -67,7 +67,7 @@ export async function addLeavePeriodForUserController(req: Request, res: Respons
     const sender_id = req.user_id!;
     const user_id = req.params.id!;
     const is_admin = req.admin!;
-    const { start_date: start, end_date: end } = req.body ?? {};
+    const { start_date: start, end_date: end, accepted } = req.body ?? {};
 
     const startDate = new Date(start);
     if (isNaN(startDate.getTime())) return sendError(res, "Invalid Date \"start_date\"", 400);
@@ -83,7 +83,7 @@ export async function addLeavePeriodForUserController(req: Request, res: Respons
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
       return sendError(res, "Insufficient permissions", 401);
     
-    const period = await addLeavePeriod(user_id, startDate, endDate);
+    const period = await addLeavePeriod(user_id, startDate, endDate, accepted);
     return res.status(200).json(period);
   } catch (err) {
     return sendError(res, err);

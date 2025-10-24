@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Shell, Card } from '../components/Layout'
-import { getClocks, getMyTeams, getTeamUsers } from '../utils/api'
+import { getClocks, getDaysOffForUser, getMyTeams, getTeamUsers } from '../utils/api'
 import { useAuth } from '../context/AuthContext'
 import { Team, User } from '../utils/types'
 
@@ -85,6 +85,8 @@ export default function DashboardPage() {
     totalWeek: number
     todayHours: number
     last7Days: string[]
+    daysOff: string[]
+    workingDaysCount: number
   } | null>(null)
   const [managedTeam, setManagedTeam] = useState<TeamWithMembers | null>(null)
   const [teamSummary, setTeamSummary] = useState<{
@@ -134,8 +136,12 @@ export default function DashboardPage() {
         const todayHours = dailyHours.find(d => d.day === today)?.hours || 0
         
         const last7Days = getCurrentWeekDays()
-        
-        setSummary({ dailyHours, totalWeek, todayHours, last7Days })
+
+        const daysOff = await getDaysOffForUser(user!.id, last7Days[0], last7Days[last7Days.length - 1])
+
+        const workingDaysCount = last7Days.filter(d => !daysOff.includes(d)).length
+
+        setSummary({ dailyHours, totalWeek, todayHours, last7Days, daysOff, workingDaysCount })
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error)
       } finally {
@@ -213,6 +219,9 @@ export default function DashboardPage() {
     )
   }
 
+  const dayHoursTarget = managedTeam ? (managedTeam.team.endHour - managedTeam.team.startHour) : 0
+  const weekHoursTarget = summary ? dayHoursTarget * summary.workingDaysCount : 0
+
   return (
     <Shell>
       <div className="p-6 max-w-7xl mx-auto">
@@ -222,14 +231,14 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-1">Cette semaine</h3>
-                <p className="text-sm text-gray-600">Objectif : 40h (8h/jour)</p>
+                <p className="text-sm text-gray-600">Objectif : {weekHoursTarget}h ({dayHoursTarget}h/jour)</p>
               </div>
               <div className="text-right">
                 <div className="text-5xl font-bold text-yellow-600">
                   {summary ? formatHoursToHHMM(summary.totalWeek) : '0:00'}
                 </div>
                 <div className="text-sm text-gray-600 mt-1">
-                  sur 40h
+                  sur {weekHoursTarget}h
                 </div>
               </div>
             </div>
@@ -239,23 +248,23 @@ export default function DashboardPage() {
               <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
                 <div 
                   className={`h-4 rounded-full transition-all duration-700 ${
-                    summary && summary.totalWeek >= 40 ? 'bg-green-500' :
-                    summary && summary.totalWeek >= 32 ? 'bg-yellow-500' :
+                    summary && summary.totalWeek >= weekHoursTarget ? 'bg-green-500' :
+                    summary && summary.totalWeek >= Math.round(weekHoursTarget * 0.8) ? 'bg-yellow-500' :
                     'bg-orange-500'
                   }`}
-                  style={{ width: `${Math.min((summary?.totalWeek || 0) / 40 * 100, 100)}%` }}
+                  style={{ width: `${Math.min((summary?.totalWeek || 0) / weekHoursTarget * 100, 100)}%` }}
                 />
               </div>
               <div className="flex justify-between text-xs text-gray-500 mt-2">
                 <span>0h</span>
-                <span>20h</span>
-                <span className="font-semibold">40h</span>
+                <span>{Math.round(weekHoursTarget * 0.5)}h</span>
+                <span className="font-semibold">{weekHoursTarget}h</span>
               </div>
             </div>
             
             {/* Indicateur de progression */}
             <div className="mt-4 flex items-center justify-center gap-2">
-              {summary && summary.totalWeek >= 40 ? (
+              {summary && summary.totalWeek >= weekHoursTarget ? (
                 <>
                   <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -264,7 +273,7 @@ export default function DashboardPage() {
                 </>
               ) : (
                 <span className="text-sm text-gray-600">
-                  Encore {formatHoursToHHMM(Math.max(40 - (summary?.totalWeek || 0), 0))} pour atteindre l'objectif
+                  Encore {formatHoursToHHMM(Math.max(weekHoursTarget - (summary?.totalWeek || 0), 0))} pour atteindre l'objectif
                 </span>
               )}
             </div>
@@ -286,8 +295,8 @@ export default function DashboardPage() {
                 {summary ? formatHoursToHHMM(summary.todayHours) : '0:00'}
               </div>
               <div className="flex items-center gap-1">
-                <div className="text-xs text-gray-500">Objectif: 8h</div>
-                {summary && summary.todayHours >= 8 && (
+                <div className="text-xs text-gray-500">Objectif: {dayHoursTarget}h</div>
+                {summary && summary.todayHours >= dayHoursTarget && (
                   <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
@@ -322,7 +331,7 @@ export default function DashboardPage() {
                 <div className="text-sm font-semibold text-gray-700">Jours travaillés</div>
               </div>
               <div className="text-3xl font-bold text-gray-900 mb-1">
-                {summary ? summary.dailyHours.filter(d => d.hours > 0).length : 0}/5
+                {summary ? summary.dailyHours.filter(d => d.hours > 0).length : 0}/{summary ? summary.workingDaysCount : 0}
               </div>
               <div className="text-xs text-gray-500">Cette semaine</div>
             </div>
@@ -346,91 +355,100 @@ export default function DashboardPage() {
                   const isToday = day === new Date().toISOString().slice(0, 10)
                   const targetHours = 8
                   const progress = (hours / targetHours) * 100
+                  const isDayOff = summary.daysOff.includes(day)
                   
                   return (
                     <div 
                       key={day} 
                       className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
-                        isToday 
-                          ? 'bg-yellow-50 border-yellow-400 shadow-lg' 
+                          isToday 
+                          ? isDayOff ? 'bg-gray-100 border-gray-300'
+                          : 'bg-yellow-50 border-yellow-400 shadow-lg' 
+                          : isDayOff ? 'bg-gray-100 border-gray-200 hover:border-gray-300 hover:shadow-md'
                           : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
                       }`}
                     >
                       <div className="flex items-center gap-4 min-w-[180px]">
                         <div className={`w-14 h-14 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm ${
-                          isToday 
+                          isToday && !isDayOff
                             ? 'bg-yellow-500 text-white' 
                             : 'bg-gray-100 text-gray-700'
                         }`}>
                           {dayName.substring(0, 3).toUpperCase()}
                         </div>
                         <div>
-                          <div className={`font-bold capitalize ${isToday ? 'text-yellow-900' : 'text-gray-900'}`}>
+                          <div className={`font-bold capitalize ${isToday && !isDayOff ? 'text-yellow-900' : 'text-gray-900'}`}>
                             {dayName}
                           </div>
                           <div className="text-xs text-gray-500">{dayMonth}</div>
                         </div>
                       </div>
-                      
-                      <div className="flex items-center gap-6 flex-1">
-                        {/* Barre de progression avec objectif 7h */}
-                        <div className="flex-1 max-w-md">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="text-xs text-gray-500">Progression</span>
-                            <span className="text-xs font-semibold text-gray-600">{Math.round(progress)}%</span>
-                          </div>
-                          <div className="relative w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                            <div 
-                              className={`h-3 rounded-full transition-all duration-500 ${
-                                hours === 0 ? 'bg-gray-300' :
-                                hours < 5 ? 'bg-red-500' :
-                                hours < 8 ? 'bg-orange-500' :
-                                hours >= 8 ? 'bg-green-500' :
-                                'bg-yellow-500'
-                              }`}
-                              style={{ width: `${Math.min(progress, 100)}%` }}
-                            />
-                            {/* Ligne d'objectif à 7h */}
-                            <div className="absolute top-0 left-[100%] w-0.5 h-3 bg-gray-400" style={{ transform: 'translateX(-1px)' }}></div>
+
+                      {isDayOff ? (
+                        <div className="flex-1 p-4 rounded-full text-gray-500">Jour de repos</div>
+                      ) :
+                        <div className="flex-1 mx-4">
+                          <div className="flex items-center gap-6 flex-1">
+                            {/* Barre de progression avec objectif 7h */}
+                            <div className="flex-1 max-w-md">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-xs text-gray-500">Progression</span>
+                                <span className="text-xs font-semibold text-gray-600">{Math.round(progress)}%</span>
+                              </div>
+                              <div className="relative w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                <div 
+                                  className={`h-3 rounded-full transition-all duration-500 ${
+                                    hours === 0 ? 'bg-gray-300' :
+                                    hours < Math.round(dayHoursTarget * 0.625) ? 'bg-red-500' :
+                                    hours < dayHoursTarget ? 'bg-orange-500' :
+                                    hours >= dayHoursTarget ? 'bg-green-500' :
+                                    'bg-yellow-500'
+                                  }`}
+                                  style={{ width: `${Math.min(progress, 100)}%` }}
+                                />
+                                {/* Ligne d'objectif à 7h */}
+                                <div className="absolute top-0 left-[100%] w-0.5 h-3 bg-gray-400" style={{ transform: 'translateX(-1px)' }}></div>
+                              </div>
+                            </div>
+                            
+                            {/* Heures avec indicateur */}
+                            <div className="flex items-center gap-3 min-w-[140px]">
+                              <div className="text-right">
+                                <div className={`text-2xl font-bold ${
+                                  hours === 0 ? 'text-gray-400' :
+                                  hours < Math.round(dayHoursTarget * 0.625) ? 'text-red-600' :
+                                  hours < dayHoursTarget ? 'text-orange-600' :
+                                  'text-green-600'
+                                }`}>
+                                  {formatHoursToHHMM(hours)}
+                                </div>
+                                <div className="text-xs text-gray-500">/ 8h</div>
+                              </div>
+                              
+                              {/* Icône de statut */}
+                              {hours >= 8 ? (
+                                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                  <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              ) : hours > 0 ? (
+                                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                </div>
+                              ) : (
+                                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        
-                        {/* Heures avec indicateur */}
-                        <div className="flex items-center gap-3 min-w-[140px]">
-                          <div className="text-right">
-                            <div className={`text-2xl font-bold ${
-                              hours === 0 ? 'text-gray-400' :
-                              hours < 5 ? 'text-red-600' :
-                              hours < 8 ? 'text-orange-600' :
-                              'text-green-600'
-                            }`}>
-                              {formatHoursToHHMM(hours)}
-                            </div>
-                            <div className="text-xs text-gray-500">/ 8h</div>
-                          </div>
-                          
-                          {/* Icône de statut */}
-                          {hours >= 8 ? (
-                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                              <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                          ) : hours > 0 ? (
-                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                              <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                            </div>
-                          ) : (
-                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                      }
                     </div>
                   )
                 })}
