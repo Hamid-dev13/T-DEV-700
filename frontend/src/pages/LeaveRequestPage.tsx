@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Shell, Card } from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { getMyLeavePeriods, createLeavePeriod, deleteLeavePeriod } from '../utils/api'
@@ -6,6 +7,7 @@ import { LeavePeriod } from '../utils/types'
 
 export default function LeaveRequestPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [leavePeriods, setLeavePeriods] = useState<LeavePeriod[]>([])
   const [loading, setLoading] = useState(true)
   const [startDate, setStartDate] = useState('')
@@ -375,7 +377,24 @@ export default function LeaveRequestPage() {
   return (
     <Shell>
       <div className="max-w-5xl mx-auto px-4 py-8">
-        <h1 className="page-title text-center mb-8">Mes demandes de vacances</h1>
+        <div className="flex items-center justify-between mb-8">
+          <button
+            onClick={() => navigate('/team')}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all"
+            style={{
+              background: 'rgba(255, 212, 0, 0.1)',
+              border: '1px solid rgba(255, 212, 0, 0.3)',
+              color: 'hsl(var(--ink))'
+            }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Retour à mon équipe
+          </button>
+          <h1 className="page-title">Mes demandes de vacances</h1>
+          <div className="w-[180px]"></div>
+        </div>
 
         <Card title="Nouvelle demande">
           {error && (

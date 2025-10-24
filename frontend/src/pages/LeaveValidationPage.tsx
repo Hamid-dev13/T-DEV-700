@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Shell, Card } from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { getMyTeams, getTeamMembersLeavePeriods, updateLeavePeriodStatus, deleteUserLeavePeriod } from '../utils/api'
@@ -11,6 +12,7 @@ type LeavePeriodWithUser = LeavePeriod & {
 
 export default function LeaveValidationPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [leavePeriods, setLeavePeriods] = useState<LeavePeriodWithUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -455,7 +457,24 @@ export default function LeaveValidationPage() {
   return (
     <Shell>
       <div className="max-w-5xl mx-auto px-4 py-8">
-        <h1 className="page-title text-center mb-8">Validation des demandes de vacances</h1>
+        <div className="flex items-center justify-between mb-8">
+          <button
+            onClick={() => navigate('/team')}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all"
+            style={{
+              background: 'rgba(255, 212, 0, 0.1)',
+              border: '1px solid rgba(255, 212, 0, 0.3)',
+              color: 'hsl(var(--ink))'
+            }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Retour à mon équipe
+          </button>
+          <h1 className="page-title">Validation des demandes</h1>
+          <div className="w-[180px]"></div>
+        </div>
 
         {error && (
           <div className="mb-6 p-4 rounded-lg" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>

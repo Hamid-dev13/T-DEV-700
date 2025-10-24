@@ -301,10 +301,8 @@ export default function MemberDetailsPage() {
       const day = originalDate.getDate()
       const newClockIn = new Date(year, month, day, inHours, inMinutes, 0, 0)
       
-      // Vérifier si c'est un nouveau pointage en vérifiant si le clockIn existe dans les timestamps
-      const isNewClock = !timestamps.some(t => 
-        Math.abs(t.date.getTime() - editingClock.clockIn.getTime()) < 2000
-      )
+      // Vérifier si c'est un nouveau pointage
+      const isNewClock = !editingClock.clockInISO
       
       if (isNewClock) {
         // Créer un nouveau pointage
@@ -317,7 +315,22 @@ export default function MemberDetailsPage() {
         }
       } else {
         // Modifier un pointage existant
-        await updateClockForMember(memberId, editingClock.clockIn.toISOString(), newClockIn)
+        // Trouver le timestamp actuel qui correspond (même jour, heure proche)
+        const dayStr = originalDate.toISOString().slice(0, 10)
+        const matchingClockIn = timestamps.find(t => {
+          const tDayStr = t.date.toISOString().slice(0, 10)
+          if (tDayStr === dayStr) {
+            // Chercher un timestamp avec une heure proche de l'heure affichée
+            const tHour = t.date.getHours()
+            const editHour = editingClock.clockIn.getHours()
+            return Math.abs(tHour - editHour) <= 2 // Tolérance de 2 heures
+          }
+          return false
+        })
+        
+        if (matchingClockIn) {
+          await updateClockForMember(memberId, matchingClockIn.iso, newClockIn)
+        }
         
         if (editingClock.clockOut && editClockOutTime) {
           const [outHours, outMinutes] = editClockOutTime.split(':').map(Number)
@@ -327,7 +340,20 @@ export default function MemberDetailsPage() {
           const outDay = originalOutDate.getDate()
           const newClockOut = new Date(outYear, outMonth, outDay, outHours, outMinutes, 0, 0)
           
-          await updateClockForMember(memberId, editingClock.clockOut.toISOString(), newClockOut)
+          const outDayStr = originalOutDate.toISOString().slice(0, 10)
+          const matchingClockOut = timestamps.find(t => {
+            const tDayStr = t.date.toISOString().slice(0, 10)
+            if (tDayStr === outDayStr) {
+              const tHour = t.date.getHours()
+              const editHour = editingClock.clockOut!.getHours()
+              return Math.abs(tHour - editHour) <= 2
+            }
+            return false
+          })
+          
+          if (matchingClockOut) {
+            await updateClockForMember(memberId, matchingClockOut.iso, newClockOut)
+          }
         }
       }
       
@@ -711,9 +737,8 @@ export default function MemberDetailsPage() {
                             clockOut: defaultClockOut,
                             day: currentDay,
                             clockInOriginal: defaultClockIn,
-                            clockOutOriginal: defaultClockOut,
-                            clockInISO: defaultClockIn.toISOString(),
-                            clockOutISO: defaultClockOut.toISOString()
+                            clockOutOriginal: defaultClockOut
+                            // Ne pas définir clockInISO et clockOutISO pour un nouveau pointage
                           })
                         }}
                         className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
