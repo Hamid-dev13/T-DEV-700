@@ -121,7 +121,7 @@ export async function deleteClockForMemberController(req: Request, res: Response
 
 export async function getDaysOffForUserController(req: Request, res: Response) {
   try {
-    const user_id = req.user_id!;
+    const user_id = req.params.id!;
     const { from, to } = req.query ?? {};
 
     if (!from || !to)

@@ -1,4 +1,4 @@
-import { and, between, eq, gte, lte, notExists, or } from "drizzle-orm";
+import { and, between, eq, gte, lt, lte, notExists, or, sql } from "drizzle-orm";
 import { db } from "../db/client";
 import { Clock, clocks } from "../models/clock.model";
 import { leavePeriods } from "../models/leave_period.model";
@@ -100,7 +100,13 @@ export async function getClocksForUserFiltered(
           eq(leavePeriods.user_id, clocks.user_id),
           eq(leavePeriods.accepted, true),
           between(clocks.at, leavePeriods.startDate, leavePeriods.endDate)))
-      )))
+      ),
+      notExists(
+        db.select()
+          .from(publicHolidays)
+          .where(eq(publicHolidays.date, sql`date(${clocks.at})`))
+      )
+    ))
     .orderBy(clocks.at);
 
   return results.map((row) => row.at);
