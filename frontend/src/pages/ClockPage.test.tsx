@@ -75,8 +75,8 @@ describe('ClockPage Component', () => {
 
   it('should display clock entries when available', async () => {
     const mockClocks = [
-      new Date('2025-10-23T09:00:00'),
-      new Date('2025-10-23T17:00:00')
+      { date: new Date('2025-10-23T09:00:00'), iso: '2025-10-23T09:00:00Z' },
+      { date: new Date('2025-10-23T17:00:00'), iso: '2025-10-23T17:00:00Z' }
     ]
     vi.mocked(api.getClocks).mockResolvedValue(mockClocks)
 
@@ -94,10 +94,10 @@ describe('ClockPage Component', () => {
 
   it('should group clock entries by day', async () => {
     const mockClocks = [
-      new Date('2025-10-23T09:00:00'),
-      new Date('2025-10-23T17:00:00'),
-      new Date('2025-10-22T09:30:00'),
-      new Date('2025-10-22T18:00:00')
+      { date: new Date('2025-10-23T09:00:00'), iso: '2025-10-23T09:00:00Z' },
+      { date: new Date('2025-10-23T17:00:00'), iso: '2025-10-23T17:00:00Z' },
+      { date: new Date('2025-10-22T09:30:00'), iso: '2025-10-22T09:30:00Z' },
+      { date: new Date('2025-10-22T18:00:00'), iso: '2025-10-22T18:00:00Z' }
     ]
     vi.mocked(api.getClocks).mockResolvedValue(mockClocks)
 

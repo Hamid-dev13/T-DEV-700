@@ -123,7 +123,10 @@ describe('MemberDetailsPage Component', () => {
     const clockOut = new Date('2025-01-15T17:00:00')
 
     vi.mocked(api.getTeamsWithMembers).mockResolvedValue([mockTeam])
-    vi.mocked(api.getClocks).mockResolvedValue([clockIn, clockOut])
+    vi.mocked(api.getClocks).mockResolvedValue([
+      { date: clockIn, iso: clockIn.toISOString() },
+      { date: clockOut, iso: clockOut.toISOString() }
+    ])
 
     render(
       <MemoryRouter initialEntries={['/member/member1']}>
@@ -245,10 +248,10 @@ describe('MemberDetailsPage Component', () => {
   it('should load current week clocks', async () => {
     vi.mocked(api.getTeamsWithMembers).mockResolvedValue([mockTeam])
     vi.mocked(api.getClocks).mockResolvedValue([
-      new Date('2025-01-13T09:00:00'),
-      new Date('2025-01-13T17:00:00'),
-      new Date('2025-01-14T09:00:00'),
-      new Date('2025-01-14T17:00:00')
+      { date: new Date('2025-01-13T09:00:00'), iso: '2025-01-13T09:00:00Z' },
+      { date: new Date('2025-01-13T17:00:00'), iso: '2025-01-13T17:00:00Z' },
+      { date: new Date('2025-01-14T09:00:00'), iso: '2025-01-14T09:00:00Z' },
+      { date: new Date('2025-01-14T17:00:00'), iso: '2025-01-14T17:00:00Z' }
     ])
 
     render(

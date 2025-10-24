@@ -36,7 +36,8 @@ describe('apiClient', () => {
         ok: true,
         status: 200,
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => mockResponse
+        json: async () => mockResponse,
+        text: async () => JSON.stringify(mockResponse)
       } as Response)
 
       const result = await api.get('/test')
@@ -56,7 +57,8 @@ describe('apiClient', () => {
         ok: true,
         status: 200,
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({})
+        json: async () => ({}),
+        text: async () => '{}'
       } as Response)
 
       await api.get('/test', { query: { foo: 'bar', baz: 123 } })
@@ -71,7 +73,8 @@ describe('apiClient', () => {
         ok: true,
         status: 200,
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({})
+        json: async () => ({}),
+        text: async () => '{}'
       } as Response)
 
       await api.get('/test', { query: { foo: 'bar', skip: undefined, none: null } })
@@ -90,7 +93,8 @@ describe('apiClient', () => {
         ok: true,
         status: 200,
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: true })
+        json: async () => ({ success: true }),
+        text: async () => '{"success":true}'
       } as Response)
 
       await api.post('/test', mockPayload)
@@ -116,7 +120,8 @@ describe('apiClient', () => {
         ok: true,
         status: 200,
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: true })
+        json: async () => ({ success: true }),
+        text: async () => '{"success":true}'
       } as Response)
 
       await api.put('/test', mockPayload)
@@ -138,7 +143,8 @@ describe('apiClient', () => {
         ok: true,
         status: 200,
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: true })
+        json: async () => ({ success: true }),
+        text: async () => '{"success":true}'
       } as Response)
 
       await api.patch('/test', mockPayload)
@@ -265,7 +271,8 @@ describe('apiClient', () => {
         ok: true,
         status: 200,
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => mockData
+        json: async () => mockData,
+        text: async () => JSON.stringify(mockData)
       } as Response)
 
       const result = await api.get('/test')
@@ -302,7 +309,8 @@ describe('apiClient', () => {
         ok: true,
         status: 200,
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({})
+        json: async () => ({}),
+        text: async () => '{}'
       } as Response)
 
       await api.get('/test', { headers: { 'X-Custom-Header': 'value' } })

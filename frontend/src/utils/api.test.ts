@@ -332,7 +332,10 @@ describe('api module', () => {
         expect.objectContaining({ query: expect.any(Object) })
       )
       expect(result).toHaveLength(2)
-      expect(result[0]).toBeInstanceOf(Date)
+      expect(result[0]).toHaveProperty('date')
+      expect(result[0]).toHaveProperty('iso')
+      expect(result[0].date).toBeInstanceOf(Date)
+      expect(result[0].iso).toBe('2025-01-15T09:00:00Z')
     })
 
     it('should use provided date range', async () => {
