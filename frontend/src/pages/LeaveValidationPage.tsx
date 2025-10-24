@@ -3,6 +3,7 @@ import { Shell, Card } from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { getMyTeams, getTeamMembersLeavePeriods, updateLeavePeriodStatus, deleteUserLeavePeriod } from '../utils/api'
 import { LeavePeriod, User } from '../utils/types'
+import { ConfirmModal } from '../components/ConfirmModal'
 
 type LeavePeriodWithUser = LeavePeriod & {
   user: User
@@ -19,6 +20,12 @@ export default function LeaveValidationPage() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
   const [showPending, setShowPending] = useState(true)
   const [showValidated, setShowValidated] = useState(false)
+  const [confirmRejectModalOpen, setConfirmRejectModalOpen] = useState(false)
+  const [confirmValidateModalOpen, setConfirmValidateModalOpen] = useState(false)
+  const [confirmCancelModalOpen, setConfirmCancelModalOpen] = useState(false)
+  const [pendingReject, setPendingReject] = useState<{ userId: string, leaveId: string } | null>(null)
+  const [pendingValidate, setPendingValidate] = useState<{ userId: string, leaveId: string } | null>(null)
+  const [pendingCancel, setPendingCancel] = useState<{ userId: string, leaveId: string } | null>(null)
 
   useEffect(() => {
     loadTeamsAndPeriods()
@@ -64,29 +71,63 @@ export default function LeaveValidationPage() {
     }
   }
 
-  async function handleValidate(userId: string, leaveId: string) {
+  function handleValidateClick(userId: string, leaveId: string) {
+    setPendingValidate({ userId, leaveId })
+    setConfirmValidateModalOpen(true)
+  }
+
+  async function confirmValidate() {
+    if (!pendingValidate) return
+    
     try {
-      await updateLeavePeriodStatus(userId, leaveId, true)
+      await updateLeavePeriodStatus(pendingValidate.userId, pendingValidate.leaveId, true)
       if (selectedTeamId) {
         await loadLeavePeriods(selectedTeamId)
       }
+      setPendingValidate(null)
     } catch (err: any) {
       console.error('Erreur lors de la validation:', err)
       setError(err.message || 'Erreur lors de la validation')
     }
   }
 
-  async function handleReject(userId: string, leaveId: string) {
-    if (!confirm('Êtes-vous sûr de vouloir refuser et supprimer cette demande ?')) return
+  function handleRejectClick(userId: string, leaveId: string) {
+    setPendingReject({ userId, leaveId })
+    setConfirmRejectModalOpen(true)
+  }
+
+  async function confirmReject() {
+    if (!pendingReject) return
     
     try {
-      await deleteUserLeavePeriod(userId, leaveId)
+      await deleteUserLeavePeriod(pendingReject.userId, pendingReject.leaveId)
       if (selectedTeamId) {
         await loadLeavePeriods(selectedTeamId)
       }
+      setPendingReject(null)
     } catch (err: any) {
       console.error('Erreur lors du refus:', err)
       setError(err.message || 'Erreur lors du refus')
+    }
+  }
+
+  function handleCancelClick(userId: string, leaveId: string) {
+    setPendingCancel({ userId, leaveId })
+    setConfirmCancelModalOpen(true)
+  }
+
+  async function confirmCancel() {
+    if (!pendingCancel) return
+    
+    try {
+      await deleteUserLeavePeriod(pendingCancel.userId, pendingCancel.leaveId)
+      if (selectedTeamId) {
+        await loadLeavePeriods(selectedTeamId)
+      }
+      setPendingCancel(null)
+    } catch (err: any) {
+      console.error('Erreur lors de l\'annulation:', err)
+      setError(err.message || 'Erreur lors de l\'annulation')
     }
   }
 
@@ -505,7 +546,7 @@ export default function LeaveValidationPage() {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleValidate(period.user_id, period.id)}
+                          onClick={() => handleValidateClick(period.user_id, period.id)}
                           className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
                           style={{ 
                             background: 'rgba(34, 197, 94, 0.1)', 
@@ -516,7 +557,7 @@ export default function LeaveValidationPage() {
                           Valider
                         </button>
                         <button
-                          onClick={() => handleReject(period.user_id, period.id)}
+                          onClick={() => handleRejectClick(period.user_id, period.id)}
                           className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
                           style={{ 
                             background: 'rgba(239, 68, 68, 0.1)', 
@@ -545,22 +586,35 @@ export default function LeaveValidationPage() {
                     className="p-6 rounded-2xl border-2"
                     style={{ borderColor: 'rgba(34, 197, 94, 0.3)', background: 'rgba(34, 197, 94, 0.05)' }}
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
-                           style={{ background: 'rgba(34, 197, 94, 0.2)' }}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4 flex-1">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
+                             style={{ background: 'rgba(34, 197, 94, 0.2)' }}>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold mb-1">
+                            {period.user.firstName} {period.user.lastName}
+                          </h3>
+                          <p className="font-semibold mb-1">
+                            {formatDate(period.startDate)} → {formatDate(period.endDate, true)}
+                          </p>
+                          <p className="text-sm subtle">
+                            Durée: {getDaysBetween(period.startDate, period.endDate)} jour(s)
+                          </p>
+                        </div>
+                        {getStatusBadge(period)}
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold mb-1">
-                          {period.user.firstName} {period.user.lastName}
-                        </h3>
-                        <p className="font-semibold mb-1">
-                          {formatDate(period.startDate)} → {formatDate(period.endDate, true)}
-                        </p>
-                        <p className="text-sm subtle">
-                          Durée: {getDaysBetween(period.startDate, period.endDate)} jour(s)
-                        </p>
-                      </div>
-                      {getStatusBadge(period)}
+                      <button
+                        onClick={() => handleCancelClick(period.user_id, period.id)}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                        style={{ 
+                          background: 'rgba(239, 68, 68, 0.1)', 
+                          color: 'rgb(239, 68, 68)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)'
+                        }}
+                      >
+                        Annuler
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -572,6 +626,48 @@ export default function LeaveValidationPage() {
           {renderTeamCalendar()}
         </Card>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmValidateModalOpen}
+        onClose={() => {
+          setConfirmValidateModalOpen(false)
+          setPendingValidate(null)
+        }}
+        onConfirm={confirmValidate}
+        title="Valider la demande"
+        message="Êtes-vous sûr de vouloir valider cette demande de vacances ?"
+        confirmText="Valider"
+        cancelText="Annuler"
+        danger={false}
+      />
+
+      <ConfirmModal
+        isOpen={confirmRejectModalOpen}
+        onClose={() => {
+          setConfirmRejectModalOpen(false)
+          setPendingReject(null)
+        }}
+        onConfirm={confirmReject}
+        title="Refuser la demande"
+        message="Êtes-vous sûr de vouloir refuser et supprimer définitivement cette demande de vacances ?"
+        confirmText="Refuser"
+        cancelText="Annuler"
+        danger={true}
+      />
+
+      <ConfirmModal
+        isOpen={confirmCancelModalOpen}
+        onClose={() => {
+          setConfirmCancelModalOpen(false)
+          setPendingCancel(null)
+        }}
+        onConfirm={confirmCancel}
+        title="Annuler la validation"
+        message="Êtes-vous sûr de vouloir annuler cette validation et supprimer la demande ? Cette action est irréversible."
+        confirmText="Annuler la validation"
+        cancelText="Retour"
+        danger={true}
+      />
     </Shell>
   )
 }

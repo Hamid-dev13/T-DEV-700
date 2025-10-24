@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Shell, Card } from '../components/Layout'
 import { getClocks, getTeamsWithMembers, updateClockForMember, deleteClockForMember, addClockForMember, getDaysOffForUser } from '../utils/api'
+import { ConfirmModal } from '../components/ConfirmModal'
 
 interface DailySummary {
   day: string
@@ -141,6 +142,8 @@ export default function MemberDetailsPage() {
   const [editClockInTime, setEditClockInTime] = useState('')
   const [editClockOutTime, setEditClockOutTime] = useState('')
   const [daysOff, setDaysOff] = useState<string[]>([])
+  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false)
+  const [pendingDeletePair, setPendingDeletePair] = useState<ClockPair | null>(null)
 
   // Charger les données du membre
   useEffect(() => {
@@ -332,10 +335,8 @@ export default function MemberDetailsPage() {
       setEditingClock(null)
       setEditClockInTime('')
       setEditClockOutTime('')
-      alert(isNewClock ? '✅ Pointage créé avec succès !' : '✅ Pointage modifié avec succès !')
     } catch (error) {
       console.error('Erreur:', error)
-      alert('Erreur: ' + (error as Error).message)
     }
   }
   
@@ -349,26 +350,27 @@ export default function MemberDetailsPage() {
       setDeletingClock(null)
     } catch (error) {
       console.error('Erreur lors de la suppression:', error)
-      alert('Erreur lors de la suppression du pointage')
     }
   }
   
   // Fonction pour supprimer une paire complète
-  const handleDeletePair = async (pair: ClockPair) => {
-    if (!memberId) return
-    
-    if (!confirm('Supprimer ce pointage ?')) return
+  const handleDeleteClick = (pair: ClockPair) => {
+    setPendingDeletePair(pair)
+    setConfirmDeleteModalOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!memberId || !pendingDeletePair) return
     
     try {
-      await deleteClockForMember(memberId, pair.clockIn.toISOString())
-      if (pair.clockOut) {
-        await deleteClockForMember(memberId, pair.clockOut.toISOString())
+      await deleteClockForMember(memberId, pendingDeletePair.clockIn.toISOString())
+      if (pendingDeletePair.clockOut) {
+        await deleteClockForMember(memberId, pendingDeletePair.clockOut.toISOString())
       }
       await reloadClocks()
-      alert('✅ Pointage supprimé')
-    } catch (error) {
-      console.error('Erreur:', error)
-      alert('❌ Erreur lors de la suppression')
+      setPendingDeletePair(null)
+    } catch (err) {
+      console.error('Erreur lors de la suppression:', err)
     }
   }
   
@@ -682,7 +684,7 @@ export default function MemberDetailsPage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleDeletePair(pair)}
+                                  onClick={() => handleDeleteClick(pair)}
                                   className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -785,6 +787,20 @@ export default function MemberDetailsPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={confirmDeleteModalOpen}
+        onClose={() => {
+          setConfirmDeleteModalOpen(false)
+          setPendingDeletePair(null)
+        }}
+        onConfirm={confirmDelete}
+        title="Supprimer le pointage"
+        message="Êtes-vous sûr de vouloir supprimer ce pointage ? Cette action est irréversible."
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        danger={true}
+      />
     </Shell>
   )
 }
