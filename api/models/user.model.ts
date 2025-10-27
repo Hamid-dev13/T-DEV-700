@@ -1,6 +1,5 @@
-import { pgTable, uuid, varchar, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
 import { getTableColumns, InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { boolean } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: uuid("id").notNull().defaultRandom().primaryKey(),

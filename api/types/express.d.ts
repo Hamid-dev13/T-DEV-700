@@ -1,5 +1,3 @@
-import { SafeUser } from "../models/user.model"
-
 declare global {
   namespace Express {
     interface Request {
@@ -7,5 +5,12 @@ declare global {
       user_id?: string,
       admin?: boolean
     }
+
+    interface Response {
+      // definition in utils/response-extend.ts
+      sendError(message: any | null, statusCode?: number): this;
+    }
   }
 }
+
+export {};

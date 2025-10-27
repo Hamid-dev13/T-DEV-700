@@ -1,3 +1,4 @@
+import "./utils/response-extend";   // keep for Response.sendError() runtime definition
 import cors, { CorsOptions } from "cors";
 import dotenv from "dotenv";
 import express, { Request, Response } from "express";

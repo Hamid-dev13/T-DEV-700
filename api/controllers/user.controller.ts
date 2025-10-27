@@ -1,15 +1,11 @@
 import { Request, Response } from "express";
 import { addUser, deleteUser, loginUser, retrieveUser, retrieveUsers, updateUser } from "../services/user.service";
-import { sendError } from "../utils/format";
-import { retreiveTeamsForUserWithManager } from "../services/team.service";
 
 export async function loginUserController(req: Request, res: Response) {
   try {
     const body = req.body;
     const { email, password } = body ?? {};
-    if (!email || !password) {
-      return sendError(res, "Missing required fields", 400)
-    }
+    if (!email || !password) return res.sendError("Missing required fields", 400);
 
     const { token, user } = await loginUser({ email, password });
 
@@ -64,7 +60,7 @@ export async function addUserController(req: Request, res: Response) {
     const body = req.body;
     const { first_name, last_name, email, password, phone } = body ?? {};
     if (!first_name || !last_name || !email || !password) {
-      return sendError(res, "Missing required fields", 400)
+      return res.sendError("Missing required fields", 400);
     }
 
     const user = await addUser({ first_name, last_name, email, password, phone });
