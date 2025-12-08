@@ -145,15 +145,12 @@ export async function getClocks(id: string, from?: Date, to?: Date): Promise<Arr
     if (!from) from = new Date()
     if (!to) to = new Date()
     const list = await apiClient.get(`/users/${encodeURIComponent(id)}/clocks`, { query: { from, to } })
-    console.log('[API] getClocks raw data:', list)
     const dates = list.map((item: string) => {
       const date = new Date(item)
-      console.log('[API] Date conversion:', item, '->', date.toISOString())
-      return { date, iso: item } // Retourner à la fois la date et le string original
+      return { date, iso: item }
     })
     return dates
   } catch (err: any) {
-    console.log("Error getting clocks: %s", err.message)
     return []
   }
 }
@@ -166,10 +163,8 @@ export async function addClockForMember(userId: string, at: Date | string) {
   const payload = {
     at: typeof at === 'string' ? at : at.toISOString()
   }
-  console.log('[API] addClockForMember:', { userId, payload })
   try {
     const result = await apiClient.post(`/users/${encodeURIComponent(userId)}/clocks`, payload)
-    console.log('[API] addClockForMember réussi, résultat:', result)
     return result
   } catch (error) {
     console.error('[API] addClockForMember erreur:', error)
@@ -182,14 +177,8 @@ export async function updateClockForMember(userId: string, from: Date | string, 
     from: typeof from === 'string' ? from : from.toISOString(),
     to: typeof to === 'string' ? to : to.toISOString()
   }
-  console.log('[API] updateClockForMember:', { userId, payload })
-  console.log('[API] Dates envoyées - from:', payload.from, 'to:', payload.to)
   try {
     const result = await apiClient.patch(`/users/${encodeURIComponent(userId)}/clocks`, payload)
-    console.log('[API] updateClockForMember réussi, résultat:', result)
-    if (!result) {
-      console.warn('[API] ATTENTION: Le backend a renvoyé undefined/null - l\'enregistrement n\'a probablement pas été trouvé')
-    }
     return result
   } catch (error) {
     console.error('[API] updateClockForMember erreur:', error)
@@ -201,19 +190,17 @@ export async function deleteClockForMember(userId: string, at: Date | string) {
   const payload = {
     at: typeof at === 'string' ? at : at.toISOString()
   }
-  console.log('[API] deleteClockForMember:', { userId, payload })
-  console.log('[API] Date à supprimer:', payload.at)
   try {
     const result = await apiClient.delete(`/users/${encodeURIComponent(userId)}/clocks`, payload)
-    console.log('[API] deleteClockForMember réussi, résultat:', result)
-    if (!result) {
-      console.warn('[API] ATTENTION: Le backend a renvoyé undefined/null - l\'enregistrement n\'a probablement pas été trouvé')
-    }
     return result
   } catch (error) {
     console.error('[API] deleteClockForMember erreur:', error)
     throw error
   }
+}
+
+export async function getDaysOffForUser(userId: string, from: string, to: string): Promise<string[]> {
+  return apiClient.get(`/users/${encodeURIComponent(userId)}/days-off?`, { query: { from, to } }).then((res: any) => res.days_off || [])
 }
 
 export async function teamAverages(teamId: string, from?: Date, to?: Date) {
@@ -247,4 +234,77 @@ export async function teamAverages(teamId: string, from?: Date, to?: Date) {
     .sort((a, b) => a.week.localeCompare(b.week))
 
   return { daily, weekly }
+}
+
+// --- Reports ---
+export async function getReports(userId: string, reportType: string, from: Date, to: Date) {
+  try {
+    const params = new URLSearchParams({
+      user: userId,
+      report: reportType,
+      from: from.toISOString(),
+      to: to.toISOString()
+    })
+    return await apiClient.get(`/reports?${params.toString()}`)
+  } catch (err) {
+    console.error('Erreur getReports:', err)
+    return []
+  }
+}
+
+// --- Leave Periods ---
+export async function getMyLeavePeriods() {
+  return apiClient.get('/user/leave-periods')
+}
+
+export async function getUserLeavePeriods(userId: string) {
+  return apiClient.get(`/users/${encodeURIComponent(userId)}/leave-periods`)
+}
+
+export async function createLeavePeriod(startDate: Date, endDate: Date) {
+  const payload = {
+    start_date: startDate.toISOString(),
+    end_date: endDate.toISOString()
+  }
+  return apiClient.post('/user/leave-periods', payload)
+}
+
+export async function updateLeavePeriodStatus(userId: string, leaveId: string, accepted: boolean) {
+  const payload = { accepted }
+  return apiClient.put(`/users/${encodeURIComponent(userId)}/leave-periods/${encodeURIComponent(leaveId)}`, payload)
+}
+
+export async function deleteLeavePeriod(leaveId: string) {
+  return apiClient.delete(`/user/leave-periods/${encodeURIComponent(leaveId)}`)
+}
+
+export async function deleteUserLeavePeriod(userId: string, leaveId: string) {
+  return apiClient.delete(`/users/${encodeURIComponent(userId)}/leave-periods/${encodeURIComponent(leaveId)}`)
+}
+
+export async function getTeamMembersLeavePeriods(teamId: string) {
+  try {
+    const teamData = await getTeamUsers(teamId)
+    const members = teamData.members || []
+    
+    const allPeriods = await Promise.all(
+      members.map(async (member: any) => {
+        try {
+          const periods = await getUserLeavePeriods(member.id)
+          return periods.map((period: any) => ({
+            ...period,
+            user: member
+          }))
+        } catch (err) {
+          console.error(`Erreur lors de la récupération des périodes pour ${member.id}:`, err)
+          return []
+        }
+      })
+    )
+    
+    return allPeriods.flat()
+  } catch (err) {
+    console.error('Erreur getTeamMembersLeavePeriods:', err)
+    return []
+  }
 }

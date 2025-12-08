@@ -23,12 +23,6 @@ async function request(path: string, { method = "GET", headers = {}, payload, qu
     body: payload ? JSON.stringify(payload) : undefined,
   }
 
-  if (method === "PATCH" || method === "DELETE") {
-    console.log(`[apiClient] ${method} ${url.toString()}`)
-    console.log('[apiClient] Payload:', payload)
-    console.log('[apiClient] Body:', init.body)
-  }
-
   const res = await fetch(url, init)
 
   if (res.status === 401) { const e: any = new Error("UNAUTHORIZED"); e.status = 401; e.response = res; throw e }

@@ -154,7 +154,7 @@ export async function getDaysOffForUser(
     let current = leave.startDate;
     const end = leave.endDate;
 
-    while (current <= end) {
+    while (current < end) {
       if (current >= from && current <= toNext) {
         leaveDates.push(current.toISOString().substring(0, 10));
       }

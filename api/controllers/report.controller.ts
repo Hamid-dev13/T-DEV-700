@@ -19,10 +19,17 @@ export async function getReportsForUserController(req: Request, res: Response) {
 
     const sender_id = req.user_id!;
 
-    const team = (await retrieveMainTeamForUser(sender_id) || undefined)!;
+    // Allow users to fetch their own reports
+    if (user_id !== sender_id) {
+      // Check if the sender is the manager of the target user's team
+      const targetUserTeam = await retrieveMainTeamForUser(user_id);
+      
+      if (!targetUserTeam)
+        return res.sendError("User is not in any team", 404);
 
-    if (!(req.admin || team.managerId === sender_id))
-      return res.sendError("Insufficient permissions", 401);
+      if (!(req.admin || targetUserTeam.managerId === sender_id))
+        return res.sendError("Insufficient permissions", 401);
+    }
 
     const reports = await getReportForUser(user_id, report_type, fromDate, toDate);
     

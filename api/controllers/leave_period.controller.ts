@@ -41,6 +41,18 @@ export async function addLeavePeriodForMyUserController(req: Request, res: Respo
     if (endDate.getTime() - startDate.getTime() < 360000 * 24)
       return res.sendError("Invalid Dates", 400);
     
+    // Check for overlapping leave periods
+    const existingPeriods = await retrieveLeavePeriods(user_id);
+    const hasOverlap = existingPeriods.some(period => {
+      const periodStart = new Date(period.startDate);
+      const periodEnd = new Date(period.endDate);
+      return (startDate < periodEnd && endDate > periodStart);
+    });
+
+    if (hasOverlap) {
+      return res.sendError("Specified dates overlap with an existing leave period", 400);
+    }
+    
     const period = await addLeavePeriod(user_id, startDate, endDate);
     return res.status(200).json(period);
   } catch (err) {
@@ -53,7 +65,7 @@ export async function addLeavePeriodForUserController(req: Request, res: Respons
     const sender_id = req.user_id!;
     const user_id = req.params.id!;
     const is_admin = req.admin!;
-    const { start_date: start, end_date: end } = req.body ?? {};
+    const { start_date: start, end_date: end, accepted } = req.body ?? {};
 
     const startDate = new Date(start);
     if (isNaN(startDate.getTime())) return res.sendError("Invalid Date \"start_date\"", 400);
@@ -69,7 +81,7 @@ export async function addLeavePeriodForUserController(req: Request, res: Respons
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
       return res.sendError("Insufficient permissions", 401);
     
-    const period = await addLeavePeriod(user_id, startDate, endDate);
+    const period = await addLeavePeriod(user_id, startDate, endDate, accepted);
     return res.status(200).json(period);
   } catch (err) {
     return res.sendError(err);
