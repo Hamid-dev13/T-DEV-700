@@ -125,6 +125,15 @@ jobs:
             echo "tags=${{ secrets.DOCKER_USERNAME }}/monapp-frontend:${BRANCH},${{ secrets.DOCKER_USERNAME }}/monapp-frontend:latest" >> $GITHUB_OUTPUT
           fi
 
+      - name: 🏷️ Préparer les tags Docker Admin
+        id: meta-admin
+        run: |
+          BRANCH=${GITHUB_REF##*/}
+          echo "tags=${{ secrets.DOCKER_USERNAME }}/monapp-admin:${BRANCH}" >> $GITHUB_OUTPUT
+          if [ "$BRANCH" == "main" ]; then
+            echo "tags=${{ secrets.DOCKER_USERNAME }}/monapp-admin:${BRANCH},${{ secrets.DOCKER_USERNAME }}/monapp-admin:latest" >> $GITHUB_OUTPUT
+          fi
+
       # Étape 5 : Builder et POUSSER l'image Docker du BACKEND
       - name: 🐳 Build et Push Backend Docker Image
         uses: docker/build-push-action@v5
@@ -149,12 +158,25 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Étape 7 : Message de succès
+      # Étape 7 : Builder et POUSSER l'image Docker du ADMIN
+      - name: 🐳 Build et Push Admin Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./admin
+          file: ./admin/Dockerfile
+          target: production
+          push: true
+          tags: ${{ steps.meta-admin.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Étape 8 : Message de succès
       - name: ✅ Images publiées avec succès !
         run: |
           echo "🎉 Images Docker publiées sur Docker Hub !"
           echo "📦 Backend : ${{ steps.meta-backend.outputs.tags }}"
           echo "📦 Frontend : ${{ steps.meta-frontend.outputs.tags }}"
+          echo "📦 Admin : ${{ steps.meta-admin.outputs.tags }}"
 
   # ==========================================
   # JOB 3 : DÉPLOIEMENT sur le VPS
@@ -198,7 +220,8 @@ jobs:
             echo "🐳 Téléchargement des nouvelles images Docker..."
             docker pull ${{ secrets.DOCKER_USERNAME }}/monapp-backend:main
             docker pull ${{ secrets.DOCKER_USERNAME }}/monapp-frontend:main
-            
+            docker pull ${{ secrets.DOCKER_USERNAME }}/monapp-admin:main
+
             # Arrêter les anciens containers
             echo " Arrêt des anciens containers..."
             docker-compose -f docker-compose.prod.yml down
