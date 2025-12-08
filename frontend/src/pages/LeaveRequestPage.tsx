@@ -6,6 +6,10 @@ import { getMyLeavePeriods, createLeavePeriod, deleteLeavePeriod } from '../util
 import { LeavePeriod } from '../utils/types'
 
 export default function LeaveRequestPage() {
+  useEffect(() => {
+    document.title = "Demandes de congés • Time Manager"
+  }, [])
+  
   const { user } = useAuth()
   const navigate = useNavigate()
   const [leavePeriods, setLeavePeriods] = useState<LeavePeriod[]>([])

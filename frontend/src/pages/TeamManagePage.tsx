@@ -19,6 +19,10 @@ function formatHoursToHHMM(decimalHours: number): string {
 }
 
 export default function TeamManagePage() {
+  useEffect(() => {
+    document.title = "Équipes • Time Manager"
+  }, [])
+
   const { user: me } = useAuth()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'members' | 'manager'>('members')

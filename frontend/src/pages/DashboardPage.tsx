@@ -78,6 +78,10 @@ interface TeamWithMembers {
 }
 
 export default function DashboardPage() {
+  useEffect(() => {
+    document.title = "Dashboard • Time Manager"
+  }, [])
+
   const { user } = useAuth()
   const navigate = useNavigate()
   const [summary, setSummary] = useState<{

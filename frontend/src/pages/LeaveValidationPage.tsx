@@ -11,6 +11,10 @@ type LeavePeriodWithUser = LeavePeriod & {
 }
 
 export default function LeaveValidationPage() {
+  useEffect(() => {
+    document.title = "Demandes de congés • Time Manager"
+  }, [])
+  
   const { user } = useAuth()
   const navigate = useNavigate()
   const [leavePeriods, setLeavePeriods] = useState<LeavePeriodWithUser[]>([])

@@ -22,6 +22,10 @@ function groupByDay(entries: Array<{ date: Date, iso: string }>): [string, Date[
 }
 
 export default function ClockPage() {
+  useEffect(() => {
+    document.title = "Pointage • Time Manager"
+  }, [])
+
   const { user: me } = useAuth()
   const [rawData, setRawData] = useState<Array<{ date: Date, iso: string }>>([])
   const [refreshTrigger, setRefreshTrigger] = useState(0)

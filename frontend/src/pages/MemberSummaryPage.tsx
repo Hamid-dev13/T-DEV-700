@@ -22,6 +22,10 @@ interface LatenessData {
 }
 
 export default function MemberSummaryPage() {
+  useEffect(() => {
+    document.title = "Résumé du membre • Time Manager"
+  }, [])
+  
   const { memberId } = useParams<{ memberId: string }>()
   const navigate = useNavigate()
   const [member, setMember] = useState<MemberInfo | null>(null)

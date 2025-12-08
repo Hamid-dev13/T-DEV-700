@@ -136,6 +136,10 @@ function calculateDelay(timestamps: Date[], targetDay: string, expectedHour: num
 }
 
 export default function MemberDetailsPage() {
+  useEffect(() => {
+    document.title = "Détails du membre • Time Manager"
+  }, [])
+  
   const { memberId } = useParams<{ memberId: string }>()
   const navigate = useNavigate()
   const [member, setMember] = useState<MemberInfo | null>(null)

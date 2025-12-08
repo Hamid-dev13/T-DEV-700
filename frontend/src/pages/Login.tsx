@@ -4,6 +4,10 @@ import { Shell, Card } from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
+  useEffect(() => {
+    document.title = "Login • Time Manager"
+  }, [])
+  
   const [email, setEmail] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [error, setError] = useState<string>('')
