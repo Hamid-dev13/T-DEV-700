@@ -1,9 +1,21 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db/client";
-import { safeUserSelect, users, type SafeUser } from "../models/user.model";
+import { safeUserSelect, toSafeUser, User, users, type SafeUser } from "../models/user.model";
 import { hashPassword, verifyPassword, verifyPasswordRequirements } from "../utils/password";
 import jwt from "jsonwebtoken";
 import type { StringValue } from "ms";
+
+
+export function generateAccessToken(user: User): string {
+  return jwt.sign({ user_id: user.id, admin: user.admin }, process.env.ACCESS_TOKEN_SECRET!,
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN! as StringValue });
+}
+
+export function generateRefreshToken(user: User): string {
+  return jwt.sign({ user_id: user.id }, process.env.REFRESH_TOKEN_SECRET!,
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN! as StringValue });
+}
+
 
 export type LoginInput = {
   email: string;
@@ -29,7 +41,7 @@ export type UpdateUserInput = {
 export async function loginUser({
   email,
   password,
-}: LoginInput): Promise<{ token: string; user: SafeUser }> {
+}: LoginInput): Promise<{ accessToken: string, refreshToken: string, user: SafeUser }> {
   if (!email || !password) {
     throw new Error("Missing required fields: email, password");
   }
@@ -49,21 +61,40 @@ export async function loginUser({
     throw new Error("Invalid credentials");
   }
 
-  // create token if ok
-  const payload = { user_id: user.id, admin: user.admin };
-  const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: process.env.JWT_EXPIRES_IN! as StringValue });
+  // create tokens if ok
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
 
-  const { password: _, ...safeUser } = user;
-  return { token, user: safeUser };
+  await updateRefreshTokenForUser(user.id, refreshToken);
+
+  return { accessToken, refreshToken, user: toSafeUser(user) };
 }
 
-export async function retrieveUser(user_id: string): Promise<SafeUser> {
+export async function updateRefreshTokenForUser(user_id: string, refreshToken: string) {
+  await db.update(users)
+    .set({ refreshToken })
+    .where(eq(users.id, user_id))
+}
+
+export async function clearRefreshTokenForUser(user_id: string) {
+  await db.update(users)
+    .set({ refreshToken: null })
+    .where(eq(users.id, user_id))
+}
+
+export async function retrieveUserSafe(user_id: string): Promise<SafeUser> {
   const [user] = await db.select(safeUserSelect).from(users)
     .where(eq(users.id, user_id)).limit(1);
   return user;
 }
 
-export async function retrieveUsers(): Promise<SafeUser[]> {
+export async function retrieveUser(user_id: string): Promise<User> {
+  const [user] = await db.select().from(users)
+    .where(eq(users.id, user_id)).limit(1);
+  return user;
+}
+
+export async function retrieveUsersSafe(): Promise<SafeUser[]> {
   return db.select(safeUserSelect).from(users);
 }
 
@@ -88,8 +119,7 @@ export async function addUser({
     .values({firstName: first_name, lastName: last_name, email: email, password: password, phone: phone})
     .returning();
   
-  const { password: _, ...safeUser } = user;
-  return safeUser;
+  return toSafeUser(user);
 }
 
 export async function updateUser(
@@ -114,8 +144,7 @@ export async function updateUser(
     .where(eq(users.id, id))
     .returning();
   
-  const { password: _, ...safeUser } = user;
-  return safeUser;
+  return toSafeUser(user);
 }
 
 export async function deleteUser(id: string): Promise<boolean> {

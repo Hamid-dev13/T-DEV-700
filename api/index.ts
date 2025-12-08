@@ -13,6 +13,9 @@ import passwordRouter from "./routes/password.route";
 import leavePeriodsRouter from "./routes/leave_period.route";
 import { transporter } from "./services/mail.service";
 // import nocache from "nocache";
+// logging
+import winston from "winston";
+import expressWinston from "express-winston";
 
 dotenv.config({ path: "../.env" });
 
@@ -40,6 +43,22 @@ app.use(express.json());
 // prevent default caching mechanism
 // app.set('etag', false)
 // app.use(['/user', '/user/login'], nocache())
+
+// Request Logging
+app.use(expressWinston.logger({
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.printf(log => log.message as string)   // only log message
+    })
+  ],
+  format: winston.format.combine(
+    winston.format.colorize(),
+    winston.format.json()
+  ),
+  meta: true,
+  msg: "[{{req.ip}}]: HTTP {{req.method}} {{req.url}}",
+  colorize: false
+}))
 
 // Routers
 app.use(userRouter);
@@ -70,6 +89,17 @@ app.get("/health", async (req: Request, res: Response) => {
     mail: mail_ok ? "available" : "not available"
   })
 });
+
+// Error Logging
+app.use(expressWinston.errorLogger({
+  transports: [
+    new winston.transports.Console()
+  ],
+  format: winston.format.combine(
+    winston.format.colorize(),
+    winston.format.json()
+  )
+}))
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

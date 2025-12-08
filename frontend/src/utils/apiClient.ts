@@ -1,13 +1,6 @@
 /// <reference types="vite/client" />
-import { COOKIE_TOKEN_KEY } from "./cookie"
 
 export const BASE_URL = import.meta.env.VITE_API_URL || ""
-
-export function clearToken() {
-  try {
-    document.cookie = `${COOKIE_TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`
-  } catch {}
-}
 
 async function request(path: string, { method = "GET", headers = {}, payload, query }: { method?: string; headers?: Record<string, string>; payload?: any; query?: Record<string, any> } = {}) {
   if (!BASE_URL) throw new Error("API base URL not configured. Set VITE_API_URL in your env.")
@@ -38,8 +31,8 @@ async function request(path: string, { method = "GET", headers = {}, payload, qu
 
   const res = await fetch(url, init)
 
-  if (res.status === 401) { const e: any = new Error("UNAUTHORIZED"); e.code = 401; throw e }
-  if (res.status === 403) { const e: any = new Error("FORBIDDEN");    e.code = 403; throw e }
+  if (res.status === 401) { const e: any = new Error("UNAUTHORIZED"); e.status = 401; e.response = res; throw e }
+  if (res.status === 403) { const e: any = new Error("FORBIDDEN");    e.status = 403; e.response = res; throw e }
   if (!res.ok) {
     let msg = ""
     try {
@@ -51,7 +44,7 @@ async function request(path: string, { method = "GET", headers = {}, payload, qu
         msg = await res.text()
       }
     } catch {}
-    const e: any = new Error(msg || `HTTP ${res.status}`); e.code = res.status; throw e
+    const e: any = new Error(msg || `HTTP ${res.status}`); e.status = res.status; e.response = res; throw e
   }
 
   // Gérer les réponses vides (204, 200 sans body)

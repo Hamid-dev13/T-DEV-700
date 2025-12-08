@@ -1,7 +1,7 @@
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { db } from "../db/client";
 import { Team, teams } from "../models/team.model";
-import { SafeUser, safeUserSelect, users } from "../models/user.model";
+import { SafeUser, safeUserSelect, toSafeUser, users } from "../models/user.model";
 import { userTeams } from "../models/user_team.model";
 import { alias } from "drizzle-orm/pg-core";
 
@@ -93,14 +93,14 @@ export async function retreiveTeamsForUserWithManager(user_id: string): Promise<
     const teamId = row.team.id;
 
     if (!teamsMap.has(teamId)) {
-      const { password, ...manager } = row.manager;
+      const manager = toSafeUser(row.manager);
       teamsMap.set(teamId, {
         team: row.team,
         manager: manager,
         members: [],
       });
     }
-    const { password, ...member } = row.member;
+    const member = toSafeUser(row.member);
     teamsMap.get(teamId)!.members.push(member);
   }
 

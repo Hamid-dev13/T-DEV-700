@@ -1,4 +1,4 @@
-import apiClient, { clearToken } from './apiClient'
+import apiClient from './apiClient'
 import * as fake from './fakeApi'
 
 export const computeDailyHours = fake.computeDailyHours
@@ -7,8 +7,19 @@ export const aggregateWeekly   = fake.aggregateWeekly
 export const bootstrap = () => {}
 
 export async function getSession() {
-  try { return await apiClient.get('/user') } 
-  catch (e1) { return null }
+  try { return await apiClient.get('/user') }
+  catch (err: any) {
+    // check if refresh token expired
+    if (err.status === 401) {
+      try {
+        await refreshSession()
+        return await apiClient.get('/user')
+      } catch {
+        return null
+      }
+    }
+    return null
+  }
 }
 
 export async function login(email: string, password: string) {
@@ -18,8 +29,12 @@ export async function login(email: string, password: string) {
   return apiClient.post("/user/login", payload);
 }
 
-export function logout() {
-  clearToken()
+export async function refreshSession() {
+  return apiClient.post("/user/refresh");
+}
+
+export async function logout() {
+  return apiClient.post("/user/logout");
 }
 
 // --- Users ---

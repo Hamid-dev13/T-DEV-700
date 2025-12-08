@@ -116,7 +116,8 @@ Both use:
 
 Required in `.env` (root directory):
 - `DATABASE_URL` - PostgreSQL connection string (Supabase)
-- `JWT_SECRET` - Secret for signing JWT tokens
+- `ACCESS_TOKEN_SECRET` - Secret for signing Access tokens
+- `REFRESH_TOKEN_SECRET` - Secret for signing Refresh tokens
 - `WEBSITE_URL` - Frontend URL for CORS
 - `PORT` / `BACKEND_CONTAINER_PORT` - Backend port configuration
 - `FRONTEND_HOST_PORT` / `FRONTEND_CONTAINER_PORT` - Frontend port configuration

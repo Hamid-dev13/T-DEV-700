@@ -1,11 +1,14 @@
 import { Router } from "express";
-import { addUserController, loginUserController, retrieveUsersController, updateMyUserController, updateOtherUserController, deleteMyUserController, deleteOtherUserController, retrieveMyUserController, retrieveOtherUserController } from "../controllers/user.controller";
+import { addUserController, loginUserController, retrieveUsersController, updateMyUserController, updateOtherUserController, deleteMyUserController, deleteOtherUserController, retrieveMyUserController, retrieveOtherUserController, refreshTokenController, logoutUserController } from "../controllers/user.controller";
 import { isAuth } from "../middleware/isAuth";
 import { isAdmin } from "../middleware/isAdmin";
+import { hasValidRefreshToken } from "../middleware/hasValidRefreshToken";
 
 const router = Router();
 
 router.post("/user/login", loginUserController);
+router.post("/user/refresh", hasValidRefreshToken, refreshTokenController);
+router.post("/user/logout", hasValidRefreshToken, logoutUserController);
 
 router.get("/user", isAuth, retrieveMyUserController);
 router.get("/users/:id", isAuth, retrieveOtherUserController);
