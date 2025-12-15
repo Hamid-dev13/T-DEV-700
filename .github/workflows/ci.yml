@@ -160,6 +160,8 @@ jobs:
           target: production
           push: true
           tags: ${{ steps.meta-frontend.outputs.tags }}
+          build-args: |
+            VITE_API_URL=https://api.clock.51.178.54.74.nip.io
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -172,6 +174,8 @@ jobs:
           target: production
           push: true
           tags: ${{ steps.meta-admin.outputs.tags }}
+          build-args: |
+            VITE_API_URL=https://api.clock.51.178.54.74.nip.io
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
