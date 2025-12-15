@@ -60,6 +60,16 @@ app.use("/api-docs.json", (req: Request, res: Response) => {
   res.send(swaggerSpec);
 });
 
+// Route racine
+app.get("/", (req: Request, res: Response) => {
+  res.json({
+    message: "Time Manager API",
+    version: "1.0.0",
+    documentation: "/api-docs",
+    health: "/health"
+  });
+});
+
 // Test Route for DB connection + Mail transporter
 app.get("/health", async (req: Request, res: Response) => {
   let database_ok = false;
