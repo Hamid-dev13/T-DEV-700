@@ -5,19 +5,30 @@ import { retreiveTeamsForUserWithManager } from "../services/team.service";
 
 export async function loginUserController(req: Request, res: Response) {
   try {
+    console.log('[LOGIN] Request headers:', JSON.stringify(req.headers, null, 2));
+    console.log('[LOGIN] Request body:', JSON.stringify(req.body, null, 2));
+
     const body = req.body;
     const { email, password } = body ?? {};
+
+    console.log('[LOGIN] Extracted email:', email);
+    console.log('[LOGIN] Password provided:', !!password);
+    console.log('[LOGIN] Password length:', password?.length);
+
     if (!email || !password) {
+      console.log('[LOGIN] Missing fields - email:', !!email, 'password:', !!password);
       return sendError(res, "Missing required fields", 400)
     }
 
+    console.log('[LOGIN] Attempting to authenticate user:', email);
     const { token, user } = await loginUser({ email, password });
+    console.log('[LOGIN] Authentication successful for:', email);
 
     return res.status(200)
       .cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true, // Must be true for sameSite: 'none'
+        sameSite: 'none', // Required for cross-origin cookies
         maxAge: 24 * 60 * 60 * 1000 // 24 heures
       })
       .json(user);
@@ -25,6 +36,7 @@ export async function loginUserController(req: Request, res: Response) {
     const message =
       err instanceof Error ? err.message : "Internal server error";
     const status = message.includes("Invalid credentials") ? 401 : 500;
+    console.log('[LOGIN] Authentication failed:', message);
     return res.status(status).json({ error: message });
   }
 }

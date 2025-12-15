@@ -25,6 +25,8 @@ services:
       - "5001:3001"
     env_file:
       - .env
+    volumes:
+      - ./.env:/.env:ro
     restart: unless-stopped
     deploy:
       resources:

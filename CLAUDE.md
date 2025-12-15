@@ -54,6 +54,7 @@ cd admin
 npm run dev           # Start Vite dev server
 npm run build         # Build for production
 npm run preview       # Preview production build
+npm run lint          # Run ESLint on codebase
 ```
 
 ## Architecture
@@ -155,11 +156,14 @@ Required in `.env` (root directory):
 ## Key Patterns & Conventions
 
 ### Database Schema Management
-- Models use Drizzle ORM's schema definition
+- Models use Drizzle ORM's schema definition (in `api/models/` directory)
 - Each model exports: Table definition, `InferSelectModel` type, and `InferInsertModel` type
 - User model exports `SafeUser` type (omits password) and `safeUserSelect` for queries
-- Run `npm run db:generate` to create migrations from schema changes
-- Run `npm run db:push` to apply changes directly (dev only)
+- Schema changes workflow:
+  1. Modify schema files in `api/models/*.model.ts`
+  2. Generate migration: `cd api && npm run db:generate` (creates files in `api/drizzle/`)
+  3. Apply migration: From root run `npm run db:migrate` (runs inside Docker container)
+  4. Alternative for dev: `cd api && npm run db:push` (direct push, skips migrations)
 
 ### API Routes Pattern
 Routes follow RESTful conventions:
@@ -201,8 +205,12 @@ Routes follow RESTful conventions:
 
 **Frontend Testing** (Vitest + React Testing Library):
 - Test files: `*.test.tsx` and `*.test.ts` in `frontend/src/`
-- Run tests: `npm run test` (watch mode), `npm run test:coverage`
-- Coverage requirement: Minimum 40% (enforced in CI)
+- Run tests: `npm run test` (watch mode), `npm run test:ui` (UI mode), `npm run test:coverage`
+- Coverage requirement: Minimum 40% (enforced in CI on push to `main`)
+- Test setup: `frontend/src/test/setup.ts` (loaded by vitest.config.ts)
+- Coverage reporter: v8 provider, outputs text/json/html reports
+- Coverage excludes: `node_modules/`, `src/test/`, `**/*.d.ts`, `**/*.config.*`, `**/mockData`, `dist/`
+- Path alias: `@` resolves to `frontend/src/`
 - Tests include: Pages (Login, Dashboard, Clock, Account, TeamManage, MemberDetails), API utilities
 
 **Backend Testing**:
@@ -214,19 +222,22 @@ The project uses GitHub Actions workflows:
 
 **CI** (`.github/workflows/ci.yml`):
 - Triggers on push/PR to `main`, `dev`, `CICD` branches
-- **Frontend Tests**: Runs on push to `main` with coverage validation (≥40%)
-- Builds Docker images with Buildx (backend and frontend)
-- Pushes to Docker Hub with branch-based tags
-- Tags `main` branch as both `:main` and `:latest`
-- Deploys to VPS only on push to `main`
-
-**Deployment Process**:
-1. Images built and pushed to Docker Hub
-2. SSH into VPS
-3. Pull latest code from GitHub
-4. Pull new Docker images
-5. Restart containers with `docker-compose.prod.yml`
-6. Clean up old images
+- **Job 1 - Frontend Tests**: Runs on push to `main` only
+  - Installs dependencies with `npm ci`
+  - Runs `npm run test:coverage -- --run`
+  - Validates coverage ≥40% threshold
+  - Uploads coverage report as artifact (90-day retention)
+- **Job 2 - Docker Build & Push**: Depends on test job passing
+  - Builds three Docker images with Buildx (backend, frontend, admin)
+  - Pushes to Docker Hub: `hamidledev/monapp-{backend,frontend,admin}:{branch}`
+  - Tags `main` branch as both `:main` and `:latest`
+  - Uses GitHub Actions cache for faster builds
+- **Job 3 - Deploy**: Only on push to `main`, depends on previous jobs
+  - SSHs into VPS (requires secrets: `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `SSH_PORT`)
+  - Pulls latest code from GitHub
+  - Pulls new Docker images from Docker Hub
+  - Restarts containers with `docker-compose.prod.yml`
+  - Prunes unused images for cleanup
 
 ## API Documentation
 
@@ -253,7 +264,11 @@ The API uses Supabase (PostgreSQL) with:
 - Swagger JSON: `GET /api-docs.json` (raw OpenAPI spec)
 
 **Common Issues**:
-- Backend runs on port 3000 by default (configurable via `PORT`)
+- **Port Mapping Differences**:
+  - Development: Backend runs on port 3000 (default)
+  - Production (`docker-compose.prod.yml`): Backend mapped to 5001:3001 (host:container)
+  - Frontend: 3001:80 (production), Admin: 3002:80 (production)
 - CORS configured for `WEBSITE_URL` and `ADMIN_WEBSITE_URL` origins only
 - Check Docker logs: `docker-compose -f docker-compose.dev.yml logs -f [service-name]`
 - Clock operations use ±1 second tolerance for matching updates/deletes
+- Authentication issues between environments: Verify `API_URL` environment variable matches actual backend URL and that CORS origins include the frontend domain
