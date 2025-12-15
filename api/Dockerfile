@@ -68,8 +68,9 @@ EXPOSE 3000
 
 # HEALTHCHECK : Docker vérifie régulièrement que l'app est en vie
 # Toutes les 30s, attendre 3s, timeout 10s, 3 échecs max avant "unhealthy"
+# Utilise la variable PORT ou 3001 par défaut
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+    CMD node -e "const port = process.env.PORT || 3001; require('http').get(`http://localhost:${port}/health`, (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # dumb-init gère les signaux correctement (SIGTERM pour arrêt propre)
 # Ensuite on lance l'application
