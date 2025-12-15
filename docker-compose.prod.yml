@@ -23,7 +23,7 @@ services:
     image: hamidledev/monapp-backend:main
     container_name: prod-backend
     ports:
-      - "5001:3000"
+      - "5001:3001"
     env_file:
       - .env
     restart: unless-stopped
