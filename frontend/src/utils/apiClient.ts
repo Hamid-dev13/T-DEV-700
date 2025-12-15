@@ -1,7 +1,15 @@
 /// <reference types="vite/client" />
 import { COOKIE_TOKEN_KEY } from "./cookie"
 
-export const BASE_URL = import.meta.env.VITE_API_URL || ""
+// Récupérer l'URL de base de l'API
+let BASE_URL = import.meta.env.VITE_API_URL || ""
+
+// Si la page est chargée en HTTPS et que l'URL de l'API est en HTTP, forcer HTTPS
+if (typeof window !== "undefined" && window.location.protocol === "https:" && BASE_URL.startsWith("http://")) {
+  BASE_URL = BASE_URL.replace("http://", "https://")
+}
+
+export { BASE_URL }
 
 export function clearToken() {
   try {
