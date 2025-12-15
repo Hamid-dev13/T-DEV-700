@@ -13,13 +13,18 @@ import leavePeriodsRouter from "./routes/leave_period.route";
 import { transporter } from "./services/mail.service";
 // import nocache from "nocache";
 
-dotenv.config({ path: "../.env" });
+// En production, les variables sont injectées par Docker via env_file
+// En développement, on charge le fichier .env
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: "../.env" });
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Configure CORS
 const ALLOWED_ORIGINS = [process.env.WEBSITE_URL, process.env.ADMIN_WEBSITE_URL].filter((it) => it);
+console.log('[CORS] Allowed origins:', ALLOWED_ORIGINS);
 
 const corsOptions: CorsOptions = {
   origin: (requestOrigin, callback) => {
