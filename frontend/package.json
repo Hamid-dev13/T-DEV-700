@@ -8,7 +8,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "test:coverage:check": "vitest --coverage --run && node -e \"const fs = require('fs'); const data = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8')); const coverage = data.total.lines.pct; console.log('📊 Coverage actuel:', coverage.toFixed(2) + '%'); if (coverage < 40) { console.error('❌ Coverage insuffisant! Minimum requis: 40%, actuel:', coverage.toFixed(2) + '%'); process.exit(1); } else { console.log('✅ Coverage OK! Seuil atteint:', coverage.toFixed(2) + '% >= 40%'); }\""
   },
   "dependencies": {
     "react": "^18.3.1",

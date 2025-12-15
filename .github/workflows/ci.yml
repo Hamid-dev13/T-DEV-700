@@ -53,8 +53,13 @@ jobs:
         run: |
           echo "🔍 Vérification du seuil de coverage minimum (40%)..."
 
-          # Extraire le pourcentage de coverage depuis le rapport
-          COVERAGE=$(npm run test:coverage -- --run 2>&1 | grep "All files" | awk '{print $2}' | sed 's/%//')
+          # Extraire le pourcentage de coverage depuis le fichier JSON de coverage
+          if [ -f "coverage/coverage-summary.json" ]; then
+            COVERAGE=$(node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8')); console.log(data.total.lines.pct.toFixed(2));")
+          else
+            # Fallback: extraire depuis la sortie texte si le JSON n'existe pas
+            COVERAGE=$(npm run test:coverage -- --run 2>&1 | grep -E "All files|Lines" | tail -1 | awk '{print $NF}' | sed 's/%//' || echo "0")
+          fi
 
           echo "📊 Coverage actuel: ${COVERAGE}%"
 
