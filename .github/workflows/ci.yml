@@ -181,6 +181,12 @@ jobs:
   # ==========================================
   # JOB 3 : DÉPLOIEMENT sur le VPS
   # ==========================================
+  # Configuration requise dans GitHub Secrets :
+  # - SSH_HOST: 51.178.54.74 (IP du VPS)
+  # - SSH_USER: ubuntu
+  # - SSH_PORT: 22
+  # - SSH_PRIVATE_KEY: Clé privée SSH (contenu de id_ed25519)
+  # ==========================================
   deploy:
     name: 🚀 Déploiement sur VPS
     runs-on: ubuntu-latest
@@ -204,9 +210,9 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             echo "🔄 Début du déploiement sur le VPS..."
-            
+
             # Se déplacer dans le dossier du projet
-            cd /root/T-DEV-700
+            cd /home/ubuntu/epitech/T-DEV-700
             
             # Pull les dernières modifications depuis GitHub
             echo " Récupération des dernières modifications..."
