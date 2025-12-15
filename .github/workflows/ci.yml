@@ -230,19 +230,19 @@ jobs:
 
             # Arrêter les anciens containers
             echo " Arrêt des anciens containers..."
-            docker-compose -f docker-compose.prod.yml down
-            
+            docker compose -f docker-compose.prod.yml down
+
             # Démarrer les nouveaux containers avec les nouvelles images
             echo "Démarrage des nouveaux containers..."
-            docker-compose -f docker-compose.prod.yml up -d
-            
+            docker compose -f docker-compose.prod.yml up -d
+
             # Nettoyer les anciennes images non utilisées (économiser de l'espace)
             echo " Nettoyage des anciennes images..."
             docker image prune -af
-            
+
             # Vérifier que les containers tournent
             echo " Vérification des containers..."
-            docker-compose -f docker-compose.prod.yml ps
+            docker compose -f docker-compose.prod.yml ps
             
             echo " Déploiement terminé avec succès !"
 
