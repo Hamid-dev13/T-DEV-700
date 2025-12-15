@@ -1,4 +1,4 @@
- <reference types="vite/client" />
+/// <reference types="vite/client" />
 import { COOKIE_TOKEN_KEY } from "./cookie"
 
 // Récupérer l'URL de base de l'API
