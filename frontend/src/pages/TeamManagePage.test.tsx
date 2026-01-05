@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import TeamManagePage from './TeamManagePage'
 import { AuthProvider } from '../context/AuthContext'
@@ -61,9 +62,13 @@ describe('TeamManagePage Component', () => {
     )
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     expect(screen.getByText('Chargement de l\'équipe...')).toBeInTheDocument()
@@ -73,9 +78,13 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockResolvedValue([mockTeamData])
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -89,9 +98,13 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockResolvedValue([])
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -103,9 +116,13 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockRejectedValue(new Error('Network error'))
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -118,9 +135,13 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockResolvedValue([mockTeamData])
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -166,9 +187,13 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockResolvedValue(mockMultipleTeams)
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -210,9 +235,13 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockResolvedValue(mockMultipleTeams)
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -232,9 +261,13 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockResolvedValue(mockTeamData as any)
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -247,9 +280,13 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockResolvedValue([mockTeamData])
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {

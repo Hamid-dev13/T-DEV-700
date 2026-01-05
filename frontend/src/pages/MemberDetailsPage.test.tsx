@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter } from 'react-router-dom'
 import MemberDetailsPage from './MemberDetailsPage'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
@@ -67,12 +68,16 @@ describe('MemberDetailsPage Component', () => {
     vi.mocked(api.getClocks).mockResolvedValue([])
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <MemoryRouter initialEntries={['/member/member1']}>
         <AuthProvider>
           <Routes>
             <Route path="/member/:memberId" element={<MemberDetailsPage />} />
           </Routes>
         </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
       </MemoryRouter>
     )
 
@@ -84,12 +89,16 @@ describe('MemberDetailsPage Component', () => {
     vi.mocked(api.getClocks).mockResolvedValue([])
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <MemoryRouter initialEntries={['/member/member1']}>
         <AuthProvider>
           <Routes>
             <Route path="/member/:memberId" element={<MemberDetailsPage />} />
           </Routes>
         </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
       </MemoryRouter>
     )
 
@@ -103,12 +112,16 @@ describe('MemberDetailsPage Component', () => {
     vi.mocked(api.getClocks).mockResolvedValue([])
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <MemoryRouter initialEntries={['/member/member1']}>
         <AuthProvider>
           <Routes>
             <Route path="/member/:memberId" element={<MemberDetailsPage />} />
           </Routes>
         </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
       </MemoryRouter>
     )
 
@@ -129,12 +142,16 @@ describe('MemberDetailsPage Component', () => {
     ])
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <MemoryRouter initialEntries={['/member/member1']}>
         <AuthProvider>
           <Routes>
             <Route path="/member/:memberId" element={<MemberDetailsPage />} />
           </Routes>
         </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
       </MemoryRouter>
     )
 
@@ -148,12 +165,16 @@ describe('MemberDetailsPage Component', () => {
     vi.mocked(api.getClocks).mockResolvedValue([])
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <MemoryRouter initialEntries={['/member/member1']}>
         <AuthProvider>
           <Routes>
             <Route path="/member/:memberId" element={<MemberDetailsPage />} />
           </Routes>
         </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
       </MemoryRouter>
     )
 
@@ -167,12 +188,16 @@ describe('MemberDetailsPage Component', () => {
     vi.mocked(api.getClocks).mockResolvedValue([])
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <MemoryRouter initialEntries={['/member/member1']}>
         <AuthProvider>
           <Routes>
             <Route path="/member/:memberId" element={<MemberDetailsPage />} />
           </Routes>
         </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
       </MemoryRouter>
     )
 
@@ -196,12 +221,16 @@ describe('MemberDetailsPage Component', () => {
     vi.mocked(api.getClocks).mockResolvedValue([])
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <MemoryRouter initialEntries={['/member/member1']}>
         <AuthProvider>
           <Routes>
             <Route path="/member/:memberId" element={<MemberDetailsPage />} />
           </Routes>
         </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
       </MemoryRouter>
     )
 
@@ -231,12 +260,16 @@ describe('MemberDetailsPage Component', () => {
     vi.mocked(api.getClocks).mockResolvedValue([])
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <MemoryRouter initialEntries={['/member/member2']}>
         <AuthProvider>
           <Routes>
             <Route path="/member/:memberId" element={<MemberDetailsPage />} />
           </Routes>
         </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
       </MemoryRouter>
     )
 
@@ -255,12 +288,16 @@ describe('MemberDetailsPage Component', () => {
     ])
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <MemoryRouter initialEntries={['/member/member1']}>
         <AuthProvider>
           <Routes>
             <Route path="/member/:memberId" element={<MemberDetailsPage />} />
           </Routes>
         </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
       </MemoryRouter>
     )
 
@@ -286,12 +323,16 @@ describe('MemberDetailsPage Component', () => {
     vi.mocked(api.getClocks).mockResolvedValue([])
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <MemoryRouter initialEntries={['/member/member1']}>
         <AuthProvider>
           <Routes>
             <Route path="/member/:memberId" element={<MemberDetailsPage />} />
           </Routes>
         </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
       </MemoryRouter>
     )
 

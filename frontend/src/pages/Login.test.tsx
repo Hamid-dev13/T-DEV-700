@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import Login from './Login'
 import { AuthProvider } from '../context/AuthContext'
@@ -25,9 +26,13 @@ describe('Login Component', () => {
 
   it('should render login form correctly', async () => {
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <Login />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -43,9 +48,13 @@ describe('Login Component', () => {
     const user = userEvent.setup()
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <Login />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -68,9 +77,13 @@ describe('Login Component', () => {
     vi.mocked(api.login).mockResolvedValue(mockUser)
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <Login />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -95,9 +108,13 @@ describe('Login Component', () => {
     vi.mocked(api.login).mockRejectedValue(new Error('Invalid credentials'))
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <Login />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -124,9 +141,13 @@ describe('Login Component', () => {
     )
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <Login />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {

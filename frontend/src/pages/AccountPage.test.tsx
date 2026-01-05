@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { BrowserRouter } from 'react-router-dom'
 import AccountPage from './AccountPage'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
@@ -35,9 +36,11 @@ describe('AccountPage Component', () => {
 
   it('should render account page with user data', async () => {
     render(
-      <AuthProvider>
-        <AccountPage />
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AccountPage />
+        </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -52,9 +55,11 @@ describe('AccountPage Component', () => {
     const user = userEvent.setup()
 
     render(
-      <AuthProvider>
-        <AccountPage />
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AccountPage />
+        </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -73,9 +78,11 @@ describe('AccountPage Component', () => {
     vi.mocked(api.updateMyProfile).mockResolvedValue({ success: true })
 
     render(
-      <AuthProvider>
-        <AccountPage />
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AccountPage />
+        </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -104,9 +111,11 @@ describe('AccountPage Component', () => {
     const user = userEvent.setup()
 
     render(
-      <AuthProvider>
-        <AccountPage />
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AccountPage />
+        </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -129,9 +138,11 @@ describe('AccountPage Component', () => {
     vi.mocked(api.updateMyProfile).mockResolvedValue({ success: true })
 
     render(
-      <AuthProvider>
-        <AccountPage />
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AccountPage />
+        </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -159,9 +170,11 @@ describe('AccountPage Component', () => {
     const user = userEvent.setup()
 
     render(
-      <AuthProvider>
-        <AccountPage />
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AccountPage />
+        </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -186,9 +199,11 @@ describe('AccountPage Component', () => {
     const user = userEvent.setup()
 
     render(
-      <AuthProvider>
-        <AccountPage />
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AccountPage />
+        </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -218,9 +233,11 @@ describe('AccountPage Component', () => {
     vi.mocked(api.updateMyProfile).mockRejectedValue(new Error('Server error'))
 
     render(
-      <AuthProvider>
-        <AccountPage />
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AccountPage />
+        </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -240,9 +257,11 @@ describe('AccountPage Component', () => {
     vi.mocked(api.updateMyProfile).mockRejectedValue(new Error('Password does not meet security requirements'))
 
     render(
-      <AuthProvider>
-        <AccountPage />
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AccountPage />
+        </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -265,9 +284,11 @@ describe('AccountPage Component', () => {
     vi.mocked(global.confirm).mockReturnValue(false)
 
     render(
-      <AuthProvider>
-        <AccountPage />
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AccountPage />
+        </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -285,9 +306,11 @@ describe('AccountPage Component', () => {
     vi.mocked(global.confirm).mockReturnValue(true)
 
     render(
-      <AuthProvider>
-        <AccountPage />
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AccountPage />
+        </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -307,9 +330,11 @@ describe('AccountPage Component', () => {
     vi.mocked(api.updateMyProfile).mockResolvedValue({ success: true })
 
     render(
-      <AuthProvider>
-        <AccountPage />
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AccountPage />
+        </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {

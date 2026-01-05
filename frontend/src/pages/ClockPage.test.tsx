@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import ClockPage from './ClockPage'
 import { AuthProvider } from '../context/AuthContext'
@@ -32,9 +33,13 @@ describe('ClockPage Component', () => {
 
   it('should render clock page with title and button', async () => {
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <ClockPage />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     expect(await screen.findByText('Pointage')).toBeInTheDocument()
@@ -44,9 +49,13 @@ describe('ClockPage Component', () => {
 
   it('should display empty state when no clock entries', async () => {
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <ClockPage />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     expect(await screen.findByText('Aucune entrée dans cette période.')).toBeInTheDocument()
@@ -58,9 +67,13 @@ describe('ClockPage Component', () => {
     vi.mocked(api.addClock).mockResolvedValue(mockClock)
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <ClockPage />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -81,9 +94,13 @@ describe('ClockPage Component', () => {
     vi.mocked(api.getClocks).mockResolvedValue(mockClocks)
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <ClockPage />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -102,9 +119,13 @@ describe('ClockPage Component', () => {
     vi.mocked(api.getClocks).mockResolvedValue(mockClocks)
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <ClockPage />
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {

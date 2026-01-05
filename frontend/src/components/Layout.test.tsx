@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { Shell, Card, Link } from './Layout'
 import { AuthProvider } from '../context/AuthContext'
@@ -21,6 +22,8 @@ vi.mock('../router', () => ({
 describe('Card Component', () => {
   it('should render card with title and children', () => {
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <Card title="Test Card">
         <div>Test Content</div>
       </Card>
@@ -32,6 +35,8 @@ describe('Card Component', () => {
 
   it('should render card with actions', () => {
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <Card title="Test Card" actions={<button>Action Button</button>}>
         <div>Content</div>
       </Card>
@@ -43,6 +48,8 @@ describe('Card Component', () => {
 
   it('should render card with footer', () => {
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <Card title="Test Card" footer={<div>Footer Content</div>}>
         <div>Content</div>
       </Card>
@@ -58,7 +65,9 @@ describe('Link Component', () => {
   })
 
   it('should render link with children', () => {
-    render(<Link to="/test">Test Link</Link>)
+    render(
+      <BrowserRouter>
+      <BrowserRouter><Link to="/test">Test Link</Link>)
 
     expect(screen.getByText('Test Link')).toBeInTheDocument()
   })
@@ -66,7 +75,9 @@ describe('Link Component', () => {
   it('should navigate when clicked', async () => {
     const user = userEvent.setup()
 
-    render(<Link to="/dashboard">Go to Dashboard</Link>)
+    render(
+      <BrowserRouter>
+      <BrowserRouter><Link to="/dashboard">Go to Dashboard</Link>)
 
     const link = screen.getByText('Go to Dashboard')
     await user.click(link)
@@ -84,11 +95,15 @@ describe('Shell Component', () => {
     vi.mocked(api.getSession).mockResolvedValue(null)
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <Shell>
           <div>Test Content</div>
         </Shell>
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     expect(await screen.findByText('Test Content')).toBeInTheDocument()
@@ -100,11 +115,15 @@ describe('Shell Component', () => {
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <Shell>
           <div>Test Content</div>
         </Shell>
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     // Attendre que l'utilisateur soit chargé
@@ -121,11 +140,15 @@ describe('Shell Component', () => {
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <Shell>
           <div>Test Content</div>
         </Shell>
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     const pointageButton = await screen.findByText('Pointage')
@@ -140,11 +163,15 @@ describe('Shell Component', () => {
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <Shell>
           <div>Test Content</div>
         </Shell>
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     const dashboardButton = await screen.findByText('Dashboard')
@@ -159,11 +186,15 @@ describe('Shell Component', () => {
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <Shell>
           <div>Test Content</div>
         </Shell>
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     const logoutButton = await screen.findByText('Se déconnecter')
@@ -178,11 +209,15 @@ describe('Shell Component', () => {
     const currentYear = new Date().getFullYear()
 
     render(
+      <BrowserRouter>
+      <BrowserRouter>
       <AuthProvider>
         <Shell>
           <div>Test Content</div>
         </Shell>
       </AuthProvider>
+      </BrowserRouter>
+      </BrowserRouter>
     )
 
     expect(await screen.findByText(`© ${currentYear} — Démo`)).toBeInTheDocument()
