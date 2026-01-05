@@ -90,7 +90,7 @@ export default function ClockPage() {
                           ></span>
                           <div className="flex items-center gap-4">
                             <span className={`text-sm font-semibold px-3 py-1.5 rounded-full ${isArrival ? 'pill-green' : 'pill-red'}`}>
-                              {isArrival ? '⬆️ Arrivée' : '⬇️ Départ'}
+                              {isArrival ? 'Arrivée' : 'Départ'}
                             </span>
                             <span className="text-base font-medium clock">{e.toLocaleTimeString()}</span>
                           </div>
