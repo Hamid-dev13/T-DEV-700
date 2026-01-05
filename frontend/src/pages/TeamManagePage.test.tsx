@@ -63,11 +63,9 @@ describe('TeamManagePage Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 
@@ -79,11 +77,9 @@ describe('TeamManagePage Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 
@@ -99,11 +95,9 @@ describe('TeamManagePage Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 
@@ -117,11 +111,9 @@ describe('TeamManagePage Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 
@@ -136,11 +128,9 @@ describe('TeamManagePage Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 
@@ -188,11 +178,9 @@ describe('TeamManagePage Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 
@@ -236,11 +224,9 @@ describe('TeamManagePage Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 
@@ -262,11 +248,9 @@ describe('TeamManagePage Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 
@@ -281,11 +265,9 @@ describe('TeamManagePage Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <TeamManagePage />
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 

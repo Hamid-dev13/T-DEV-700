@@ -26,8 +26,8 @@ describe('Authentication Flow Integration Tests', () => {
 
       renderWithProviders(<Login />)
 
-      const emailInput = screen.getByPlaceholderText(/email/i)
-      const passwordInput = screen.getByPlaceholderText(/mot de passe/i)
+      const emailInput = screen.getByPlaceholderText('vous@exemple.com')
+      const passwordInput = screen.getByPlaceholderText('••••••••')
       const submitButton = screen.getByRole('button', { name: /connexion/i })
 
       await user.type(emailInput, 'test@example.com')

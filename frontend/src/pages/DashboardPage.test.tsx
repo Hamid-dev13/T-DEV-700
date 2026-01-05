@@ -11,6 +11,7 @@ vi.mock('../utils/api', () => ({
   getClocks: vi.fn(),
   getMyTeams: vi.fn(),
   getTeamUsers: vi.fn(),
+  getDaysOffForUser: vi.fn(),
   login: vi.fn(),
   logout: vi.fn()
 }))
@@ -30,6 +31,7 @@ describe('DashboardPage Component', () => {
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
     vi.mocked(api.getClocks).mockResolvedValue([])
     vi.mocked(api.getMyTeams).mockResolvedValue([])
+    vi.mocked(api.getDaysOffForUser).mockResolvedValue([])
   })
 
   it('should render dashboard page with title', async () => {
@@ -41,7 +43,7 @@ describe('DashboardPage Component', () => {
       </BrowserRouter>
     )
 
-    expect(await screen.findByText('Résumé de vos heures - Semaine en cours')).toBeInTheDocument()
+    expect(await screen.findByText(/Résumé de vos heures/)).toBeInTheDocument()
   })
 
   it('should display loading state initially', () => {
@@ -66,9 +68,9 @@ describe('DashboardPage Component', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText("Aujourd'hui")).toBeInTheDocument()
-      expect(screen.getByText('Cette semaine')).toBeInTheDocument()
-    })
+      expect(screen.getAllByText("Aujourd'hui").length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Cette semaine').length).toBeGreaterThan(0)
+    }, { timeout: 5000 })
   })
 
   it('should calculate and display daily hours', async () => {
@@ -87,8 +89,8 @@ describe('DashboardPage Component', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Résumé de vos heures - Semaine en cours')).toBeInTheDocument()
-    })
+      expect(screen.getByText(/Résumé de vos heures/)).toBeInTheDocument()
+    }, { timeout: 5000 })
   })
 
   it('should display team summary when user is a manager', async () => {

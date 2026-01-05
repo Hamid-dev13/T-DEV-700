@@ -36,10 +36,10 @@ describe('Card Component', () => {
   it('should render card with actions', () => {
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <Card title="Test Card" actions={<button>Action Button</button>}>
         <div>Content</div>
       </Card>
+      </BrowserRouter>
     )
 
     expect(screen.getByText('Test Card')).toBeInTheDocument()
@@ -49,10 +49,10 @@ describe('Card Component', () => {
   it('should render card with footer', () => {
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <Card title="Test Card" footer={<div>Footer Content</div>}>
         <div>Content</div>
       </Card>
+      </BrowserRouter>
     )
 
     expect(screen.getByText('Footer Content')).toBeInTheDocument()
@@ -66,8 +66,8 @@ describe('Link Component', () => {
 
   it('should render link with children', () => {
     render(
-      <BrowserRouter>
-      <BrowserRouter><Link to="/test">Test Link</Link>)
+      <BrowserRouter><Link to="/test">Test Link</Link></BrowserRouter>
+    )
 
     expect(screen.getByText('Test Link')).toBeInTheDocument()
   })
@@ -76,8 +76,8 @@ describe('Link Component', () => {
     const user = userEvent.setup()
 
     render(
-      <BrowserRouter>
-      <BrowserRouter><Link to="/dashboard">Go to Dashboard</Link>)
+      <BrowserRouter><Link to="/dashboard">Go to Dashboard</Link></BrowserRouter>
+    )
 
     const link = screen.getByText('Go to Dashboard')
     await user.click(link)
@@ -96,13 +96,11 @@ describe('Shell Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <Shell>
           <div>Test Content</div>
         </Shell>
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 
@@ -116,13 +114,11 @@ describe('Shell Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <Shell>
           <div>Test Content</div>
         </Shell>
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 
@@ -141,13 +137,11 @@ describe('Shell Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <Shell>
           <div>Test Content</div>
         </Shell>
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 
@@ -164,13 +158,11 @@ describe('Shell Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <Shell>
           <div>Test Content</div>
         </Shell>
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 
@@ -187,13 +179,11 @@ describe('Shell Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <Shell>
           <div>Test Content</div>
         </Shell>
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 
@@ -210,13 +200,11 @@ describe('Shell Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
       <AuthProvider>
         <Shell>
           <div>Test Content</div>
         </Shell>
       </AuthProvider>
-      </BrowserRouter>
       </BrowserRouter>
     )
 

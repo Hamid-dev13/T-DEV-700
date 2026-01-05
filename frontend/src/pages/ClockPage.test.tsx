@@ -34,11 +34,9 @@ describe('ClockPage Component', () => {
   it('should render clock page with title and button', async () => {
     render(
       <BrowserRouter>
-      <BrowserRouter>
-      <AuthProvider>
-        <ClockPage />
-      </AuthProvider>
-      </BrowserRouter>
+        <AuthProvider>
+          <ClockPage />
+        </AuthProvider>
       </BrowserRouter>
     )
 
@@ -50,11 +48,9 @@ describe('ClockPage Component', () => {
   it('should display empty state when no clock entries', async () => {
     render(
       <BrowserRouter>
-      <BrowserRouter>
-      <AuthProvider>
-        <ClockPage />
-      </AuthProvider>
-      </BrowserRouter>
+        <AuthProvider>
+          <ClockPage />
+        </AuthProvider>
       </BrowserRouter>
     )
 
@@ -68,11 +64,9 @@ describe('ClockPage Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
-      <AuthProvider>
-        <ClockPage />
-      </AuthProvider>
-      </BrowserRouter>
+        <AuthProvider>
+          <ClockPage />
+        </AuthProvider>
       </BrowserRouter>
     )
 
@@ -95,11 +89,9 @@ describe('ClockPage Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
-      <AuthProvider>
-        <ClockPage />
-      </AuthProvider>
-      </BrowserRouter>
+        <AuthProvider>
+          <ClockPage />
+        </AuthProvider>
       </BrowserRouter>
     )
 
@@ -120,11 +112,9 @@ describe('ClockPage Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
-      <AuthProvider>
-        <ClockPage />
-      </AuthProvider>
-      </BrowserRouter>
+        <AuthProvider>
+          <ClockPage />
+        </AuthProvider>
       </BrowserRouter>
     )
 
