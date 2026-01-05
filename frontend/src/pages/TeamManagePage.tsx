@@ -168,18 +168,30 @@ export default function TeamManagePage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {members.map(member => {
-                  const isManager = member.id === manager.id;
+                  const isMemberManager = member.id === manager.id;
+                  const canClick = isManager && !isMemberManager;
+                  
+                  const handleMemberClick = () => {
+                    if (canClick) {
+                      sessionStorage.setItem(`member_${member.id}`, JSON.stringify(member));
+                      navigate(`/member/${member.id}`);
+                    }
+                  };
+                  
                   return (
                     <div
                       key={member.id}
-                      className="card p-6 hover:shadow-lg transition-all"
+                      className={`card p-6 transition-all ${
+                        canClick ? 'hover:shadow-lg cursor-pointer hover:scale-105' : ''
+                      }`}
+                      onClick={handleMemberClick}
                     >
                       <div className="flex items-start gap-4">
                         <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
-                             style={{ background: isManager 
+                             style={{ background: isMemberManager 
                                ? 'linear-gradient(135deg, rgba(255, 212, 0, 0.4), rgba(255, 212, 0, 0.2))' 
                                : 'linear-gradient(135deg, rgba(255, 212, 0, 0.2), rgba(255, 212, 0, 0.1))' }}>
-                          {isManager ? '👔' : '👤'}
+                          {isMemberManager ? '👔' : '👤'}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-bold text-lg mb-1 truncate">
@@ -194,7 +206,7 @@ export default function TeamManagePage() {
                             </p>
                           )}
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {isManager && (
+                            {isMemberManager && (
                               <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full"
                                     style={{ background: 'rgba(255, 212, 0, 0.3)', color: 'hsl(var(--ink))' }}>
                                 👔 Manager
