@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import ClockPage from './ClockPage'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
@@ -32,9 +33,11 @@ describe('ClockPage Component', () => {
 
   it('should render clock page with title and button', async () => {
     render(
-      <AuthProvider>
-        <ClockPage />
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <ClockPage />
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     expect(await screen.findByText('Pointage')).toBeInTheDocument()
@@ -44,9 +47,11 @@ describe('ClockPage Component', () => {
 
   it('should display empty state when no clock entries', async () => {
     render(
-      <AuthProvider>
-        <ClockPage />
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <ClockPage />
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     expect(await screen.findByText('Aucune entrée dans cette période.')).toBeInTheDocument()
@@ -58,9 +63,11 @@ describe('ClockPage Component', () => {
     vi.mocked(api.addClock).mockResolvedValue(mockClock)
 
     render(
-      <AuthProvider>
-        <ClockPage />
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <ClockPage />
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     await waitFor(() => {
@@ -81,9 +88,11 @@ describe('ClockPage Component', () => {
     vi.mocked(api.getClocks).mockResolvedValue(mockClocks)
 
     render(
-      <AuthProvider>
-        <ClockPage />
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <ClockPage />
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     await waitFor(() => {
@@ -102,9 +111,11 @@ describe('ClockPage Component', () => {
     vi.mocked(api.getClocks).mockResolvedValue(mockClocks)
 
     render(
-      <AuthProvider>
-        <ClockPage />
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <ClockPage />
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     await waitFor(() => {

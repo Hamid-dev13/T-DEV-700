@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import Login from './Login'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
@@ -25,9 +26,11 @@ describe('Login Component', () => {
 
   it('should render login form correctly', async () => {
     render(
-      <AuthProvider>
-        <Login />
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <Login />
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     await waitFor(() => {
@@ -43,9 +46,11 @@ describe('Login Component', () => {
     const user = userEvent.setup()
 
     render(
-      <AuthProvider>
-        <Login />
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <Login />
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     await waitFor(() => {
@@ -68,9 +73,11 @@ describe('Login Component', () => {
     vi.mocked(api.login).mockResolvedValue(mockUser)
 
     render(
-      <AuthProvider>
-        <Login />
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <Login />
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     await waitFor(() => {
@@ -95,9 +102,11 @@ describe('Login Component', () => {
     vi.mocked(api.login).mockRejectedValue(new Error('Invalid credentials'))
 
     render(
-      <AuthProvider>
-        <Login />
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <Login />
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     await waitFor(() => {
@@ -124,9 +133,11 @@ describe('Login Component', () => {
     )
 
     render(
-      <AuthProvider>
-        <Login />
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <Login />
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     await waitFor(() => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import { BrowserRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router-dom'
 import DashboardPage from './DashboardPage'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
@@ -11,6 +11,7 @@ vi.mock('../utils/api', () => ({
   getClocks: vi.fn(),
   getMyTeams: vi.fn(),
   getTeamUsers: vi.fn(),
+  getDaysOffForUser: vi.fn(),
   login: vi.fn(),
   logout: vi.fn()
 }))
@@ -30,27 +31,28 @@ describe('DashboardPage Component', () => {
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
     vi.mocked(api.getClocks).mockResolvedValue([])
     vi.mocked(api.getMyTeams).mockResolvedValue([])
+    vi.mocked(api.getDaysOffForUser).mockResolvedValue([])
   })
 
   it('should render dashboard page with title', async () => {
     render(
-      <BrowserRouter>
+      <MemoryRouter>
         <AuthProvider>
           <DashboardPage />
         </AuthProvider>
-      </BrowserRouter>
+      </MemoryRouter>
     )
 
-    expect(await screen.findByText('Résumé de vos heures - Semaine en cours')).toBeInTheDocument()
+    expect(await screen.findByText('📊 Résumé de vos heures')).toBeInTheDocument()
   })
 
   it('should display loading state initially', () => {
     render(
-      <BrowserRouter>
+      <MemoryRouter>
         <AuthProvider>
           <DashboardPage />
         </AuthProvider>
-      </BrowserRouter>
+      </MemoryRouter>
     )
 
     expect(screen.getByText('Récupération de vos données...')).toBeInTheDocument()
@@ -58,17 +60,19 @@ describe('DashboardPage Component', () => {
 
   it('should display summary cards with default values', async () => {
     render(
-      <BrowserRouter>
+      <MemoryRouter>
         <AuthProvider>
           <DashboardPage />
         </AuthProvider>
-      </BrowserRouter>
+      </MemoryRouter>
     )
 
-    await waitFor(() => {
-      expect(screen.getByText("Aujourd'hui")).toBeInTheDocument()
-      expect(screen.getByText('Cette semaine')).toBeInTheDocument()
-    })
+    // Wait for the component to finish loading first
+    expect(await screen.findByText('📊 Résumé de vos heures')).toBeInTheDocument()
+
+    // Then check for the summary cards
+    expect(screen.getByText("Aujourd'hui")).toBeInTheDocument()
+    expect(screen.getAllByText('Cette semaine').length).toBeGreaterThan(0)
   })
 
   it('should calculate and display daily hours', async () => {
@@ -79,15 +83,15 @@ describe('DashboardPage Component', () => {
     vi.mocked(api.getClocks).mockResolvedValue(mockClocks)
 
     render(
-      <BrowserRouter>
+      <MemoryRouter>
         <AuthProvider>
           <DashboardPage />
         </AuthProvider>
-      </BrowserRouter>
+      </MemoryRouter>
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Résumé de vos heures - Semaine en cours')).toBeInTheDocument()
+      expect(screen.getByText('📊 Résumé de vos heures')).toBeInTheDocument()
     })
   })
 
@@ -110,11 +114,11 @@ describe('DashboardPage Component', () => {
     vi.mocked(api.getClocks).mockResolvedValue([])
 
     render(
-      <BrowserRouter>
+      <MemoryRouter>
         <AuthProvider>
           <DashboardPage />
         </AuthProvider>
-      </BrowserRouter>
+      </MemoryRouter>
     )
 
     await waitFor(() => {
@@ -125,11 +129,11 @@ describe('DashboardPage Component', () => {
 
   it('should display detail by day section', async () => {
     render(
-      <BrowserRouter>
+      <MemoryRouter>
         <AuthProvider>
           <DashboardPage />
         </AuthProvider>
-      </BrowserRouter>
+      </MemoryRouter>
     )
 
     await waitFor(() => {

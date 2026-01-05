@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { Shell, Card, Link } from './Layout'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
@@ -84,11 +85,13 @@ describe('Shell Component', () => {
     vi.mocked(api.getSession).mockResolvedValue(null)
 
     render(
-      <AuthProvider>
-        <Shell>
-          <div>Test Content</div>
-        </Shell>
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <Shell>
+            <div>Test Content</div>
+          </Shell>
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     expect(await screen.findByText('Test Content')).toBeInTheDocument()
@@ -100,11 +103,13 @@ describe('Shell Component', () => {
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(
-      <AuthProvider>
-        <Shell>
-          <div>Test Content</div>
-        </Shell>
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <Shell>
+            <div>Test Content</div>
+          </Shell>
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     // Attendre que l'utilisateur soit chargé
@@ -121,11 +126,13 @@ describe('Shell Component', () => {
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(
-      <AuthProvider>
-        <Shell>
-          <div>Test Content</div>
-        </Shell>
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <Shell>
+            <div>Test Content</div>
+          </Shell>
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     const pointageButton = await screen.findByText('Pointage')
@@ -140,11 +147,13 @@ describe('Shell Component', () => {
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(
-      <AuthProvider>
-        <Shell>
-          <div>Test Content</div>
-        </Shell>
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <Shell>
+            <div>Test Content</div>
+          </Shell>
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     const dashboardButton = await screen.findByText('Dashboard')
@@ -159,11 +168,13 @@ describe('Shell Component', () => {
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(
-      <AuthProvider>
-        <Shell>
-          <div>Test Content</div>
-        </Shell>
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <Shell>
+            <div>Test Content</div>
+          </Shell>
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     const logoutButton = await screen.findByText('Se déconnecter')
@@ -178,11 +189,13 @@ describe('Shell Component', () => {
     const currentYear = new Date().getFullYear()
 
     render(
-      <AuthProvider>
-        <Shell>
-          <div>Test Content</div>
-        </Shell>
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <Shell>
+            <div>Test Content</div>
+          </Shell>
+        </AuthProvider>
+      </MemoryRouter>
     )
 
     expect(await screen.findByText(`© ${currentYear} — Démo`)).toBeInTheDocument()

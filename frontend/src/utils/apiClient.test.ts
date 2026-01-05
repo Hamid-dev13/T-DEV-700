@@ -177,7 +177,7 @@ describe('apiClient', () => {
 
       await expect(api.get('/test')).rejects.toMatchObject({
         message: 'UNAUTHORIZED',
-        code: 401
+        status: 401
       })
     })
 
@@ -190,7 +190,7 @@ describe('apiClient', () => {
 
       await expect(api.get('/test')).rejects.toMatchObject({
         message: 'FORBIDDEN',
-        code: 403
+        status: 403
       })
     })
 
@@ -204,7 +204,7 @@ describe('apiClient', () => {
 
       await expect(api.get('/test')).rejects.toMatchObject({
         message: 'Bad request',
-        code: 400
+        status: 400
       })
     })
 
@@ -218,7 +218,7 @@ describe('apiClient', () => {
 
       await expect(api.get('/test')).rejects.toMatchObject({
         message: 'Validation error',
-        code: 400
+        status: 400
       })
     })
 
@@ -232,7 +232,7 @@ describe('apiClient', () => {
 
       await expect(api.get('/test')).rejects.toMatchObject({
         message: 'Internal server error',
-        code: 500
+        status: 500
       })
     })
 
@@ -247,7 +247,7 @@ describe('apiClient', () => {
 
       await expect(api.get('/test')).rejects.toMatchObject({
         message: 'HTTP 500',
-        code: 500
+        status: 500
       })
     })
   })
