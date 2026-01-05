@@ -30,7 +30,7 @@ export function Shell({ children }: { children: ReactNode }) {
               {user && !isActive('/login') && (
                 <>
                   <button onClick={() => navigate('/account')} className="nav-pill">Mon compte</button>
-                  <button onClick={() => { logout(); navigate('/login'); }} className="btn-ghost">Se déconnecter</button>
+                  <button onClick={() => { logout().then(() => navigate('/login')); }} className="btn-ghost">Se déconnecter</button>
                 </>
               )}
             </div>

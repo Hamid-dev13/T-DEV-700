@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { getReportForUser } from "../services/report.service";
 import { retrieveMainTeamForUser } from "../services/team.service";
-import { sendError } from "../utils/format";
 
 export async function getReportsForUserController(req: Request, res: Response) {
   try {
@@ -12,23 +11,30 @@ export async function getReportsForUserController(req: Request, res: Response) {
     const user_id = user as string;
     const report_type = report as string;
     const fromDate = new Date(from as string);
-    if (isNaN(fromDate.getTime())) return sendError(res, "Invalid Date \"from\"", 400);
+    if (isNaN(fromDate.getTime())) return res.sendError("Invalid Date \"from\"", 400);
     fromDate.setHours(0, 0, 0, 0)
     const toDate = new Date(to as string);
-    if (isNaN(toDate.getTime())) return sendError(res, "Invalid Date \"to\"", 400);
+    if (isNaN(toDate.getTime())) return res.sendError("Invalid Date \"to\"", 400);
     toDate.setHours(0, 0, 0, 0)
 
     const sender_id = req.user_id!;
 
-    const team = (await retrieveMainTeamForUser(sender_id) || undefined)!;
+    // Allow users to fetch their own reports
+    if (user_id !== sender_id) {
+      // Check if the sender is the manager of the target user's team
+      const targetUserTeam = await retrieveMainTeamForUser(user_id);
+      
+      if (!targetUserTeam)
+        return res.sendError("User is not in any team", 404);
 
-    if (!(req.admin || team.managerId === sender_id))
-      return sendError(res, "Insufficient permissions", 401);
+      if (!(req.admin || targetUserTeam.managerId === sender_id))
+        return res.sendError("Insufficient permissions", 401);
+    }
 
     const reports = await getReportForUser(user_id, report_type, fromDate, toDate);
     
     return res.status(200).json(reports);
   } catch (err) {
-    return sendError(res, err);
+    return res.sendError(err);
   }
 }

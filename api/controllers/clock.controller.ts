@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { addClock, getClocksForUserFiltered, getDaysOffForUser, removeClock, updateClock } from "../services/clock.service";
-import { convertToUTC, formatWithTimezone } from "../utils/timezone";
-import { sendError } from "../utils/format";
+import { formatWithTimezone } from "../utils/timezone";
 import { isManagerOfUser } from "../services/team.service";
 
 export async function reportTimeController(req: Request, res: Response) {
@@ -26,14 +25,14 @@ export async function retrieveReportTimeSummaryController(req: Request, res: Res
     let { from, to } = req.query ?? {};
 
     if (!from || !to)
-      return sendError(res, "Missing required fields 'from', 'to'", 400);
+      return res.sendError("Missing required fields 'from', 'to'", 400);
 
     const fromDate = new Date(from as string);
-    if (isNaN(fromDate.getTime())) return sendError(res, "Invalid Date \"from\"", 400);
+    if (isNaN(fromDate.getTime())) return res.sendError("Invalid Date \"from\"", 400);
     fromDate.setHours(0, 0, 0, 0)
 
     const toDate = new Date(to as string);
-    if (isNaN(toDate.getTime())) return sendError(res, "Invalid Date \"to\"", 400);
+    if (isNaN(toDate.getTime())) return res.sendError("Invalid Date \"to\"", 400);
     toDate.setHours(0, 0, 0, 0)
 
     const results = await getClocksForUserFiltered(user_id, { from: fromDate, to: toDate });
@@ -54,19 +53,19 @@ export async function addClockForMemberController(req: Request, res: Response) {
     const { id: user_id } = req.params ?? {};
     const { at } = req.body ?? {};
 
-    if (!at) return sendError(res, "Missing required field \"at\"", 400);
+    if (!at) return res.sendError("Missing required field \"at\"", 400);
 
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
-      return sendError(res, "Insufficient permissions", 401);
+      return res.sendError("Insufficient permissions", 401);
 
     const atDate = new Date(at);
 
-    if (isNaN(atDate.getTime())) return sendError(res, "Invalid Date", 400);
+    if (isNaN(atDate.getTime())) return res.sendError("Invalid Date", 400);
 
     const clock = await addClock(user_id, atDate);
     return res.status(200).json(clock);
   } catch (err) {
-    return sendError(res, err);
+    return res.sendError(err);
   }
 }
 
@@ -77,21 +76,21 @@ export async function updateClockForMemberController(req: Request, res: Response
     const { id: user_id } = req.params ?? {};
     const { from, to } = req.body ?? {};
     
-    if (!from || !to) return sendError(res, "Missing required fields \"from\", \"to\"", 400);
+    if (!from || !to) return res.sendError("Missing required fields \"from\", \"to\"", 400);
     
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
-      return sendError(res, "Insufficient permissions", 401);
+      return res.sendError("Insufficient permissions", 401);
 
     const fromDate = new Date(from);
-    if (isNaN(fromDate.getTime())) return sendError(res, "Invalid Date", 400);
+    if (isNaN(fromDate.getTime())) return res.sendError("Invalid Date", 400);
     const toDate = new Date(to);
-    if (isNaN(toDate.getTime())) return sendError(res, "Invalid Date", 400);
+    if (isNaN(toDate.getTime())) return res.sendError("Invalid Date", 400);
 
     const clock = await updateClock(user_id, fromDate, toDate);
     
     return res.status(200).json(clock);
   } catch (err) {
-    return sendError(res, err);
+    return res.sendError(err);
   }
 }
 
@@ -102,20 +101,20 @@ export async function deleteClockForMemberController(req: Request, res: Response
     const { id: user_id } = req.params ?? {};
     const { at } = req.body ?? {};
 
-    if (!at) return sendError(res, "Missing required field \"at\"", 400);
+    if (!at) return res.sendError("Missing required field \"at\"", 400);
     
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
-      return sendError(res, "Insufficient permissions", 401);
+      return res.sendError("Insufficient permissions", 401);
 
     const atDate = new Date(at);
 
-    if (isNaN(atDate.getTime())) return sendError(res, "Invalid Date", 400);
+    if (isNaN(atDate.getTime())) return res.sendError("Invalid Date", 400);
     
     await removeClock(user_id, atDate);
     
     return res.sendStatus(200);
   } catch (err) {
-    return sendError(res, err);
+    return res.sendError(err);
   }
 }
 
@@ -125,14 +124,14 @@ export async function getDaysOffForUserController(req: Request, res: Response) {
     const { from, to } = req.query ?? {};
 
     if (!from || !to)
-      return sendError(res, "Missing required fields 'from', 'to'", 400);
+      return res.sendError("Missing required fields 'from', 'to'", 400);
 
     const fromDate = new Date(from as string);
-    if (isNaN(fromDate.getTime())) return sendError(res, "Invalid Date \"from\"", 400);
+    if (isNaN(fromDate.getTime())) return res.sendError("Invalid Date \"from\"", 400);
     fromDate.setHours(0, 0, 0, 0)
 
     const toDate = new Date(to as string);
-    if (isNaN(toDate.getTime())) return sendError(res, "Invalid Date \"to\"", 400);
+    if (isNaN(toDate.getTime())) return res.sendError("Invalid Date \"to\"", 400);
     toDate.setHours(0, 0, 0, 0)
 
     const days_off = await getDaysOffForUser(user_id, { from: fromDate, to: toDate });
@@ -143,7 +142,7 @@ export async function getDaysOffForUserController(req: Request, res: Response) {
       days_off
     });
   } catch (err) {
-    return sendError(res, err);
+    return res.sendError(err);
   }
 }
 

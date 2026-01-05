@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Shell, Card } from '../components/Layout'
-import { getClocks, getTeamsWithMembers, updateClockForMember, deleteClockForMember, addClockForMember } from '../utils/api'
+import { getClocks, getTeamsWithMembers, updateClockForMember, deleteClockForMember, addClockForMember, getDaysOffForUser } from '../utils/api'
+import { ConfirmModal } from '../components/ConfirmModal'
 
 interface DailySummary {
   day: string
@@ -90,7 +91,7 @@ function getCurrentWeekDays(): string[] {
 }
 
 // Calcule le retard basé sur l'heure de premier pointage
-function calculateDelay(timestamps: Date[], targetDay: string, expectedHour: number): { status: string, minutes: number | null } {
+function calculateDelay(timestamps: Date[], targetDay: string, expectedHour: number, daysOff: string[] = []): { status: string, minutes: number | null } {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const targetDate = new Date(targetDay)
@@ -98,6 +99,11 @@ function calculateDelay(timestamps: Date[], targetDay: string, expectedHour: num
   
   if (targetDate > today) {
     return { status: 'future', minutes: null }
+  }
+  
+  // Vérifier si c'est un jour de congé
+  if (daysOff.includes(targetDay)) {
+    return { status: 'day_off', minutes: null }
   }
   
   const dayTimestamps = timestamps.filter(ts => ts.toISOString().slice(0, 10) === targetDay)
@@ -130,6 +136,10 @@ function calculateDelay(timestamps: Date[], targetDay: string, expectedHour: num
 }
 
 export default function MemberDetailsPage() {
+  useEffect(() => {
+    document.title = "Détails du membre • Time Manager"
+  }, [])
+  
   const { memberId } = useParams<{ memberId: string }>()
   const navigate = useNavigate()
   const [member, setMember] = useState<MemberInfo | null>(null)
@@ -140,6 +150,9 @@ export default function MemberDetailsPage() {
   const [deletingClock, setDeletingClock] = useState<Date | null>(null)
   const [editClockInTime, setEditClockInTime] = useState('')
   const [editClockOutTime, setEditClockOutTime] = useState('')
+  const [daysOff, setDaysOff] = useState<string[]>([])
+  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false)
+  const [pendingDeletePair, setPendingDeletePair] = useState<ClockPair | null>(null)
 
   // Charger les données du membre
   useEffect(() => {
@@ -159,10 +172,6 @@ export default function MemberDetailsPage() {
         // Récupérer toutes les équipes avec leurs membres
         const allTeams = await getTeamsWithMembers()
         
-        console.log('=== DEBUG ÉQUIPES ===')
-        console.log('Toutes les équipes:', allTeams)
-        console.log('Member ID:', memberId)
-        
         // Trouver les équipes du membre
         const userTeams = allTeams.filter((team: Team) => 
           team.members && team.members.some((m: any) => 
@@ -170,8 +179,6 @@ export default function MemberDetailsPage() {
             (m && typeof m === 'object' && m.id === memberId)
           )
         )
-        
-        console.log('Équipes du membre:', userTeams)
         
         // Chercher la team "Manager" dans toutes les équipes
         const managerTeam = allTeams.find((team: Team) => 
@@ -182,21 +189,15 @@ export default function MemberDetailsPage() {
           )
         )
         
-        console.log('Team Manager trouvée:', managerTeam)
-        
         // Vérifier si le membre est dans la team Manager
         const isManager = managerTeam && managerTeam.members && managerTeam.members.some((m: any) => 
           (typeof m === 'string' && m === memberId) || 
           (m && typeof m === 'object' && m.id === memberId)
         )
         
-        console.log('Est manager?', isManager)
-        
         // Si c'est un manager, utiliser les horaires de la team Manager
         // Sinon, utiliser les horaires de sa propre équipe
         const selectedTeam = isManager ? managerTeam : (userTeams[0] || null)
-        
-        console.log('Équipe sélectionnée:', selectedTeam)
         
         setMemberTeam(selectedTeam)
         
@@ -209,7 +210,10 @@ export default function MemberDetailsPage() {
         
         const clocks = await getClocks(memberId!, monday, now)
         setTimestamps(clocks)
-        
+
+        const daysOff = await getDaysOffForUser(memberId!, monday.toISOString().slice(0, 10), now.toISOString().slice(0, 10));
+        setDaysOff(daysOff);
+
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error)
       } finally {
@@ -294,10 +298,8 @@ export default function MemberDetailsPage() {
       const day = originalDate.getDate()
       const newClockIn = new Date(year, month, day, inHours, inMinutes, 0, 0)
       
-      // Vérifier si c'est un nouveau pointage (pas encore en base) ou une modification
-      const dayString = editingClock.day
-      const existingPairs = clockPairsByDay[dayString] || []
-      const isNewClock = existingPairs.length === 0
+      // Vérifier si c'est un nouveau pointage
+      const isNewClock = !editingClock.clockInISO
       
       if (isNewClock) {
         // Créer un nouveau pointage
@@ -310,7 +312,22 @@ export default function MemberDetailsPage() {
         }
       } else {
         // Modifier un pointage existant
-        await updateClockForMember(memberId, editingClock.clockIn.toISOString(), newClockIn)
+        // Trouver le timestamp actuel qui correspond (même jour, heure proche)
+        const dayStr = originalDate.toISOString().slice(0, 10)
+        const matchingClockIn = timestamps.find(t => {
+          const tDayStr = t.date.toISOString().slice(0, 10)
+          if (tDayStr === dayStr) {
+            // Chercher un timestamp avec une heure proche de l'heure affichée
+            const tHour = t.date.getHours()
+            const editHour = editingClock.clockIn.getHours()
+            return Math.abs(tHour - editHour) <= 2 // Tolérance de 2 heures
+          }
+          return false
+        })
+        
+        if (matchingClockIn) {
+          await updateClockForMember(memberId, matchingClockIn.iso, newClockIn)
+        }
         
         if (editingClock.clockOut && editClockOutTime) {
           const [outHours, outMinutes] = editClockOutTime.split(':').map(Number)
@@ -320,7 +337,20 @@ export default function MemberDetailsPage() {
           const outDay = originalOutDate.getDate()
           const newClockOut = new Date(outYear, outMonth, outDay, outHours, outMinutes, 0, 0)
           
-          await updateClockForMember(memberId, editingClock.clockOut.toISOString(), newClockOut)
+          const outDayStr = originalOutDate.toISOString().slice(0, 10)
+          const matchingClockOut = timestamps.find(t => {
+            const tDayStr = t.date.toISOString().slice(0, 10)
+            if (tDayStr === outDayStr) {
+              const tHour = t.date.getHours()
+              const editHour = editingClock.clockOut!.getHours()
+              return Math.abs(tHour - editHour) <= 2
+            }
+            return false
+          })
+          
+          if (matchingClockOut) {
+            await updateClockForMember(memberId, matchingClockOut.iso, newClockOut)
+          }
         }
       }
       
@@ -328,10 +358,8 @@ export default function MemberDetailsPage() {
       setEditingClock(null)
       setEditClockInTime('')
       setEditClockOutTime('')
-      alert(isNewClock ? '✅ Pointage créé avec succès !' : '✅ Pointage modifié avec succès !')
     } catch (error) {
       console.error('Erreur:', error)
-      alert('Erreur: ' + (error as Error).message)
     }
   }
   
@@ -345,34 +373,32 @@ export default function MemberDetailsPage() {
       setDeletingClock(null)
     } catch (error) {
       console.error('Erreur lors de la suppression:', error)
-      alert('Erreur lors de la suppression du pointage')
     }
   }
   
   // Fonction pour supprimer une paire complète
-  const handleDeletePair = async (pair: ClockPair) => {
-    if (!memberId) return
-    
-    if (!confirm('Supprimer ce pointage ?')) return
+  const handleDeleteClick = (pair: ClockPair) => {
+    setPendingDeletePair(pair)
+    setConfirmDeleteModalOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!memberId || !pendingDeletePair) return
     
     try {
-      await deleteClockForMember(memberId, pair.clockIn.toISOString())
-      if (pair.clockOut) {
-        await deleteClockForMember(memberId, pair.clockOut.toISOString())
+      await deleteClockForMember(memberId, pendingDeletePair.clockIn.toISOString())
+      if (pendingDeletePair.clockOut) {
+        await deleteClockForMember(memberId, pendingDeletePair.clockOut.toISOString())
       }
       await reloadClocks()
-      alert('✅ Pointage supprimé')
-    } catch (error) {
-      console.error('Erreur:', error)
-      alert('❌ Erreur lors de la suppression')
+      setPendingDeletePair(null)
+    } catch (err) {
+      console.error('Erreur lors de la suppression:', err)
     }
   }
   
   // Fonction pour ouvrir le modal d'édition
   const openEditModal = (pair: ClockPair) => {
-    console.log('openEditModal appelé', pair)
-    console.log('clockInISO:', pair.clockInISO)
-    console.log('clockOutISO:', pair.clockOutISO)
     setEditingClock(pair)
     const clockInTime = pair.clockIn.toLocaleTimeString('fr-FR', { 
       hour: '2-digit', 
@@ -398,17 +424,12 @@ export default function MemberDetailsPage() {
     const result: { [key: string]: { status: string, minutes: number | null } } = {}
     const expectedHour = memberTeam?.startHour ?? 9
     
-    console.log('=== DEBUG RETARDS ===')
-    console.log('Équipe utilisée:', memberTeam?.name)
-    console.log('Heure de début attendue:', expectedHour)
-    console.log('memberTeam complet:', memberTeam)
-    
-    weekDays.forEach(day => {
-      result[day] = calculateDelay(timestamps.map(t => t.date), day, expectedHour)
-    })
+    for (const day of weekDays) {
+      result[day] = calculateDelay(timestamps.map(t => t.date), day, expectedHour, daysOff)
+    }
     
     return result
-  }, [timestamps, weekDays, memberTeam])
+  }, [timestamps, weekDays, memberTeam, daysOff])
   
   // Calculer les statistiques
   const stats = useMemo(() => {
@@ -450,6 +471,8 @@ export default function MemberDetailsPage() {
         return 'Absent'
       case 'future':
         return 'À venir'
+      case 'day_off':
+        return 'Jour de repos'
       default:
         return 'N/A'
     }
@@ -463,6 +486,7 @@ export default function MemberDetailsPage() {
       case 'on_time': return 'bg-blue-500 text-white'
       case 'absent': return 'bg-gray-400 text-white'
       case 'future': return 'bg-gray-300 text-gray-600'
+      case 'day_off': return 'bg-purple-500 text-white'
       default: return 'bg-gray-400 text-white'
     }
   }
@@ -480,19 +504,34 @@ export default function MemberDetailsPage() {
     )
   }
 
+  const workingDaysCount = weekDays.filter(d => !daysOff.includes(d)).length
+  const weekHoursTarget = memberTeam ? (memberTeam.endHour - memberTeam.startHour) * workingDaysCount : 0
+
   return (
     <Shell>
       <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Bouton retour */}
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center text-sm text-gray-600 hover:text-yellow-600 transition-colors mb-6"
-        >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Retour au Dashboard
-        </button>
+        {/* Navigation */}
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center text-sm text-gray-600 hover:text-yellow-600 transition-colors"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Retour au Dashboard
+          </button>
+
+          <button
+            onClick={() => navigate(`/member/${memberId}/summary`)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Pour regarder les résumés
+          </button>
+        </div>
 
         {/* En-tête avec infos du membre */}
         <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-xl p-6 mb-6 border border-yellow-200">
@@ -514,7 +553,7 @@ export default function MemberDetailsPage() {
               <div className="text-4xl font-bold text-yellow-600">
                 {formatHoursToHHMM(weekTotal)}
               </div>
-              <div className="text-sm text-gray-500">sur 35h</div>
+              <div className="text-sm text-gray-500">sur {formatHoursToHHMM(weekHoursTarget)}h</div>
             </div>
           </div>
         </div>
@@ -574,7 +613,8 @@ export default function MemberDetailsPage() {
               const delayInfo = delays[day]
               const isToday = day === new Date().toISOString().split('T')[0]
               const pairs = clockPairsByDay[day] || []
-              
+              const isDayOff = daysOff.includes(day);
+
               return (
                 <div key={day} className="space-y-2">
                   <div 
@@ -595,77 +635,88 @@ export default function MemberDetailsPage() {
                     </div>
                     
                     <div className="flex items-center gap-6">
-                      <div className="text-right">
-                        <div className="text-xs text-gray-500 mb-1">Heures travaillées</div>
-                        <div className="text-lg font-bold text-gray-900">{formatHoursToHHMM(hours)}</div>
-                      </div>
+                      {isDayOff ? (
+                        <div className="text-right">
+                          <div className="text-sm text-purple-600 font-semibold">Jour de repos</div>
+                        </div>
+                      ) : 
+                        <div className="text-right">
+                          <div className="text-xs text-gray-500 mb-1">Heures travaillées</div>
+                          <div className="text-lg font-bold text-gray-900">{formatHoursToHHMM(hours)}</div>
+                        </div>
+                      }
                       
                       <div className="w-px h-12 bg-gray-300"></div>
                       
                       <div className="min-w-[180px]">
-                        <span className={`inline-block px-3 py-1.5 rounded text-xs font-medium ${getStatusBadgeClass(delayInfo?.status)}`}>
-                          {formatDelayText(delayInfo)}
-                        </span>
+                        {isDayOff ? null : 
+                          <span className={`inline-block px-3 py-1.5 rounded text-xs font-medium ${getStatusBadgeClass(delayInfo?.status)}`}>
+                            {formatDelayText(delayInfo)}
+                          </span>
+                        }
                       </div>
                     </div>
                   </div>
                   
                   {/* Afficher les paires de pointages */}
-                  {pairs.length > 0 ? (
+                  {isDayOff ? null : 
                     <div className="ml-16 space-y-2">
-                      {pairs.map((pair, idx) => (
-                        <div key={idx} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3">
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                              </svg>
-                              <span className="font-medium text-gray-900">
-                                {pair.clockIn.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false })}
-                              </span>
+                      {pairs.length > 0 && (
+                        <>
+                          {pairs.map((pair, idx) => (
+                            <div key={idx} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3">
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                  </svg>
+                                  <span className="font-medium text-gray-900">
+                                    {pair.clockIn.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                  </span>
+                                </div>
+                                
+                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                                
+                                <div className="flex items-center gap-2">
+                                  <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                  </svg>
+                                  <span className="font-medium text-gray-900">
+                                    {pair.clockOut ? pair.clockOut.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }) : 'En cours...'}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => openEditModal(pair)}
+                                  className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                  Modifier
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteClick(pair)}
+                                  className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                  Supprimer
+                                </button>
+                              </div>
                             </div>
-                            
-                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                            </svg>
-                            
-                            <div className="flex items-center gap-2">
-                              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                              </svg>
-                              <span className="font-medium text-gray-900">
-                                {pair.clockOut ? pair.clockOut.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }) : 'En cours...'}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => openEditModal(pair)}
-                              className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                              Modifier
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeletePair(pair)}
-                              className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                              Supprimer
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="ml-16">
+                          ))}
+                        </>
+                      )}
+                      
+                      {/* Bouton pour ajouter un pointage - toujours visible */}
                       <button
                         type="button"
                         onClick={() => {
@@ -678,9 +729,8 @@ export default function MemberDetailsPage() {
                             clockOut: defaultClockOut,
                             day: currentDay,
                             clockInOriginal: defaultClockIn,
-                            clockOutOriginal: defaultClockOut,
-                            clockInISO: defaultClockIn.toISOString(),
-                            clockOutISO: defaultClockOut.toISOString()
+                            clockOutOriginal: defaultClockOut
+                            // Ne pas définir clockInISO et clockOutISO pour un nouveau pointage
                           })
                         }}
                         className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
@@ -691,7 +741,7 @@ export default function MemberDetailsPage() {
                         Ajouter un pointage
                       </button>
                     </div>
-                  )}
+                  }
                 </div>
               )
             })}
@@ -754,6 +804,20 @@ export default function MemberDetailsPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={confirmDeleteModalOpen}
+        onClose={() => {
+          setConfirmDeleteModalOpen(false)
+          setPendingDeletePair(null)
+        }}
+        onConfirm={confirmDelete}
+        title="Supprimer le pointage"
+        message="Êtes-vous sûr de vouloir supprimer ce pointage ? Cette action est irréversible."
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        danger={true}
+      />
     </Shell>
   )
 }

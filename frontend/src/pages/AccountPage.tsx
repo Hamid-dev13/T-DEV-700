@@ -4,6 +4,10 @@ import { useAuth } from '../context/AuthContext'
 import { updateMyProfile } from '../utils/api'
 
 export default function AccountPage() {
+  useEffect(() => {
+    document.title = "Compte • Time Manager"
+  }, [])
+
   const { user, refreshUser } = useAuth()
   
   const [firstName, setFirstName] = useState<string>('')

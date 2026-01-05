@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 // Set environment variable before importing
 process.env.VITE_API_URL = 'http://localhost:3000'
 
-import { api, clearToken } from './apiClient'
+import { api } from './apiClient'
 
 // Mock fetch globally
 global.fetch = vi.fn()
@@ -15,18 +15,6 @@ describe('apiClient', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
-  })
-
-  describe('clearToken', () => {
-    it('should clear token cookie', () => {
-      // Should not throw
-      expect(() => clearToken()).not.toThrow()
-    })
-
-    it('should handle errors gracefully', () => {
-      // Should not throw
-      expect(() => clearToken()).not.toThrow()
-    })
   })
 
   describe('api.get', () => {

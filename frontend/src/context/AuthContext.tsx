@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, ReactNode, useCallback } from 'react'
 import { User } from '../utils/types'
 import * as api from '../utils/api'
+import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null
@@ -15,6 +16,7 @@ const AuthCtx = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
+  const navigate = useNavigate();
 
   useEffect(() => {
     let alive = true
@@ -23,9 +25,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const u = await api.getSession()
         if (!alive) return
         setUser(u || null)
+        if (!u) navigate('/login')
       } catch {
         if (!alive) return
         setUser(null)
+        navigate('/login')
       } finally {
         if (alive) setLoading(false)
       }
@@ -49,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async (): Promise<void> => {
     setLoading(true)
     try {
-      api.logout()
+      await api.logout()
       setUser(null)
     } finally {
       setLoading(false)

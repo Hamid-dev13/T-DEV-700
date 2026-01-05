@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { getCookie } from "../utils/cookie";
+import { COOKIE_ACCESS_TOKEN_KEY, getCookie } from "../utils/cookies";
 
 
 export async function isAuth(req: Request, res: Response, next: NextFunction) {
@@ -18,14 +18,14 @@ export async function isAuth(req: Request, res: Response, next: NextFunction) {
 
         // try from cookies
         if (!token && req.headers.cookie) {
-            token = getCookie(req.headers.cookie, "token");
+            token = getCookie(req.headers.cookie, COOKIE_ACCESS_TOKEN_KEY);
         }
 
         if (token) {
             // verify
-            jwt.verify(token, process.env.JWT_SECRET!, (err, decoded) => {
+            jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!, (err, decoded) => {
                 if (err) {
-                    return res.status(401).json({ message: "Invalid Token" });
+                    return res.sendError("Invalid Token", 401);
                 }
 
                 const payload = decoded as jwt.JwtPayload;
@@ -37,10 +37,10 @@ export async function isAuth(req: Request, res: Response, next: NextFunction) {
                 return next();
             })
         } else {
-            return res.status(401).json({ error: "Invalid Token" });
+            return res.sendError("Invalid Token", 401);
         }
 
-    } catch(error:any) {
-        return res.status(401).json({ error: error.message });
+    } catch(error: any) {
+        return res.sendError(error, 401);
     }
 }
