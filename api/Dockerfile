@@ -59,6 +59,10 @@ RUN npm ci --only=production --frozen-lockfile && npm cache clean --force
 # Copie du code compilé TypeScript depuis l'étape builder
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 
+# Copie des fichiers Swagger YAML nécessaires pour la documentation API
+COPY --from=builder --chown=nodejs:nodejs /app/swagger ./swagger
+COPY --from=builder --chown=nodejs:nodejs /app/config ./config
+
 # Variables d'environnement par défaut
 ENV NODE_ENV=production
 ENV PORT=3000
