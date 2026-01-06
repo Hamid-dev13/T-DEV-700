@@ -1,7 +1,13 @@
-import { Users as UsersIcon, Clock, Calendar, User } from 'lucide-react';
+import { Users as UsersIcon, Clock, Calendar, User as UserElement } from 'lucide-react';
+import { Team, User } from "../utils/types";
 
-function TeamCard({ team, manager }) {
-  const formatDate = (date) => {
+interface TeamCardProps {
+  team: Team;
+  manager: User | null;
+}
+
+function TeamCard({ team, manager }: TeamCardProps) {
+  const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: '2-digit',
@@ -23,7 +29,7 @@ function TeamCard({ team, manager }) {
 
       <div className="space-y-3 border-t pt-4">
         <div className="flex items-center text-sm text-gray-700">
-          <User className="w-4 h-4 mr-2 text-gray-400" />
+          <UserElement className="w-4 h-4 mr-2 text-gray-400" />
           <span className="font-medium">Manager:</span>
           <span className="ml-2">
             {manager ? `${manager.firstName} ${manager.lastName}` : 'Non défini'}

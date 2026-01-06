@@ -62,7 +62,7 @@ export async function retrieveMainTeamForUser(user_id: string): Promise<Team | n
   return result.length > 0 ? result[0].team : null;
 }
 
-export async function retreiveTeamsForUserWithManager(user_id: string): Promise<{ team: Team, manager: SafeUser }[]> {
+export async function retreiveTeamsForUserWithManager(user_id: string): Promise<{ team: Team, manager: SafeUser, members: SafeUser[] }[]> {
   const members = alias(users, "members");
 
   const teamIdsSubquery = db

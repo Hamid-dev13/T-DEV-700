@@ -1,6 +1,15 @@
 import { AlertTriangle, X } from 'lucide-react';
+import { User } from '../utils/types';
 
-function DeleteUserModal({ isOpen, onClose, onConfirm, user, loading }) {
+interface DeleteUserModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  user: User | null;
+  loading: boolean;
+}
+
+function DeleteUserModal({ isOpen, onClose, onConfirm, user, loading }: DeleteUserModalProps) {
   if (!isOpen || !user) return null;
 
   return (

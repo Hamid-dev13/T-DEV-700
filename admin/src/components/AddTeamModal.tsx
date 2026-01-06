@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react';
 import { X, UsersRound } from 'lucide-react';
+import { Team, User } from '../utils/types';
+import { addTeam, getUsers } from '../utils/api';
 
-function AddTeamModal({ isOpen, onClose, onTeamAdded }) {
+interface AddTeamModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onTeamAdded: (team: Team) => void;
+}
+
+function AddTeamModal({ isOpen, onClose, onTeamAdded }: AddTeamModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -9,9 +17,9 @@ function AddTeamModal({ isOpen, onClose, onTeamAdded }) {
     end_hour: 17,
     manager: '',
   });
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
   // Récupérer la liste des utilisateurs pour le select du manager
   useEffect(() => {
@@ -22,24 +30,14 @@ function AddTeamModal({ isOpen, onClose, onTeamAdded }) {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:3001/users', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data);
-      }
+      const users = await getUsers();
+      setUsers(users);
     } catch (err) {
       console.error('Erreur lors du chargement des users:', err);
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
 
@@ -51,32 +49,18 @@ function AddTeamModal({ isOpen, onClose, onTeamAdded }) {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/teams', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      const newTeam = await addTeam(formData.name, formData.description, formData.start_hour, formData.end_hour, formData.manager);
+      onTeamAdded(newTeam);
+      setFormData({
+        name: '',
+        description: '',
+        start_hour: 9,
+        end_hour: 17,
+        manager: '',
       });
-
-      if (response.ok) {
-        const newTeam = await response.json();
-        onTeamAdded(newTeam);
-        setFormData({
-          name: '',
-          description: '',
-          start_hour: 9,
-          end_hour: 17,
-          manager: '',
-        });
-        onClose();
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Erreur lors de la création');
-      }
+      onClose();
     } catch (err) {
-      setError('Erreur de connexion');
+      setError('Erreur lors de la création: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }

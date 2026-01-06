@@ -5,35 +5,27 @@ import AddUserModal from '../components/AddUserModal';
 import EditUserModal from '../components/EditUserModal';
 import DeleteUserModal from '../components/DeleteUserModal';
 import { UserPlus, Loader2 } from 'lucide-react';
+import { User } from '../utils/types';
+import { deleteUser, getUsers } from '../utils/api';
+import { except } from 'drizzle-orm/gel-core';
 
 function Users() {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:3001/users', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data);
-      } else {
-        setError('Erreur lors du chargement des utilisateurs');
-      }
+      const users = await getUsers();
+      setUsers(users);
+    
     } catch (err) {
-      setError('Erreur de connexion');
+      setError('Erreur lors du chargement des utilisateurs' + (err instanceof Error ? ': ' + err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -43,44 +35,35 @@ function Users() {
     fetchUsers();
   }, []);
 
-  const handleUserAdded = (newUser) => {
+  const handleUserAdded = (newUser: User) => {
     setUsers([...users, newUser]);
   };
 
-  const handleEditUser = (user) => {
+  const handleEditUser = (user: User) => {
     setSelectedUser(user);
     setIsEditModalOpen(true);
   };
 
-  const handleUserUpdated = (updatedUser) => {
+  const handleUserUpdated = (updatedUser: User) => {
     setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
   };
 
-  const handleDeleteUser = (user) => {
+  const handleDeleteUser = (user: User) => {
     setSelectedUser(user);
     setIsDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
+    if (!selectedUser) return;
+
     setDeleteLoading(true);
     try {
-      const response = await fetch(`http://localhost:3001/users/${selectedUser.id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        setUsers(users.filter(u => u.id !== selectedUser.id));
-        setIsDeleteModalOpen(false);
-        setSelectedUser(null);
-      } else {
-        alert('Erreur lors de la suppression');
-      }
+      await deleteUser(selectedUser.id);
+      setUsers(users.filter(u => u.id !== selectedUser.id));
+      setIsDeleteModalOpen(false);
+      setSelectedUser(null);
     } catch (err) {
-      alert('Erreur de connexion');
+      alert('Erreur lors de la suppression: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setDeleteLoading(false);
     }

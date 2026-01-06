@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 function Sidebar() {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState<boolean>(true);
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
