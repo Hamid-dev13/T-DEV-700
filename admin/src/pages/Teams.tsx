@@ -3,35 +3,25 @@ import Sidebar from '../components/Sidebar';
 import TeamCard from '../components/TeamCard';
 import AddTeamModal from '../components/AddTeamModal';
 import { UsersRound, Loader2 } from 'lucide-react';
+import { Team, User } from '../utils/types';
+import { getTeams, getUsers } from '../utils/api';
 
 function Teams() {
-  const [teams, setTeams] = useState([]);
-  const [users, setUsers] = useState({});
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [users, setUsers] = useState<Map<string, User>>(new Map<string, User>());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchTeams = async () => {
     try {
-      const response = await fetch('http://localhost:3001/teams', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const teams = await getTeams();
+      setTeams(teams);
 
-      if (response.ok) {
-        const teamsData = await response.json();
-        setTeams(teamsData);
-
-        // Récupérer les infos des managers
-        await fetchManagers();
-      } else {
-        setError('Erreur lors du chargement des équipes');
-      }
+      // Récupérer les infos des managers
+      await fetchManagers();
     } catch (err) {
-      setError('Erreur de connexion');
+      setError('Erreur lors du chargement des équipes');
     } finally {
       setLoading(false);
     }
@@ -39,23 +29,12 @@ function Teams() {
 
   const fetchManagers = async () => {
     try {
-      const response = await fetch('http://localhost:3001/users', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const users = await getUsers();
+      const usersMap = new Map<string, User>();
+      users.forEach((user: User) => {
+        usersMap.set(user.id, user);
       });
-
-      if (response.ok) {
-        const usersData = await response.json();
-        // Créer un map userId -> user
-        const usersMap = {};
-        usersData.forEach(user => {
-          usersMap[user.id] = user;
-        });
-        setUsers(usersMap);
-      }
+      setUsers(usersMap);
     } catch (err) {
       console.error('Erreur lors du chargement des managers:', err);
     }
@@ -65,7 +44,7 @@ function Teams() {
     fetchTeams();
   }, []);
 
-  const handleTeamAdded = (newTeam) => {
+  const handleTeamAdded = (newTeam: Team) => {
     setTeams([...teams, newTeam]);
     // Recharger pour avoir les infos du manager
     fetchTeams();
@@ -107,7 +86,7 @@ function Teams() {
                   <TeamCard
                     key={team.id}
                     team={team}
-                    manager={users[team.managerId]}
+                    manager={users.get(team.managerId) || null}
                   />
                 ))}
               </div>

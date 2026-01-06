@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { X, UserPlus } from 'lucide-react';
+import { User } from '../utils/types';
+import { addUser, updateUser } from '../utils/api';
 
-function AddUserModal({ isOpen, onClose, onUserAdded }) {
+interface AddUserModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onUserAdded: (newUser: User) => void;
+}
+
+function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps) {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -13,39 +21,25 @@ function AddUserModal({ isOpen, onClose, onUserAdded }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/users', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      const newUser = await addUser(formData);
+      onUserAdded(newUser);
+      setFormData({
+        first_name: '',
+        last_name: '',
+        email: '',
+        password: '',
+        phone: '',
+        admin: false,
       });
-
-      if (response.ok) {
-        const newUser = await response.json();
-        onUserAdded(newUser);
-        setFormData({
-          first_name: '',
-          last_name: '',
-          email: '',
-          password: '',
-          phone: '',
-          admin: false,
-        });
-        onClose();
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Erreur lors de la création');
-      }
+      onClose();
     } catch (err) {
-      setError('Erreur de connexion');
+      setError('Erreur lors de la création: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }

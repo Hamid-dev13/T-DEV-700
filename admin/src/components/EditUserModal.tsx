@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react';
 import { X, UserCog } from 'lucide-react';
+import { User } from '../utils/types';
+import { updateUser } from '../utils/api';
 
-function EditUserModal({ isOpen, onClose, onUserUpdated, user }) {
+interface EditUserModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onUserUpdated: (updatedUser: User) => void;
+  user: User | null;
+}
+
+function EditUserModal({ isOpen, onClose, onUserUpdated, user }: EditUserModalProps) {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -25,7 +34,7 @@ function EditUserModal({ isOpen, onClose, onUserUpdated, user }) {
     }
   }, [isOpen, user]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -34,28 +43,15 @@ function EditUserModal({ isOpen, onClose, onUserUpdated, user }) {
       // Préparer les données - ne pas envoyer le password s'il est vide
       const dataToSend = { ...formData };
       if (!dataToSend.password) {
-        delete dataToSend.password;
+        const { password, ...rest } = dataToSend;
+        Object.assign(dataToSend, rest);
       }
 
-      const response = await fetch(`http://localhost:3001/users/${user.id}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(dataToSend),
-      });
-
-      if (response.ok) {
-        const updatedUser = await response.json();
-        onUserUpdated(updatedUser);
-        onClose();
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Erreur lors de la modification');
-      }
+      const updatedUser = await updateUser(user!.id, dataToSend);
+      onUserUpdated(updatedUser);
+      onClose();
     } catch (err) {
-      setError('Erreur de connexion');
+      setError('Erreur lors de la modification: '+ (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,15 @@
 import { Mail, Phone, Shield, User as UserIcon, Calendar, Edit2, Trash2 } from 'lucide-react';
+import { User } from "../utils/types";
 
-function UserCard({ user, onEdit, onDelete }) {
-  const formatDate = (date) => {
+
+interface UserCardProps {
+  user: User
+  onEdit: (user: User) => void
+  onDelete: (user: User) => void
+}
+
+function UserCard({ user, onEdit, onDelete }: UserCardProps) {
+  const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: '2-digit',

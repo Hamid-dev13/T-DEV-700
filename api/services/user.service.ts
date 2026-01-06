@@ -28,6 +28,7 @@ export type AddUserInput = {
   email: string,
   password: string,
   phone?: string,
+  admin?: boolean,
 };
 
 export type UpdateUserInput = {
@@ -104,6 +105,7 @@ export async function addUser({
   email,
   password,
   phone,
+  admin,
 }: AddUserInput): Promise<SafeUser> {
   if (!first_name || !last_name || !email || !password) {
     throw new Error("Missing required fields: first_name, last_name, email, password");
@@ -116,7 +118,7 @@ export async function addUser({
 
   const [user] = await db
     .insert(users)
-    .values({firstName: first_name, lastName: last_name, email: email, password: password, phone: phone})
+    .values({firstName: first_name, lastName: last_name, email: email, password: password, phone: phone, admin: admin || false})
     .returning();
   
   return toSafeUser(user);

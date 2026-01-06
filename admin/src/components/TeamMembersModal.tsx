@@ -1,15 +1,23 @@
 import { useState, useEffect } from 'react';
 import { X, Users, UserPlus, Trash2, Loader2, Shield } from 'lucide-react';
+import { Team, User } from "../utils/types";
+import { addTeamMember, getTeamUsers, getUsers, removeTeamMember } from '../utils/api';
 
-function TeamMembersModal({ isOpen, onClose, team }) {
-  const [members, setMembers] = useState([]);
-  const [manager, setManager] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
-  const [availableUsers, setAvailableUsers] = useState([]);
-  const [selectedUserId, setSelectedUserId] = useState('');
-  const [addLoading, setAddLoading] = useState(false);
+interface TeamMembersModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  team: Team | null;
+}
+
+function TeamMembersModal({ isOpen, onClose, team }: TeamMembersModalProps) {
+  const [members, setMembers] = useState<User[]>([]);
+  const [manager, setManager] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState<boolean>(false);
+  const [availableUsers, setAvailableUsers] = useState<User[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [addLoading, setAddLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen && team) {
@@ -21,23 +29,12 @@ function TeamMembersModal({ isOpen, onClose, team }) {
   const fetchTeamMembers = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:3001/teams/${team.id}/users`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setManager(data.manager);
-        setMembers(data.members || []);
-      } else {
-        setError('Erreur lors du chargement des membres');
-      }
+      const team_users = await getTeamUsers(team?.id!);
+      setManager(team_users.manager);
+      setMembers(team_users.members || []);
+      setError('');
     } catch (err) {
-      setError('Erreur de connexion');
+      setError('Erreur lors du chargement des membres');
     } finally {
       setLoading(false);
     }
@@ -45,18 +42,8 @@ function TeamMembersModal({ isOpen, onClose, team }) {
 
   const fetchAvailableUsers = async () => {
     try {
-      const response = await fetch('http://localhost:3001/users', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const users = await response.json();
-        setAvailableUsers(users);
-      }
+      const users = await getUsers();
+      setAvailableUsers(users);
     } catch (err) {
       console.error('Erreur lors du chargement des utilisateurs');
     }
@@ -67,49 +54,25 @@ function TeamMembersModal({ isOpen, onClose, team }) {
 
     setAddLoading(true);
     try {
-      const response = await fetch(`http://localhost:3001/teams/${team.id}/users`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ user: selectedUserId }),
-      });
-
-      if (response.ok) {
-        setIsAddMemberOpen(false);
-        setSelectedUserId('');
-        fetchTeamMembers();
-      } else {
-        alert('Erreur lors de l\'ajout du membre');
-      }
+      await addTeamMember(team!.id, selectedUserId);
+      setIsAddMemberOpen(false);
+      setSelectedUserId('');
+      fetchTeamMembers();
     } catch (err) {
-      alert('Erreur de connexion');
+      alert('Erreur lors de l\'ajout du membre');
     } finally {
       setAddLoading(false);
     }
   };
 
-  const handleRemoveMember = async (userId) => {
+  const handleRemoveMember = async (userId: string) => {
     if (!confirm('Êtes-vous sûr de vouloir retirer ce membre de l\'équipe ?')) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/teams/${team.id}/users`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ user: userId }),
-      });
-
-      if (response.ok) {
-        fetchTeamMembers();
-      } else {
-        alert('Erreur lors de la suppression du membre');
-      }
+      await removeTeamMember(team!.id, userId);
+      fetchTeamMembers();
     } catch (err) {
-      alert('Erreur de connexion');
+      alert('Erreur lors de la suppression du membre: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
