@@ -295,7 +295,7 @@ describe('AccountPage Component', () => {
       expect(screen.getByDisplayValue('John')).toBeInTheDocument()
     })
 
-    const deleteButton = screen.getByRole('button', { name: /supprimer mon compte/i })
+    const deleteButton = screen.getByRole('button', { name: /supprimer john/i })
     await user.click(deleteButton)
 
     expect(global.confirm).toHaveBeenCalledWith(expect.stringContaining('Êtes-vous sûr'))
@@ -317,7 +317,7 @@ describe('AccountPage Component', () => {
       expect(screen.getByDisplayValue('John')).toBeInTheDocument()
     })
 
-    const deleteButton = screen.getByRole('button', { name: /supprimer mon compte/i })
+    const deleteButton = screen.getByRole('button', { name: /supprimer john/i })
     await user.click(deleteButton)
 
     await waitFor(() => {

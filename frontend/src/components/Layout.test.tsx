@@ -103,7 +103,7 @@ describe('Shell Component', () => {
   })
 
   it('should render navigation when user is logged in', async () => {
-    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User' }
+    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User', firstName: 'Test', lastName: 'User' }
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(
@@ -120,13 +120,13 @@ describe('Shell Component', () => {
     expect(await screen.findByText('Pointage')).toBeInTheDocument()
     expect(screen.getByText('Dashboard')).toBeInTheDocument()
     expect(screen.getByText('Équipe')).toBeInTheDocument()
-    expect(screen.getByText('Mon compte')).toBeInTheDocument()
+    expect(screen.getByText('Test User')).toBeInTheDocument()
     expect(screen.getByText('Se déconnecter')).toBeInTheDocument()
   })
 
   it('should navigate to clock page when Pointage is clicked', async () => {
     const user = userEvent.setup()
-    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User' }
+    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User', firstName: 'Test', lastName: 'User' }
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(
@@ -147,7 +147,7 @@ describe('Shell Component', () => {
 
   it('should navigate to dashboard page when Dashboard is clicked', async () => {
     const user = userEvent.setup()
-    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User' }
+    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User', firstName: 'Test', lastName: 'User' }
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(
@@ -168,7 +168,7 @@ describe('Shell Component', () => {
 
   it('should call logout when Se déconnecter is clicked', async () => {
     const user = userEvent.setup()
-    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User' }
+    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User', firstName: 'Test', lastName: 'User' }
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(

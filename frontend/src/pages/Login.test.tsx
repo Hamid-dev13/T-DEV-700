@@ -49,11 +49,9 @@ describe('Login Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
-      <AuthProvider>
-        <Login />
-      </AuthProvider>
-      </BrowserRouter>
+        <AuthProvider>
+          <Login />
+        </AuthProvider>
       </BrowserRouter>
     )
 
@@ -78,11 +76,9 @@ describe('Login Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
-      <AuthProvider>
-        <Login />
-      </AuthProvider>
-      </BrowserRouter>
+        <AuthProvider>
+          <Login />
+        </AuthProvider>
       </BrowserRouter>
     )
 
@@ -109,11 +105,9 @@ describe('Login Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
-      <AuthProvider>
-        <Login />
-      </AuthProvider>
-      </BrowserRouter>
+        <AuthProvider>
+          <Login />
+        </AuthProvider>
       </BrowserRouter>
     )
 
@@ -142,11 +136,9 @@ describe('Login Component', () => {
 
     render(
       <BrowserRouter>
-      <BrowserRouter>
-      <AuthProvider>
-        <Login />
-      </AuthProvider>
-      </BrowserRouter>
+        <AuthProvider>
+          <Login />
+        </AuthProvider>
       </BrowserRouter>
     )
 

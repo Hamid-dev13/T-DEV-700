@@ -29,7 +29,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-2">
               {user && !isActive('/login') && (
                 <>
-                  <button onClick={() => navigate('/account')} className="nav-pill">Mon compte</button>
+                  <button onClick={() => navigate('/account')} className={"nav-pill" + (isActive('/account') ? ' active' : '')}>{user.firstName} {user.lastName}</button>
                   <button onClick={() => { logout().then(() => navigate('/login')); }} className="btn-ghost">Se déconnecter</button>
                 </>
               )}
