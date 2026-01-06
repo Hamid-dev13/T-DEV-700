@@ -79,7 +79,7 @@ export async function addLeavePeriodForUserController(req: Request, res: Respons
       return res.sendError("Invalid Dates", 400);
 
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
-      return res.sendError("Insufficient permissions", 401);
+      return res.sendError("Insufficient permissions", 403);
     
     const period = await addLeavePeriod(user_id, startDate, endDate, accepted);
     return res.status(200).json(period);
@@ -96,7 +96,7 @@ export async function updateLeavePeriodForUserController(req: Request, res: Resp
     const { accepted, start_date: start, end_date: end } = req.body ?? {};
 
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
-      return res.sendError("Insufficient permissions", 401);
+      return res.sendError("Insufficient permissions", 403);
 
     let period: LeavePeriod;
 
@@ -142,7 +142,7 @@ export async function deleteLeavePeriodForUserController(req: Request, res: Resp
     const { user_id, leave_id } = req.params ?? {};
 
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
-      return res.sendError("Insufficient permissions", 401);
+      return res.sendError("Insufficient permissions", 403);
     
     const result = await deleteLeavePeriod(leave_id);
     return res.status(200).json({ result });

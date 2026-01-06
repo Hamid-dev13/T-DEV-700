@@ -48,7 +48,7 @@ export async function updateTeamController(req: Request, res: Response) {
       const team = await updateTeam(team_id, { name, description, start_hour, end_hour });
       return res.status(200).json(team);
     } else {
-      return res.sendError("Insufficient permissions", 401);
+      return res.sendError("Insufficient permissions", 403);
     }
   } catch (err) {
     return res.sendError(err);
