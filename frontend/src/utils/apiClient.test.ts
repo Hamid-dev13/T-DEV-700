@@ -240,9 +240,20 @@ describe('apiClient', () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: false,
         status: 500,
+        statusText: 'Internal Server Error',
         headers: new Headers(),
         text: async () => '',
-        json: async () => { throw new Error('Not JSON') }
+        json: async () => { throw new Error('Not JSON') },
+        blob: async () => new Blob(),
+        arrayBuffer: async () => new ArrayBuffer(0),
+        formData: async () => new FormData(),
+        bytes: async () => new Uint8Array(),
+        clone: vi.fn(),
+        body: null,
+        bodyUsed: false,
+        redirected: false,
+        type: 'basic',
+        url: 'http://localhost:3000/test'
       } as Response)
 
       await expect(api.get('/test')).rejects.toMatchObject({
