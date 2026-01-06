@@ -65,10 +65,13 @@ function computeDailyHours(timestamps: Date[]): DailySummary[] {
   return result.sort((a, b) => a.day.localeCompare(b.day))
 }
 
-// Convertit les heures décimales en format HH:MM
+// Convertit les heures décimales en format HhMM (ex: 8h30)
 function formatHoursToHHMM(decimalHours: number): string {
   const hours = Math.floor(decimalHours)
   const minutes = Math.round((decimalHours - hours) * 60)
+  if (minutes === 0) {
+    return `${hours}h`
+  }
   return `${hours}h${minutes.toString().padStart(2, '0')}`
 }
 
@@ -553,7 +556,7 @@ export default function MemberDetailsPage() {
               <div className="text-4xl font-bold text-yellow-600">
                 {formatHoursToHHMM(weekTotal)}
               </div>
-              <div className="text-sm text-gray-500">sur {formatHoursToHHMM(weekHoursTarget)}h</div>
+              <div className="text-sm text-gray-500">sur {formatHoursToHHMM(weekHoursTarget)}</div>
             </div>
           </div>
         </div>

@@ -44,11 +44,14 @@ function computeDailyHours(timestamps: Array<{ date: Date, iso: string }>): Dail
   return result.sort((a, b) => a.day.localeCompare(b.day))
 }
 
-// Convertit les heures décimales en format HH:MM
+// Convertit les heures décimales en format HhMM (ex: 8h30)
 function formatHoursToHHMM(decimalHours: number): string {
   const hours = Math.floor(decimalHours)
   const minutes = Math.round((decimalHours - hours) * 60)
-  return `${hours}:${minutes.toString().padStart(2, '0')}`
+  if (minutes === 0) {
+    return `${hours}h`
+  }
+  return `${hours}h${minutes.toString().padStart(2, '0')}`
 }
 
 // Génère un tableau de dates pour la semaine en cours (lundi à vendredi seulement)
@@ -93,6 +96,7 @@ export default function DashboardPage() {
     workingDaysCount: number
   } | null>(null)
   const [managedTeam, setManagedTeam] = useState<TeamWithMembers | null>(null)
+  const [userTeam, setUserTeam] = useState<Team | null>(null)
   const [teamSummary, setTeamSummary] = useState<{
     totalMembers: number
     avgHoursToday: number
@@ -155,7 +159,23 @@ export default function DashboardPage() {
 
     fetchData()
     fetchTeamData()
+    fetchUserTeam()
   }, [user])
+
+  // Récupérer l'équipe de l'utilisateur pour les objectifs
+  async function fetchUserTeam() {
+    if (!user?.id) return
+
+    try {
+      const teams = await getMyTeams() as TeamWithMembers[]
+      // Trouver la première équipe de l'utilisateur pour les objectifs
+      if (teams.length > 0) {
+        setUserTeam(teams[0].team)
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'équipe de l\'utilisateur:', error)
+    }
+  }
 
   // Récupérer les données de l'équipe si l'utilisateur est manager
   async function fetchTeamData() {
@@ -223,7 +243,7 @@ export default function DashboardPage() {
     )
   }
 
-  const dayHoursTarget = managedTeam ? (managedTeam.team.endHour - managedTeam.team.startHour) : 0
+  const dayHoursTarget = userTeam ? (userTeam.endHour - userTeam.startHour) : 0
   const weekHoursTarget = summary ? dayHoursTarget * summary.workingDaysCount : 0
 
   return (
@@ -235,14 +255,14 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-1">Cette semaine</h3>
-                <p className="text-sm text-gray-600">Objectif : {weekHoursTarget}h ({dayHoursTarget}h/jour)</p>
+                <p className="text-sm text-gray-600">Objectif : {formatHoursToHHMM(weekHoursTarget)} ({formatHoursToHHMM(dayHoursTarget)}/jour)</p>
               </div>
               <div className="text-right">
                 <div className="text-5xl font-bold text-yellow-600">
                   {summary ? formatHoursToHHMM(summary.totalWeek) : '0:00'}
                 </div>
                 <div className="text-sm text-gray-600 mt-1">
-                  sur {weekHoursTarget}h
+                  sur {formatHoursToHHMM(weekHoursTarget)}
                 </div>
               </div>
             </div>
@@ -261,8 +281,8 @@ export default function DashboardPage() {
               </div>
               <div className="flex justify-between text-xs text-gray-500 mt-2">
                 <span>0h</span>
-                <span>{Math.round(weekHoursTarget * 0.5)}h</span>
-                <span className="font-semibold">{weekHoursTarget}h</span>
+                <span>{formatHoursToHHMM(weekHoursTarget * 0.5)}</span>
+                <span className="font-semibold">{formatHoursToHHMM(weekHoursTarget)}</span>
               </div>
             </div>
             
@@ -299,7 +319,7 @@ export default function DashboardPage() {
                 {summary ? formatHoursToHHMM(summary.todayHours) : '0:00'}
               </div>
               <div className="flex items-center gap-1">
-                <div className="text-xs text-gray-500">Objectif: {dayHoursTarget}h</div>
+                <div className="text-xs text-gray-500">Objectif: {formatHoursToHHMM(dayHoursTarget)}</div>
                 {summary && summary.todayHours >= dayHoursTarget && (
                   <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -426,7 +446,7 @@ export default function DashboardPage() {
                                 }`}>
                                   {formatHoursToHHMM(hours)}
                                 </div>
-                                <div className="text-xs text-gray-500">/ 8h</div>
+                                <div className="text-xs text-gray-500">/ {formatHoursToHHMM(dayHoursTarget)}</div>
                               </div>
                               
                               {/* Icône de statut */}
