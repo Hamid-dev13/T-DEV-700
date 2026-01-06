@@ -651,7 +651,7 @@ a, .link:focus { outline-offset: 2px; }
 
 /* Glassmorphism effect for modal */
 .glass-modal {
-  background: rgba(255, 255, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 1.0) !important;
   backdrop-filter: blur(40px) saturate(200%) !important;
   -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
   border: 2px solid rgba(255, 212, 0, 0.3) !important;
