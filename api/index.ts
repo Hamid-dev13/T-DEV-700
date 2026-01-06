@@ -27,7 +27,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Configure CORS
-const ALLOWED_ORIGINS = [process.env.WEBSITE_URL, process.env.ADMIN_WEBSITE_URL].filter((it) => it);
+const ALLOWED_ORIGINS = [process.env.WEBSITE_URL, process.env.ADMIN_WEBSITE_URL, process.env.API_URL].filter((it) => it);
 console.log('[CORS] Allowed origins:', ALLOWED_ORIGINS);
 
 const corsOptions: CorsOptions = {
