@@ -7,14 +7,12 @@ import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
 import * as router from '../router'
 
-// Mock du module API
 vi.mock('../utils/api', () => ({
   login: vi.fn(),
   logout: vi.fn(),
   getSession: vi.fn()
 }))
 
-// Mock du router
 vi.mock('../router', () => ({
   navigate: vi.fn()
 }))
@@ -116,7 +114,6 @@ describe('Shell Component', () => {
       </MemoryRouter>
     )
 
-    // Attendre que l'utilisateur soit chargé
     expect(await screen.findByText('Pointage')).toBeInTheDocument()
     expect(screen.getByText('Dashboard')).toBeInTheDocument()
     expect(screen.getByText('Équipe')).toBeInTheDocument()

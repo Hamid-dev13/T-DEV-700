@@ -4,14 +4,12 @@ import { MemoryRouter } from 'react-router-dom'
 import App from './App'
 import * as api from './utils/api'
 
-// Mock du module API
 vi.mock('./utils/api', () => ({
   login: vi.fn(),
   logout: vi.fn(),
   getSession: vi.fn()
 }))
 
-// Mock des pages pour éviter les dépendances complexes
 vi.mock('./pages/AccountPage', () => ({
   default: () => <div>Account Page Mock</div>
 }))

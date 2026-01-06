@@ -9,7 +9,6 @@ export const bootstrap = () => {}
 export async function getSession() {
   try { return await apiClient.get('/user') }
   catch (err: any) {
-    // check if refresh token expired
     if (err.status === 401) {
       try {
         await refreshSession()
@@ -25,7 +24,6 @@ export async function getSession() {
 export async function login(email: string, password: string) {
   const payload = { email, password }
 
-  // this returns the user
   return apiClient.post("/user/login", payload);
 }
 
@@ -37,12 +35,10 @@ export async function logout() {
   return apiClient.post("/user/logout");
 }
 
-// --- Users ---
 export async function getUsers() {
   return apiClient.get('/users')
 }
 export async function updateMyProfile(updates: any) {
-  // Convertir camelCase en snake_case pour le backend
   const payload = {
     first_name: updates.firstName,
     last_name: updates.lastName,
@@ -59,7 +55,6 @@ export async function deleteUser(id: string) {
   return apiClient.delete(`/users/${encodeURIComponent(id)}`)
 }
 
-// --- Teams & clocks ---
 export async function getTeams() {
   const list = await apiClient.get('/teams')
   return Array.isArray(list) ? list : (list?.items || [])
@@ -67,16 +62,13 @@ export async function getTeams() {
 
 export async function getTeamsWithMembers() {
   try {
-    // Récupérer toutes les équipes
     const allTeams = await apiClient.get('/teams')
     const teams = Array.isArray(allTeams) ? allTeams : (allTeams?.items || [])
     
-    // Récupérer les membres pour chaque équipe en parallèle
     const teamsWithMembers = await Promise.all(
       teams.map(async (team: any) => {
         try {
           const teamUsers = await getTeamUsers(team.id)
-          // teamUsers contient { manager, members }
           return {
             ...team,
             manager: teamUsers.manager,
@@ -113,11 +105,11 @@ export async function getTeamUsers(teamId: string) {
 
 export async function getUserTeamById(userId: string) {
   try {
-    // Récupérer toutes les équipes
+
     const allTeams = await apiClient.get('/teams')
     const teams = Array.isArray(allTeams) ? allTeams : (allTeams?.items || [])
     
-    // Pour chaque équipe, récupérer les membres et trouver celle qui contient l'utilisateur
+
     for (const team of teams) {
       try {
         const members = await getTeamUsers(team.id)
@@ -129,7 +121,7 @@ export async function getUserTeamById(userId: string) {
           return { ...team, members }
         }
       } catch (err) {
-        // Ignorer les erreurs pour les équipes sans accès
+
         continue
       }
     }
@@ -236,7 +228,6 @@ export async function teamAverages(teamId: string, from?: Date, to?: Date) {
   return { daily, weekly }
 }
 
-// --- Reports ---
 export async function getReports(userId: string, reportType: string, from: Date, to: Date) {
   try {
     const params = new URLSearchParams({
@@ -252,7 +243,6 @@ export async function getReports(userId: string, reportType: string, from: Date,
   }
 }
 
-// --- Leave Periods ---
 export async function getMyLeavePeriods() {
   return apiClient.get('/user/leave-periods')
 }

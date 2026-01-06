@@ -45,7 +45,6 @@ export function Shell({ children }: { children: ReactNode }) {
   )
 }
 
-// Type des props du Card
 interface CardProps {
   title: string
   actions?: ReactNode
@@ -66,7 +65,6 @@ export function Card({ title, actions, footer, children }: CardProps) {
   )
 }
 
-// Type des props du Link
 interface LinkProps {
   to: string
   children: ReactNode

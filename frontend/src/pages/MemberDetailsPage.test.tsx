@@ -5,7 +5,6 @@ import MemberDetailsPage from './MemberDetailsPage'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
 
-// Mock du module API
 vi.mock('../utils/api', () => ({
   getSession: vi.fn(),
   getClocks: vi.fn(),
@@ -14,7 +13,6 @@ vi.mock('../utils/api', () => ({
   logout: vi.fn()
 }))
 
-// Mock window.navigate
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom') as any
@@ -55,7 +53,6 @@ describe('MemberDetailsPage Component', () => {
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
     sessionStorage.clear()
 
-    // Store member data in sessionStorage
     sessionStorage.setItem(`member_member1`, JSON.stringify(mockMember))
   })
 

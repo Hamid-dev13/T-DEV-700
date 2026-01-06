@@ -6,7 +6,6 @@ import TeamManagePage from './TeamManagePage'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
 
-// Mock du module API
 vi.mock('../utils/api', () => ({
   getSession: vi.fn(),
   getMyTeams: vi.fn(),
@@ -138,8 +137,7 @@ describe('TeamManagePage Component', () => {
       expect(screen.getByText(/Engineering Team/i)).toBeInTheDocument()
     }, { timeout: 3000 })
 
-    // Click on manager tab
-    const managerTab = screen.getByText(/Manager/i)
+    const managerTab = screen.getByRole('button', { name: /👔 Manager/i })
     await user.click(managerTab)
 
     await waitFor(() => {
@@ -186,7 +184,7 @@ describe('TeamManagePage Component', () => {
 
     await waitFor(() => {
       expect(screen.getByText('🔄 Sélectionner une équipe')).toBeInTheDocument()
-      // Use getAllByText since the team name appears in the selector and in the title
+
       const teamNames = screen.getAllByText(/Engineering Team/i)
       expect(teamNames.length).toBeGreaterThan(0)
     }, { timeout: 3000 })
@@ -272,7 +270,7 @@ describe('TeamManagePage Component', () => {
     )
 
     await waitFor(() => {
-      // Should show loading state but not fetch teams
+
       expect(api.getMyTeams).not.toHaveBeenCalled()
     })
   })

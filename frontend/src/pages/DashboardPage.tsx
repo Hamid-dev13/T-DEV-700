@@ -10,11 +10,9 @@ interface DailySummary {
   hours: number
 }
 
-// Calcule les heures travaillées par jour à partir des timestamps de pointage
 function computeDailyHours(timestamps: Array<{ date: Date, iso: string }>): DailySummary[] {
   const byDay: { [key: string]: Date[] } = {}
   
-  // Grouper les timestamps par jour
   for (const ts of timestamps) {
     const day = ts.date.toISOString().slice(0, 10)
     if (!byDay[day]) byDay[day] = []
@@ -23,18 +21,16 @@ function computeDailyHours(timestamps: Array<{ date: Date, iso: string }>): Dail
   
   const result: DailySummary[] = []
   
-  // Calculer les heures pour chaque jour
   for (const [day, times] of Object.entries(byDay)) {
     const sorted = times.sort((a, b) => a.getTime() - b.getTime())
     let totalHours = 0
     
-    // Paires de pointages: in/out, in/out, etc.
     for (let i = 0; i < sorted.length - 1; i += 2) {
       const clockIn = sorted[i]
       const clockOut = sorted[i + 1]
       if (clockOut) {
         const diff = clockOut.getTime() - clockIn.getTime()
-        totalHours += diff / (1000 * 60 * 60) // Convertir ms en heures
+        totalHours += diff / (1000 * 60 * 60)
       }
     }
     
@@ -44,7 +40,6 @@ function computeDailyHours(timestamps: Array<{ date: Date, iso: string }>): Dail
   return result.sort((a, b) => a.day.localeCompare(b.day))
 }
 
-// Convertit les heures décimales en format HhMM (ex: 8h30)
 function formatHoursToHHMM(decimalHours: number): string {
   const hours = Math.floor(decimalHours)
   const minutes = Math.round((decimalHours - hours) * 60)
@@ -54,17 +49,14 @@ function formatHoursToHHMM(decimalHours: number): string {
   return `${hours}h${minutes.toString().padStart(2, '0')}`
 }
 
-// Génère un tableau de dates pour la semaine en cours (lundi à vendredi seulement)
 function getCurrentWeekDays(): string[] {
   const days: string[] = []
   const today = new Date()
   
-  // Trouver le lundi de la semaine en cours
-  const dayOfWeek = today.getDay() || 7 // Lundi = 1, Dimanche = 7
+  const dayOfWeek = today.getDay() || 7
   const monday = new Date(today)
   monday.setDate(today.getDate() - (dayOfWeek - 1))
   
-  // Générer les 5 jours de lundi à vendredi (pas de weekend)
   for (let i = 0; i < 5; i++) {
     const date = new Date(monday)
     date.setDate(monday.getDate() + i)
@@ -104,11 +96,8 @@ export default function DashboardPage() {
   } | null>(null)
   const [loading, setLoading] = useState(true)
   
-  // Fonction pour naviguer vers les détails d'un membre
   const handleMemberClick = (member: User) => {
-    // Sauvegarder les infos du membre dans sessionStorage
     sessionStorage.setItem(`member_${member.id}`, JSON.stringify(member))
-    // Naviguer vers la page de détails
     navigate(`/member/${member.id}`)
   }
 
@@ -121,25 +110,20 @@ export default function DashboardPage() {
         
         const now = new Date()
         
-        // Calculer le lundi de la semaine en cours
-        const dayOfWeek = now.getDay() || 7 // Lundi = 1, Dimanche = 7
+        const dayOfWeek = now.getDay() || 7
         const monday = new Date(now)
         monday.setDate(now.getDate() - (dayOfWeek - 1))
         
-        // Récupérer les pointages depuis le lundi de la semaine en cours
         const timestamps = await getClocks(user!.id, monday, now)
         
-        // Calculer les heures par jour
         const dailyHours = computeDailyHours(timestamps)
         
-        // Calculer le total de la semaine en cours (utilise le même lundi calculé plus haut)
         const weekStart = monday.toISOString().slice(0, 10)
         
         const totalWeek = dailyHours
           .filter(d => d.day >= weekStart)
           .reduce((sum, d) => sum + d.hours, 0)
         
-        // Heures d'aujourd'hui
         const today = now.toISOString().slice(0, 10)
         const todayHours = dailyHours.find(d => d.day === today)?.hours || 0
         
@@ -162,13 +146,12 @@ export default function DashboardPage() {
     fetchUserTeam()
   }, [user])
 
-  // Récupérer l'équipe de l'utilisateur pour les objectifs
   async function fetchUserTeam() {
     if (!user?.id) return
 
     try {
       const teams = await getMyTeams() as TeamWithMembers[]
-      // Trouver la première équipe de l'utilisateur pour les objectifs
+
       if (teams.length > 0) {
         setUserTeam(teams[0].team)
       }
@@ -177,22 +160,21 @@ export default function DashboardPage() {
     }
   }
 
-  // Récupérer les données de l'équipe si l'utilisateur est manager
   async function fetchTeamData() {
     if (!user?.id) return
 
     try {
       const teams = await getMyTeams() as TeamWithMembers[]
-      // Trouver l'équipe où l'utilisateur est manager
+
       const myManagedTeam = teams.find(t => t.manager.id === user.id)
       
       if (myManagedTeam) {
         setManagedTeam(myManagedTeam)
         
-        // Calculer les stats de l'équipe
+
         const now = new Date()
         
-        // Calculer le lundi de la semaine en cours
+
         const dayOfWeek = now.getDay() || 7
         const monday = new Date(now)
         monday.setDate(now.getDate() - (dayOfWeek - 1))
@@ -202,16 +184,16 @@ export default function DashboardPage() {
         let totalHoursWeek = 0
         const today = now.toISOString().slice(0, 10)
         
-        // Récupérer les heures de tous les membres
+
         for (const member of myManagedTeam.members) {
           const timestamps = await getClocks(member.id, monday, now)
           const dailyHours = computeDailyHours(timestamps)
           
-          // Heures d'aujourd'hui
+
           const memberToday = dailyHours.find(d => d.day === today)?.hours || 0
           totalHoursToday += memberToday
           
-          // Heures de la semaine
+
           const memberWeek = dailyHours
             .filter(d => d.day >= weekStart)
             .reduce((sum, d) => sum + d.hours, 0)

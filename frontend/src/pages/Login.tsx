@@ -33,7 +33,6 @@ export default function Login() {
 
   return (
     <div className="h-screen flex items-center justify-center bg-gray-50 p-4 overflow-hidden">
-      {/* Logo MR5 en haut à gauche fixe */}
       <div className="fixed top-8 left-8 z-50">
         <h1 className="text-5xl md:text-6xl font-black tracking-tighter" 
             style={{ 
@@ -48,13 +47,11 @@ export default function Login() {
       </div>
 
       <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-        {/* Cadre Bienvenue sur le côté */}
         <div className="login-hero">
           <h1 className="login-title">Bienvenue 👋</h1>
           <p className="login-sub">Connectez-vous pour accéder à votre tableau de bord.</p>
         </div>
 
-        {/* Card de connexion */}
         <Card title="Connexion">
           <form onSubmit={onSubmit} className="login-form">
             {error && (

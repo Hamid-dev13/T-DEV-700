@@ -27,7 +27,6 @@ export default function AccountPage() {
     isLongEnough: false
   })
 
-  // Initialize form with user data
   useEffect(() => {
     if (user) {
       setFirstName(user.firstName || '')
@@ -42,7 +41,6 @@ export default function AccountPage() {
 
     if (!user?.id) return
 
-    // Validation du mot de passe côté frontend si un nouveau mot de passe est fourni
     if (password) {
       const hasUpperCase = /[A-Z]/.test(password)
       const hasLowerCase = /[a-z]/.test(password)
@@ -61,7 +59,7 @@ export default function AccountPage() {
       await updateMyProfile({ firstName, lastName, email, phone, ...(password ? { password } : {}) })
       await refreshUser()
       setShowSuccessModal(true)
-      setPassword('') // Clear password field
+      setPassword('')
     } catch (err: any) {
       console.error('Erreur lors de la mise à jour:', err)
       const errorMsg = err.message || 'Erreur inconnue'
@@ -75,14 +73,12 @@ export default function AccountPage() {
       return
     }
     
-    // TODO: Implémenter la suppression du compte
     alert('Fonctionnalité de suppression à implémenter')
   }
 
   return (
     <div className="h-screen overflow-hidden">
       <Shell>
-        {/* Password Error Popup */}
         {showPasswordError && (
         <div 
           className="fixed inset-0 flex items-center justify-center z-50 animate-fadeIn" 
@@ -130,7 +126,6 @@ export default function AccountPage() {
         </div>
       )}
 
-      {/* Success Modal */}
       {showSuccessModal && (
         <div 
           className="fixed inset-0 flex items-center justify-center z-50 animate-fadeIn" 
@@ -156,7 +151,6 @@ export default function AccountPage() {
         </div>
       )}
 
-      {/* Error Modal */}
       {showErrorModal && (
         <div 
           className="fixed inset-0 flex items-center justify-center z-50 animate-fadeIn" 

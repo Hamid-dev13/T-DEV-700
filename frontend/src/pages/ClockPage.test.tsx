@@ -6,7 +6,6 @@ import ClockPage from './ClockPage'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
 
-// Mock du module API
 vi.mock('../utils/api', () => ({
   getSession: vi.fn(),
   getClocks: vi.fn(),
@@ -119,7 +118,7 @@ describe('ClockPage Component', () => {
     )
 
     await waitFor(() => {
-      // Vérifier qu'il y a 2 groupes de jours différents
+
       const dayHeaders = screen.getAllByText(/📅/)
       expect(dayHeaders.length).toBeGreaterThan(0)
     })

@@ -6,7 +6,6 @@ import AccountPage from './AccountPage'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
 
-// Mock du module API
 vi.mock('../utils/api', () => ({
   getSession: vi.fn(),
   updateMyProfile: vi.fn(),
@@ -14,7 +13,6 @@ vi.mock('../utils/api', () => ({
   logout: vi.fn()
 }))
 
-// Mock window.alert et window.confirm
 global.alert = vi.fn()
 global.confirm = vi.fn()
 
@@ -103,7 +101,7 @@ describe('AccountPage Component', () => {
         email: 'test@example.com',
         phone: '+33123456789'
       })
-      expect(global.alert).toHaveBeenCalledWith('Compte mis à jour avec succès.')
+      expect(screen.getByText('Compte mis à jour')).toBeInTheDocument()
     })
   })
 
@@ -248,7 +246,8 @@ describe('AccountPage Component', () => {
     await user.click(submitButton)
 
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith(expect.stringContaining('Server error'))
+      expect(screen.getByText('Erreur de mise à jour')).toBeInTheDocument()
+      expect(screen.getByText('Server error')).toBeInTheDocument()
     })
   })
 
@@ -275,7 +274,8 @@ describe('AccountPage Component', () => {
     await user.click(submitButton)
 
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith(expect.stringContaining('exigences de sécurité'))
+      expect(screen.getByText('Erreur de mise à jour')).toBeInTheDocument()
+      expect(screen.getByText('Password does not meet security requirements')).toBeInTheDocument()
     })
   })
 

@@ -41,32 +41,25 @@ export default function MemberSummaryPage() {
       try {
         setLoading(true)
         
-        // Récupérer les infos du membre depuis sessionStorage
         const memberDataStr = sessionStorage.getItem(`member_${memberId}`)
         if (memberDataStr) {
           const memberData = JSON.parse(memberDataStr)
           setMember(memberData)
         }
         
-        // Vérifier que memberId existe
         if (!memberId) {
           console.error('Member ID is undefined')
           return
         }
         
-        // Calculer la période (semaine en cours - lundi à vendredi)
         const today = new Date()
         
-        // Trouver le lundi de la semaine en cours
-        const dayOfWeek = today.getDay() // 0 = Dimanche, 1 = Lundi, ..., 6 = Samedi
-        // Calculer combien de jours on doit reculer pour arriver à lundi
-        // Dimanche (0) -> reculer de 6 jours, Lundi (1) -> 0 jours, Mardi (2) -> 1 jour, etc.
+        const dayOfWeek = today.getDay()
         const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1
         const monday = new Date(today)
         monday.setDate(today.getDate() - daysToSubtract)
         monday.setHours(0, 0, 0, 0)
         
-        // Vendredi de la semaine en cours  
         const friday = new Date(monday)
         friday.setDate(monday.getDate() + 4)
         friday.setHours(23, 59, 59, 999)
@@ -74,7 +67,6 @@ export default function MemberSummaryPage() {
         const from = monday
         const to = friday
         
-        // Formater les dates en YYYY-MM-DD sans conversion UTC
         const formatLocalDate = (date: Date) => {
           const year = date.getFullYear()
           const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -82,7 +74,6 @@ export default function MemberSummaryPage() {
           return `${year}-${month}-${day}`
         }
         
-        // Récupérer les KPI et les jours de repos via les routes backend
         const [presenceKPI, latenessKPI, daysOffData] = await Promise.all([
           getReports(memberId, 'presence', from, to),
           getReports(memberId, 'lateness', from, to),
@@ -91,7 +82,6 @@ export default function MemberSummaryPage() {
         
         setDaysOff(daysOffData)
         
-        // Convertir en Map pour faciliter l'accès
         const presenceMap = new Map<string, number>()
         const latenessMap = new Map<string, number>()
         
@@ -103,7 +93,7 @@ export default function MemberSummaryPage() {
           latenessMap.set(item.day, item.lateness)
         })
         
-        // Générer tous les jours de lundi à vendredi de la semaine en cours
+
         const weekDays: string[] = []
         for (let i = 0; i < 5; i++) { // Lundi à Vendredi
           const day = new Date(monday)
@@ -112,7 +102,7 @@ export default function MemberSummaryPage() {
           weekDays.push(dayStr)
         }
         
-        // Créer les tableaux avec tous les jours (0 si pas de données)
+
         const presenceArray = weekDays.map(day => ({
           day,
           time: presenceMap.get(day) || 0

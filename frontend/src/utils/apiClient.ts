@@ -1,4 +1,3 @@
-/// <reference types="vite/client" />
 
 export const BASE_URL = import.meta.env.VITE_API_URL || ""
 
@@ -25,7 +24,12 @@ async function request(path: string, { method = "GET", headers = {}, payload, qu
 
   const res = await fetch(url, init)
 
-  if (res.status === 401) { const e: any = new Error("UNAUTHORIZED"); e.status = 401; e.response = res; throw e }
+  if (res.status === 401) { 
+    if (window.location.pathname !== '/login') {
+      window.location.pathname = '/login'
+    }
+    const e: any = new Error("UNAUTHORIZED"); e.status = 401; e.response = res; throw e 
+  }
   if (res.status === 403) { const e: any = new Error("FORBIDDEN");    e.status = 403; e.response = res; throw e }
   if (!res.ok) {
     let msg = ""
@@ -41,7 +45,6 @@ async function request(path: string, { method = "GET", headers = {}, payload, qu
     const e: any = new Error(msg || `HTTP ${res.status}`); e.status = res.status; e.response = res; throw e
   }
 
-  // Gérer les réponses vides (204, 200 sans body)
   if (res.status === 204 || res.headers.get("content-length") === "0") {
     return null
   }

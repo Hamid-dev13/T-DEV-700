@@ -5,7 +5,6 @@ import DashboardPage from './DashboardPage'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
 
-// Mock du module API
 vi.mock('../utils/api', () => ({
   getSession: vi.fn(),
   getClocks: vi.fn(),

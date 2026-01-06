@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as api from './api'
 import apiClient from './apiClient'
 
-// Mock apiClient
 vi.mock('./apiClient', () => ({
   default: {
     get: vi.fn(),
@@ -51,8 +50,6 @@ describe('api module', () => {
       expect(result).toEqual(mockUser)
     })
   })
-
-  // TODO: Re-add logout test
 
   describe('getUsers', () => {
     it('should fetch all users', async () => {

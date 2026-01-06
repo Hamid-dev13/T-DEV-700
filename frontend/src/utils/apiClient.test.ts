@@ -1,11 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-// Set environment variable before importing
 process.env.VITE_API_URL = 'http://localhost:3000'
 
 import { api } from './apiClient'
 
-// Mock fetch globally
 global.fetch = vi.fn()
 
 describe('apiClient', () => {

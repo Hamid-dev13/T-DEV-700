@@ -11,7 +11,6 @@ type TeamData = {
   members: User[]
 }
 
-// Convertit les heures décimales en format HH:MM
 function formatHoursToHHMM(decimalHours: number): string {
   const hours = Math.floor(decimalHours)
   const minutes = Math.round((decimalHours - hours) * 60)
@@ -36,7 +35,6 @@ export default function TeamManagePage() {
     
     getMyTeams()
       .then(data => {
-        // La réponse peut être un tableau ou un objet unique
         const teams = Array.isArray(data) ? data : (data && data.team ? [data] : [])
         
         if (teams.length > 0) {
@@ -101,7 +99,6 @@ export default function TeamManagePage() {
   return (
     <Shell>
       <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Sélecteur d'équipe en haut à gauche si plusieurs équipes */}
         {allTeams.length > 1 && (
           <div className="mb-8">
             <label className="label mb-2">🔄 Sélectionner une équipe</label>
@@ -119,7 +116,6 @@ export default function TeamManagePage() {
           </div>
         )}
 
-        {/* Nom de l'équipe en haut au centre */}
         <div className="text-center mb-8">
           <h1 className="page-title">👥 {team.name}</h1>
           {team.description && (
@@ -127,7 +123,6 @@ export default function TeamManagePage() {
           )}
         </div>
 
-        {/* Bouton de gestion des vacances */}
         <div className="flex justify-center mb-8">
           <button
             onClick={handleLeaveRequest}
@@ -141,7 +136,6 @@ export default function TeamManagePage() {
           </button>
         </div>
 
-        {/* Onglets */}
         <div className="flex justify-center gap-4 mb-8">
           <button
             className={`nav-pill ${activeTab === 'members' ? 'nav-pill-active' : ''}`}
