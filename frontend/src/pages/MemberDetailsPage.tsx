@@ -211,10 +211,16 @@ export default function MemberDetailsPage() {
         monday.setDate(now.getDate() - (dayOfWeek - 1))
         monday.setHours(0, 0, 0, 0)
         
+        // Calculer le vendredi de la semaine en cours pour inclure tous les jours
+        const friday = new Date(monday)
+        friday.setDate(monday.getDate() + 4)
+        friday.setHours(23, 59, 59, 999)
+        
         const clocks = await getClocks(memberId!, monday, now)
         setTimestamps(clocks)
 
-        const daysOff = await getDaysOffForUser(memberId!, monday.toISOString().slice(0, 10), now.toISOString().slice(0, 10));
+        // Récupérer les jours de repos pour toute la semaine (lundi à vendredi)
+        const daysOff = await getDaysOffForUser(memberId!, monday.toISOString().slice(0, 10), friday.toISOString().slice(0, 10));
         setDaysOff(daysOff);
 
       } catch (error) {
@@ -621,26 +627,34 @@ export default function MemberDetailsPage() {
               return (
                 <div key={day} className="space-y-2">
                   <div 
-                    className={`flex items-center justify-between p-4 rounded-lg border ${
-                      isToday ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
+                    className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+                      isToday 
+                        ? isDayOff ? 'bg-purple-50 border-purple-300'
+                        : 'bg-blue-50 border-blue-200' 
+                        : isDayOff ? 'bg-purple-50 border-purple-200 hover:border-purple-300 hover:shadow-md'
+                        : 'bg-gray-50 border-gray-200'
                     }`}
                   >
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold ${
-                        isToday ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
+                        isToday && !isDayOff
+                          ? 'bg-blue-500 text-white' 
+                          : isDayOff
+                          ? 'bg-purple-400 text-white'
+                          : 'bg-gray-200 text-gray-600'
                       }`}>
-                        {dayName.substring(0, 3).toUpperCase()}
+                        {isDayOff ? '🏖️' : dayName.substring(0, 3).toUpperCase()}
                       </div>
                       <div>
-                        <div className="font-semibold text-gray-900 capitalize">{dayName}</div>
+                        <div className={`font-semibold capitalize ${isDayOff ? 'text-purple-700' : 'text-gray-900'}`}>{dayName}</div>
                         <div className="text-sm text-gray-500">{dayMonth}</div>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-6">
                       {isDayOff ? (
-                        <div className="text-right">
-                          <div className="text-sm text-purple-600 font-semibold">Jour de repos</div>
+                        <div className="flex-1 text-center">
+                          <div className="text-lg text-purple-600 font-bold">Jour de repos 🏖️</div>
                         </div>
                       ) : 
                         <div className="text-right">
@@ -649,20 +663,22 @@ export default function MemberDetailsPage() {
                         </div>
                       }
                       
-                      <div className="w-px h-12 bg-gray-300"></div>
-                      
-                      <div className="min-w-[180px]">
-                        {isDayOff ? null : 
-                          <span className={`inline-block px-3 py-1.5 rounded text-xs font-medium ${getStatusBadgeClass(delayInfo?.status)}`}>
-                            {formatDelayText(delayInfo)}
-                          </span>
-                        }
-                      </div>
+                      {!isDayOff && (
+                        <>
+                          <div className="w-px h-12 bg-gray-300"></div>
+                          
+                          <div className="min-w-[180px]">
+                            <span className={`inline-block px-3 py-1.5 rounded text-xs font-medium ${getStatusBadgeClass(delayInfo?.status)}`}>
+                              {formatDelayText(delayInfo)}
+                            </span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                   
-                  {/* Afficher les paires de pointages */}
-                  {isDayOff ? null : 
+                  {/* Afficher les paires de pointages - masqué pour les jours de repos */}
+                  {!isDayOff && ( 
                     <div className="ml-16 space-y-2">
                       {pairs.length > 0 && (
                         <>
@@ -744,7 +760,7 @@ export default function MemberDetailsPage() {
                         Ajouter un pointage
                       </button>
                     </div>
-                  }
+                  )}
                 </div>
               )
             })}
