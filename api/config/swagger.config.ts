@@ -34,12 +34,8 @@ La plupart des endpoints nécessitent un token JWT. Pour l'obtenir :
     },
     servers: [
       {
-        url: 'http://localhost:5001', 
-        description: 'Serveur de développement',
-      },
-      {
-        url: 'https://api.production.com',
-        description: 'Serveur de production',
+        url: process.env.API_URL || 'http://localhost:5001',
+        description: process.env.NODE_ENV === 'production' ? 'Serveur de production' : 'Serveur de développement',
       },
     ],
     components: {
