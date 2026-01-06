@@ -193,3 +193,207 @@ components:
           type: number
           nullable: true
 
+    CreateClockRequest:
+      type: object
+      required:
+        - at
+      properties:
+        at:
+          type: string
+          format: date-time
+          description: Timestamp of the clock entry
+
+    UpdateClockRequest:
+      type: object
+      required:
+        - old_at
+        - new_at
+      properties:
+        old_at:
+          type: string
+          format: date-time
+          description: Original timestamp to update
+        new_at:
+          type: string
+          format: date-time
+          description: New timestamp value
+
+    DaysOffResponse:
+      type: array
+      items:
+        type: string
+        format: date
+      description: Array of dates when the user was off
+
+    # ============================================
+    # LEAVE PERIODS
+    # ============================================
+    LeavePeriod:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        accepted:
+          type: boolean
+          default: false
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateLeavePeriodRequest:
+      type: object
+      required:
+        - start_date
+        - end_date
+      properties:
+        start_date:
+          type: string
+          format: date-time
+          description: Start date of leave period
+        end_date:
+          type: string
+          format: date-time
+          description: End date of leave period
+
+    UpdateLeavePeriodRequest:
+      type: object
+      required:
+        - accepted
+      properties:
+        accepted:
+          type: boolean
+          description: Whether to accept or reject the leave period
+
+    # ============================================
+    # PASSWORD RESET
+    # ============================================
+    RequestPasswordResetRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address to send password reset link
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - id
+        - password
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Password reset token ID
+        password:
+          type: string
+          format: password
+          description: New password (must contain uppercase, lowercase, digit, special char, >4 length)
+
+    # ============================================
+    # REPORTS
+    # ============================================
+    ReportResponse:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        report_type:
+          type: string
+          enum: [lateness, pause_times, presence, earlyness]
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              value:
+                type: number
+                description: Value in minutes (lateness, pause_times, presence, or earlyness)
+      description: KPI report data for a user over a date range
+
+    # ============================================
+    # AUTHENTICATION
+    # ============================================
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+        refresh_token:
+          type: string
+          description: JWT refresh token
+        user:
+          $ref: '#/components/schemas/User'
+
+    RefreshTokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: New JWT access token
+
+    # ============================================
+    # HEALTH & UTILITY
+    # ============================================
+    HealthResponse:
+      type: object
+      properties:
+        database:
+          type: string
+          enum: [connected, disconnected]
+        mail:
+          type: string
+          enum: [available, not available]
+
+    ApiInfoResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Time Manager API
+        version:
+          type: string
+          example: 1.0.0
+        documentation:
+          type: string
+          example: /api-docs
+        health:
+          type: string
+          example: /health
+
+    # ============================================
+    # ERROR RESPONSES
+    # ============================================
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        message:
+          type: string
+          description: Detailed error description
+

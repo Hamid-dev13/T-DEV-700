@@ -74,6 +74,22 @@ La plupart des endpoints nécessitent un token JWT. Pour l'obtenir :
         name: 'Attendance',
         description: 'Suivi de présence et calcul des retards',
       },
+      {
+        name: 'Reports',
+        description: 'Génération de rapports KPI (lateness, pause_times, presence, earlyness)',
+      },
+      {
+        name: 'Leave Periods',
+        description: 'Gestion des périodes de congé et absences',
+      },
+      {
+        name: 'Password',
+        description: 'Réinitialisation de mot de passe',
+      },
+      {
+        name: 'Health',
+        description: 'Santé du système et informations API',
+      },
     ],
   },
   // Chemins vers les fichiers de documentation Swagger
@@ -82,6 +98,10 @@ La plupart des endpoints nécessitent un token JWT. Pour l'obtenir :
     './swagger/users.yaml',
     './swagger/teams.yaml',
     './swagger/clocks.yaml',
+    './swagger/reports.yaml',
+    './swagger/leave_periods.yaml',
+    './swagger/password.yaml',
+    './swagger/health.yaml',
   ],
 };
 

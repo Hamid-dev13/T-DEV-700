@@ -236,3 +236,42 @@ paths:
         500:
           description: Erreur serveur
 
+  /users/{id}/teams:
+    get:
+      summary: Récupérer les équipes d'un utilisateur
+      description: Récupère la liste des équipes auxquelles appartient un utilisateur spécifique
+      tags: [Teams]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID de l'utilisateur
+      responses:
+        200:
+          description: Liste des équipes de l'utilisateur
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Team'
+        401:
+          description: Non autorisé
+        404:
+          description: Utilisateur non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+

@@ -1,0 +1,70 @@
+paths:
+  /reports:
+    get:
+      summary: Générer un rapport KPI pour un utilisateur
+      description: Génère un rapport KPI (lateness, pause_times, presence, earlyness) pour un utilisateur sur une période donnée. Les managers peuvent générer des rapports pour les membres de leur équipe, les administrateurs pour tous les utilisateurs.
+      tags: [Reports]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID de l'utilisateur pour lequel générer le rapport
+        - name: report
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [lateness, pause_times, presence, earlyness]
+          description: Type de rapport KPI à générer
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Date de début de la période (YYYY-MM-DD)
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Date de fin de la période (YYYY-MM-DD)
+      responses:
+        200:
+          description: Rapport KPI généré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        400:
+          description: Paramètres manquants ou invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        401:
+          description: Non autorisé
+        403:
+          description: Accès interdit (non manager/admin de cet utilisateur)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        404:
+          description: Utilisateur non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Erreur serveur ou nombre impair d'entrées d'horloge
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
