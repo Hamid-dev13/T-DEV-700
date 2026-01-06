@@ -56,7 +56,7 @@ export async function addClockForMemberController(req: Request, res: Response) {
     if (!at) return res.sendError("Missing required field \"at\"", 400);
 
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
-      return res.sendError("Insufficient permissions", 401);
+      return res.sendError("Insufficient permissions", 403);
 
     const atDate = new Date(at);
 
@@ -79,7 +79,7 @@ export async function updateClockForMemberController(req: Request, res: Response
     if (!from || !to) return res.sendError("Missing required fields \"from\", \"to\"", 400);
     
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
-      return res.sendError("Insufficient permissions", 401);
+      return res.sendError("Insufficient permissions", 403);
 
     const fromDate = new Date(from);
     if (isNaN(fromDate.getTime())) return res.sendError("Invalid Date", 400);
@@ -104,7 +104,7 @@ export async function deleteClockForMemberController(req: Request, res: Response
     if (!at) return res.sendError("Missing required field \"at\"", 400);
     
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
-      return res.sendError("Insufficient permissions", 401);
+      return res.sendError("Insufficient permissions", 403);
 
     const atDate = new Date(at);
 

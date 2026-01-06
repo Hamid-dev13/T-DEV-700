@@ -28,7 +28,7 @@ export async function getReportsForUserController(req: Request, res: Response) {
         return res.sendError("User is not in any team", 404);
 
       if (!(req.admin || targetUserTeam.managerId === sender_id))
-        return res.sendError("Insufficient permissions", 401);
+        return res.sendError("Insufficient permissions", 403);
     }
 
     const reports = await getReportForUser(user_id, report_type, fromDate, toDate);
