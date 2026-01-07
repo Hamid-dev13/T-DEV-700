@@ -35,7 +35,7 @@ async function request(path: string, { method = "GET", headers = {}, payload, qu
   const res = await fetch(url, init)
 
   if (res.status === 401) { const e: any = new Error("UNAUTHORIZED"); e.status = 401; e.response = res; throw e }
-  if (res.status === 403) { const e: any = new Error("FORBIDDEN");    e.status = 403; e.response = res; throw e }
+  if (res.status === 403) { const e: any = new Error("FORBIDDEN"); e.status = 403; e.response = res; throw e }
   if (!res.ok) {
     let msg = ""
     try {
@@ -46,7 +46,7 @@ async function request(path: string, { method = "GET", headers = {}, payload, qu
       } else {
         msg = await res.text()
       }
-    } catch {}
+    } catch { }
     const e: any = new Error(msg || `HTTP ${res.status}`); e.status = res.status; e.response = res; throw e
   }
 
@@ -65,23 +65,23 @@ async function request(path: string, { method = "GET", headers = {}, payload, qu
 }
 
 export async function get(path: string, opts?: any) {
-  return request(path, { ...opts, method: "GET" })  
+  return request(path, { ...opts, method: "GET" })
 }
 
 export async function post(path: string, payload?: any, opts?: any) {
-  return request(path, { ...opts, method: "POST", payload: payload })  
+  return request(path, { ...opts, method: "POST", payload: payload })
 }
 
 export async function put(path: string, payload?: any, opts?: any) {
-  return request(path, { ...opts, method: "PUT", payload: payload })  
+  return request(path, { ...opts, method: "PUT", payload: payload })
 }
 
 export async function patch(path: string, payload?: any, opts?: any) {
-  return request(path, { ...opts, method: "PATCH", payload: payload })  
+  return request(path, { ...opts, method: "PATCH", payload: payload })
 }
 
 export async function del(path: string, payload?: any, opts?: any) {
-  return request(path, { ...opts, method: "DELETE", payload: payload })  
+  return request(path, { ...opts, method: "DELETE", payload: payload })
 }
 
 export async function getSession() {
@@ -124,17 +124,6 @@ export async function addUser(payload: any) {
   return post('/users', payload);
 }
 
-export async function updateMyProfile(updates: any) {
-  // Convertir camelCase en snake_case pour le backend
-  const payload = {
-    first_name: updates.firstName,
-    last_name: updates.lastName,
-    email: updates.email,
-    phone: updates.phone,
-    ...(updates.password ? { password: updates.password } : {})
-  }
-  return put('/user', payload)
-}
 export async function updateUser(id: string, updates: any) {
   return put(`/users/${encodeURIComponent(id)}`, updates)
 }
@@ -153,7 +142,7 @@ export async function getTeamsWithMembers() {
     // Récupérer toutes les équipes
     const allTeams = await get('/teams')
     const teams = Array.isArray(allTeams) ? allTeams : (allTeams?.items || [])
-    
+
     // Récupérer les membres pour chaque équipe en parallèle
     const teamsWithMembers = await Promise.all(
       teams.map(async (team: any) => {
@@ -174,7 +163,7 @@ export async function getTeamsWithMembers() {
         }
       })
     )
-    
+
     return teamsWithMembers
   } catch (err) {
     console.error('Erreur getTeamsWithMembers:', err)
@@ -273,7 +262,7 @@ export async function getDaysOffForUser(userId: string, from: string, to: string
 export async function teamAverages(teamId: string, from?: Date, to?: Date) {
   try {
     return await get(`/teams/${encodeURIComponent(teamId)}/averages`, { query: { from, to } })
-  } catch {}
+  } catch { }
   const teams = await getTeams()
   const team = teams.find((t: any) => t.id === teamId)
   if (!team) return { daily: [], weekly: [] }
@@ -353,7 +342,7 @@ export async function getTeamMembersLeavePeriods(teamId: string) {
   try {
     const teamData = await getTeamUsers(teamId)
     const members = teamData.members || []
-    
+
     const allPeriods = await Promise.all(
       members.map(async (member: any) => {
         try {
@@ -368,7 +357,7 @@ export async function getTeamMembersLeavePeriods(teamId: string) {
         }
       })
     )
-    
+
     return allPeriods.flat()
   } catch (err) {
     console.error('Erreur getTeamMembersLeavePeriods:', err)
@@ -379,30 +368,30 @@ export async function getTeamMembersLeavePeriods(teamId: string) {
 export function computeDailyHours(events: any[]) {
   const byDay: any = {}
   for (const e of events) {
-    const d = e.timestamp.slice(0,10)
+    const d = e.timestamp.slice(0, 10)
     byDay[d] = byDay[d] || []
     byDay[d].push(e)
   }
   const res: any[] = []
   for (const [day, arr] of Object.entries(byDay)) {
-    const sorted = (arr as any[]).sort((a: any,b: any)=> new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    const sorted = (arr as any[]).sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
     let total = 0
-    for (let i=0;i<sorted.length;i+=2) {
-      const a = sorted[i], b = sorted[i+1]
+    for (let i = 0; i < sorted.length; i += 2) {
+      const a = sorted[i], b = sorted[i + 1]
       if (a && b && a.type === 'in' && b.type === 'out') {
         total += (new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) / 3600000
       }
     }
     res.push({ day, hours: parseFloat(total.toFixed(2)) })
   }
-  return res.sort((a,b)=> a.day.localeCompare(b.day))
+  return res.sort((a, b) => a.day.localeCompare(b.day))
 }
 
 export function weekOf(dateStr: string) {
   const d = new Date(dateStr)
-  const onejan = new Date(d.getFullYear(),0,1)
-  const week = Math.ceil((((d.getTime() - onejan.getTime()) / 86400000) + onejan.getDay()+1)/7)
-  return `${d.getFullYear()}-W${String(week).padStart(2,'0')}`
+  const onejan = new Date(d.getFullYear(), 0, 1)
+  const week = Math.ceil((((d.getTime() - onejan.getTime()) / 86400000) + onejan.getDay() + 1) / 7)
+  return `${d.getFullYear()}-W${String(week).padStart(2, '0')}`
 }
 
 export function aggregateWeekly(daily: any[]) {

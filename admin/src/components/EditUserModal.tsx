@@ -15,7 +15,7 @@ function EditUserModal({ isOpen, onClose, onUserUpdated, user }: EditUserModalPr
     first_name: '',
     last_name: '',
     email: '',
-    password: '',
+    new_password: '',
     phone: '',
   });
   const [loading, setLoading] = useState(false);
@@ -27,7 +27,7 @@ function EditUserModal({ isOpen, onClose, onUserUpdated, user }: EditUserModalPr
         first_name: user.firstName || '',
         last_name: user.lastName || '',
         email: user.email || '',
-        password: '', // Ne pas pré-remplir le mot de passe
+        new_password: '', // Ne pas pré-remplir le mot de passe
         phone: user.phone || '',
       });
       setError('');
@@ -42,8 +42,8 @@ function EditUserModal({ isOpen, onClose, onUserUpdated, user }: EditUserModalPr
     try {
       // Préparer les données - ne pas envoyer le password s'il est vide
       const dataToSend = { ...formData };
-      if (!dataToSend.password) {
-        const { password, ...rest } = dataToSend;
+      if (!dataToSend.new_password) {
+        const { new_password, ...rest } = dataToSend;
         Object.assign(dataToSend, rest);
       }
 
@@ -51,7 +51,7 @@ function EditUserModal({ isOpen, onClose, onUserUpdated, user }: EditUserModalPr
       onUserUpdated(updatedUser);
       onClose();
     } catch (err) {
-      setError('Erreur lors de la modification: '+ (err instanceof Error ? err.message : String(err)));
+      setError('Erreur lors de la modification: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -130,8 +130,8 @@ function EditUserModal({ isOpen, onClose, onUserUpdated, user }: EditUserModalPr
             </label>
             <input
               type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              value={formData.new_password}
+              onChange={(e) => setFormData({ ...formData, new_password: e.target.value })}
               placeholder="Laisser vide pour ne pas changer"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             />

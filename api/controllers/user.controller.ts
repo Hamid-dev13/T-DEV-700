@@ -35,11 +35,11 @@ export async function refreshTokenController(req: Request, res: Response) {
 
     if (user.refreshToken !== refreshToken)
       return res.sendError("Invalid refresh token", 401);
-    
+
     const newAccessToken = generateAccessToken(user);
 
     res.cookie(COOKIE_ACCESS_TOKEN_KEY, newAccessToken, ACCESS_TOKEN_COOKIE_OPTS);
-    
+
     return res.sendStatus(200);
   } catch (err) {
     return res.sendError(err);
@@ -55,7 +55,7 @@ export async function logoutUserController(req: Request, res: Response) {
 
     res.clearCookie(COOKIE_ACCESS_TOKEN_KEY);
     res.clearCookie(COOKIE_REFRESH_TOKEN_KEY);
-    
+
     return res.sendStatus(200);
   } catch (err) {
     return res.sendError(err);
@@ -111,9 +111,9 @@ export async function updateMyUserController(req: Request, res: Response) {
   try {
     const id = req.user_id!;
     const body = req.body;
-    const { first_name, last_name, email, password, phone } = body ?? {};
-    console.log(first_name, last_name, email, password, phone)
-    const user = await updateUser(id, { first_name, last_name, email, password, phone });
+    const { first_name, last_name, email, old_password, new_password, phone } = body ?? {};
+
+    const user = await updateUser(id, { first_name, last_name, email, old_password, new_password, phone });
     return res.status(200).json(user);
   } catch (err) {
     return res.sendStatus(500);
@@ -124,9 +124,10 @@ export async function updateOtherUserController(req: Request, res: Response) {
   try {
     const id = req.params.id!;
     const body = req.body;
-    const { first_name, last_name, email, password, phone } = body ?? {};
+    const { first_name, last_name, email, new_password, phone } = body ?? {};
 
-    const user = await updateUser(id, { first_name, last_name, email, password, phone });
+    // bypass_pass_check is true since this is an admin action
+    const user = await updateUser(id, { first_name, last_name, email, new_password, phone }, true);
     return res.status(200).json(user);
   } catch (err) {
     return res.sendStatus(500);

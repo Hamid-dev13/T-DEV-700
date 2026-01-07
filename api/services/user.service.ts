@@ -35,7 +35,8 @@ export type UpdateUserInput = {
   first_name?: string,
   last_name?: string,
   email?: string,
-  password?: string,
+  old_password?: string,
+  new_password?: string,
   phone?: string,
 };
 
@@ -118,9 +119,9 @@ export async function addUser({
 
   const [user] = await db
     .insert(users)
-    .values({firstName: first_name, lastName: last_name, email: email, password: password, phone: phone, admin: admin || false})
+    .values({ firstName: first_name, lastName: last_name, email: email, password: password, phone: phone, admin: admin || false })
     .returning();
-  
+
   return toSafeUser(user);
 }
 
@@ -130,22 +131,31 @@ export async function updateUser(
     first_name,
     last_name,
     email,
-    password,
+    old_password,
+    new_password,
     phone,
-  }: UpdateUserInput
+  }: UpdateUserInput,
+  bypass_pass_check: boolean = false
 ): Promise<SafeUser> {
-  if (password) {
-    if (!verifyPasswordRequirements(password))
+  let password: string | undefined = undefined;
+  if ((bypass_pass_check || old_password) && new_password) {
+    if (!bypass_pass_check) {
+      const user = await retrieveUser(id);
+      if (!await verifyPassword(old_password!, user.password))
+        throw new Error("Invalid old password");
+    }
+
+    if (!verifyPasswordRequirements(new_password))
       throw new Error("Password doesn't meet the minimum security requirements");
-    password = await hashPassword(password);
+    password = await hashPassword(new_password);
   }
 
   const [user] = await db
     .update(users)
-    .set({firstName: first_name, lastName: last_name, email: email, password: password, phone: phone})
+    .set({ firstName: first_name, lastName: last_name, email: email, password: password, phone: phone })
     .where(eq(users.id, id))
     .returning();
-  
+
   return toSafeUser(user);
 }
 
@@ -154,6 +164,6 @@ export async function deleteUser(id: string): Promise<boolean> {
     .delete(users)
     .where(eq(users.id, id))
     .returning();
-  
-    return deleted.id == id;
+
+  return deleted.id == id;
 }

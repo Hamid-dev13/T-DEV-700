@@ -28,7 +28,7 @@ describe('AccountPage Component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
-    vi.mocked(global.alert).mockImplementation(() => {})
+    vi.mocked(global.alert).mockImplementation(() => { })
     vi.mocked(global.confirm).mockReturnValue(false)
   })
 
