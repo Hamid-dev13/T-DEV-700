@@ -1,12 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { BrowserRouter } from 'react-router-dom'
 import AccountPage from './AccountPage'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
 
-// Mock du module API
 vi.mock('../utils/api', () => ({
   getSession: vi.fn(),
   updateMyProfile: vi.fn(),
@@ -14,7 +13,6 @@ vi.mock('../utils/api', () => ({
   logout: vi.fn()
 }))
 
-// Mock window.alert et window.confirm
 global.alert = vi.fn()
 global.confirm = vi.fn()
 
@@ -36,11 +34,11 @@ describe('AccountPage Component', () => {
 
   it('should render account page with user data', async () => {
     render(
-      <MemoryRouter>
+      <BrowserRouter>
         <AuthProvider>
           <AccountPage />
         </AuthProvider>
-      </MemoryRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -55,11 +53,11 @@ describe('AccountPage Component', () => {
     const user = userEvent.setup()
 
     render(
-      <MemoryRouter>
+      <BrowserRouter>
         <AuthProvider>
           <AccountPage />
         </AuthProvider>
-      </MemoryRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -78,11 +76,11 @@ describe('AccountPage Component', () => {
     vi.mocked(api.updateMyProfile).mockResolvedValue({ success: true })
 
     render(
-      <MemoryRouter>
+      <BrowserRouter>
         <AuthProvider>
           <AccountPage />
         </AuthProvider>
-      </MemoryRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -103,7 +101,7 @@ describe('AccountPage Component', () => {
         email: 'test@example.com',
         phone: '+33123456789'
       })
-      expect(global.alert).toHaveBeenCalledWith('Compte mis à jour avec succès.')
+      expect(screen.getByText('Compte mis à jour')).toBeInTheDocument()
     })
   })
 
@@ -111,11 +109,11 @@ describe('AccountPage Component', () => {
     const user = userEvent.setup()
 
     render(
-      <MemoryRouter>
+      <BrowserRouter>
         <AuthProvider>
           <AccountPage />
         </AuthProvider>
-      </MemoryRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -138,11 +136,11 @@ describe('AccountPage Component', () => {
     vi.mocked(api.updateMyProfile).mockResolvedValue({ success: true })
 
     render(
-      <MemoryRouter>
+      <BrowserRouter>
         <AuthProvider>
           <AccountPage />
         </AuthProvider>
-      </MemoryRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -170,11 +168,11 @@ describe('AccountPage Component', () => {
     const user = userEvent.setup()
 
     render(
-      <MemoryRouter>
+      <BrowserRouter>
         <AuthProvider>
           <AccountPage />
         </AuthProvider>
-      </MemoryRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -199,11 +197,11 @@ describe('AccountPage Component', () => {
     const user = userEvent.setup()
 
     render(
-      <MemoryRouter>
+      <BrowserRouter>
         <AuthProvider>
           <AccountPage />
         </AuthProvider>
-      </MemoryRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -233,11 +231,11 @@ describe('AccountPage Component', () => {
     vi.mocked(api.updateMyProfile).mockRejectedValue(new Error('Server error'))
 
     render(
-      <MemoryRouter>
+      <BrowserRouter>
         <AuthProvider>
           <AccountPage />
         </AuthProvider>
-      </MemoryRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -248,7 +246,8 @@ describe('AccountPage Component', () => {
     await user.click(submitButton)
 
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith(expect.stringContaining('Server error'))
+      expect(screen.getByText('Erreur de mise à jour')).toBeInTheDocument()
+      expect(screen.getByText('Server error')).toBeInTheDocument()
     })
   })
 
@@ -257,11 +256,11 @@ describe('AccountPage Component', () => {
     vi.mocked(api.updateMyProfile).mockRejectedValue(new Error('Password does not meet security requirements'))
 
     render(
-      <MemoryRouter>
+      <BrowserRouter>
         <AuthProvider>
           <AccountPage />
         </AuthProvider>
-      </MemoryRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -275,7 +274,8 @@ describe('AccountPage Component', () => {
     await user.click(submitButton)
 
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith(expect.stringContaining('exigences de sécurité'))
+      expect(screen.getByText('Erreur de mise à jour')).toBeInTheDocument()
+      expect(screen.getByText('Password does not meet security requirements')).toBeInTheDocument()
     })
   })
 
@@ -284,18 +284,18 @@ describe('AccountPage Component', () => {
     vi.mocked(global.confirm).mockReturnValue(false)
 
     render(
-      <MemoryRouter>
+      <BrowserRouter>
         <AuthProvider>
           <AccountPage />
         </AuthProvider>
-      </MemoryRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('John')).toBeInTheDocument()
     })
 
-    const deleteButton = screen.getByRole('button', { name: /supprimer mon compte/i })
+    const deleteButton = screen.getByRole('button', { name: /supprimer john/i })
     await user.click(deleteButton)
 
     expect(global.confirm).toHaveBeenCalledWith(expect.stringContaining('Êtes-vous sûr'))
@@ -306,18 +306,18 @@ describe('AccountPage Component', () => {
     vi.mocked(global.confirm).mockReturnValue(true)
 
     render(
-      <MemoryRouter>
+      <BrowserRouter>
         <AuthProvider>
           <AccountPage />
         </AuthProvider>
-      </MemoryRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('John')).toBeInTheDocument()
     })
 
-    const deleteButton = screen.getByRole('button', { name: /supprimer mon compte/i })
+    const deleteButton = screen.getByRole('button', { name: /supprimer john/i })
     await user.click(deleteButton)
 
     await waitFor(() => {
@@ -330,11 +330,11 @@ describe('AccountPage Component', () => {
     vi.mocked(api.updateMyProfile).mockResolvedValue({ success: true })
 
     render(
-      <MemoryRouter>
+      <BrowserRouter>
         <AuthProvider>
           <AccountPage />
         </AuthProvider>
-      </MemoryRouter>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
