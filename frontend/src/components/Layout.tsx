@@ -59,7 +59,7 @@ export function Card({ title, actions, footer, children }: CardProps) {
         <h2 className="text-xl md:text-2xl font-semibold">{title}</h2>
         {actions}
       </div>
-      <div className="card-body">{children}</div>
+      <div className="card-body space-y-8">{children}</div>
       {footer && <div className="card-footer">{footer}</div>}
     </div>
   )

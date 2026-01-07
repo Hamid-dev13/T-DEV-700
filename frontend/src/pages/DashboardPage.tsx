@@ -230,10 +230,10 @@ export default function DashboardPage() {
 
   return (
     <Shell>
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto mb-4">
         <Card title="📊 Résumé de vos heures">
           {/* En-tête avec progression hebdomadaire */}
-          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-6 mb-8 border-2 border-yellow-200">
+          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-6 border-2 border-yellow-200">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-1">Cette semaine</h3>
@@ -286,7 +286,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Statistiques rapides */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-3 gap-4">
             {/* Aujourd'hui */}
             <div className="bg-white rounded-xl p-5 border-2 border-gray-200 hover:border-blue-300 transition-all">
               <div className="flex items-center gap-3 mb-3">
@@ -465,7 +465,7 @@ export default function DashboardPage() {
         {managedTeam && (
           <Card title={`👥 Résumé de l'équipe - ${managedTeam.team.name}`}>
             {/* Statistiques de l'équipe */}
-            <div className="grid grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-3 gap-6">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
