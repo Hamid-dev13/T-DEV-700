@@ -20,10 +20,10 @@ interface ClockPair {
   clockIn: Date
   clockOut: Date | null
   day: string
-  clockInOriginal?: Date  // Pour stocker la date originale exacte
-  clockOutOriginal?: Date // Pour stocker la date originale exacte
-  clockInISO?: string     // Pour stocker le string ISO original
-  clockOutISO?: string    // Pour stocker le string ISO original
+  clockInOriginal?: Date
+  clockOutOriginal?: Date
+  clockInISO?: string
+  clockOutISO?: string
 }
 
 interface Team {
@@ -34,7 +34,6 @@ interface Team {
   members: any[]
 }
 
-// Calcule les heures travaillées par jour
 function computeDailyHours(timestamps: Date[]): DailySummary[] {
   const byDay: { [key: string]: Date[] } = {}
   
@@ -65,14 +64,15 @@ function computeDailyHours(timestamps: Date[]): DailySummary[] {
   return result.sort((a, b) => a.day.localeCompare(b.day))
 }
 
-// Convertit les heures décimales en format HH:MM
 function formatHoursToHHMM(decimalHours: number): string {
   const hours = Math.floor(decimalHours)
   const minutes = Math.round((decimalHours - hours) * 60)
+  if (minutes === 0) {
+    return `${hours}h`
+  }
   return `${hours}h${minutes.toString().padStart(2, '0')}`
 }
 
-// Génère les jours de la semaine en cours (lundi à vendredi)
 function getCurrentWeekDays(): string[] {
   const days: string[] = []
   const today = new Date()
@@ -90,7 +90,6 @@ function getCurrentWeekDays(): string[] {
   return days
 }
 
-// Calcule le retard basé sur l'heure de premier pointage
 function calculateDelay(timestamps: Date[], targetDay: string, expectedHour: number, daysOff: string[] = []): { status: string, minutes: number | null } {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -101,7 +100,6 @@ function calculateDelay(timestamps: Date[], targetDay: string, expectedHour: num
     return { status: 'future', minutes: null }
   }
   
-  // Vérifier si c'est un jour de congé
   if (daysOff.includes(targetDay)) {
     return { status: 'day_off', minutes: null }
   }
@@ -154,7 +152,6 @@ export default function MemberDetailsPage() {
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false)
   const [pendingDeletePair, setPendingDeletePair] = useState<ClockPair | null>(null)
 
-  // Charger les données du membre
   useEffect(() => {
     if (!memberId) return
 
@@ -162,17 +159,17 @@ export default function MemberDetailsPage() {
       try {
         setLoading(true)
         
-        // Récupérer les infos du membre depuis sessionStorage
+
         const memberDataStr = sessionStorage.getItem(`member_${memberId}`)
         if (memberDataStr) {
           const memberData = JSON.parse(memberDataStr)
           setMember(memberData)
         }
         
-        // Récupérer toutes les équipes avec leurs membres
+
         const allTeams = await getTeamsWithMembers()
         
-        // Trouver les équipes du membre
+
         const userTeams = allTeams.filter((team: Team) => 
           team.members && team.members.some((m: any) => 
             (typeof m === 'string' && m === memberId) || 
@@ -180,7 +177,7 @@ export default function MemberDetailsPage() {
           )
         )
         
-        // Chercher la team "Manager" dans toutes les équipes
+
         const managerTeam = allTeams.find((team: Team) => 
           team.name && (
             team.name.toLowerCase() === 'manager' || 
@@ -189,29 +186,33 @@ export default function MemberDetailsPage() {
           )
         )
         
-        // Vérifier si le membre est dans la team Manager
+
         const isManager = managerTeam && managerTeam.members && managerTeam.members.some((m: any) => 
           (typeof m === 'string' && m === memberId) || 
           (m && typeof m === 'object' && m.id === memberId)
         )
         
-        // Si c'est un manager, utiliser les horaires de la team Manager
-        // Sinon, utiliser les horaires de sa propre équipe
+
         const selectedTeam = isManager ? managerTeam : (userTeams[0] || null)
         
         setMemberTeam(selectedTeam)
         
-        // Récupérer les pointages de la semaine en cours
+
         const now = new Date()
         const dayOfWeek = now.getDay() || 7 // Dimanche = 7
         const monday = new Date(now)
         monday.setDate(now.getDate() - (dayOfWeek - 1))
         monday.setHours(0, 0, 0, 0)
         
+
+        const friday = new Date(monday)
+        friday.setDate(monday.getDate() + 4)
+        friday.setHours(23, 59, 59, 999)
+        
         const clocks = await getClocks(memberId!, monday, now)
         setTimestamps(clocks)
 
-        const daysOff = await getDaysOffForUser(memberId!, monday.toISOString().slice(0, 10), now.toISOString().slice(0, 10));
+        const daysOff = await getDaysOffForUser(memberId!, monday.toISOString().slice(0, 10), friday.toISOString().slice(0, 10));
         setDaysOff(daysOff);
 
       } catch (error) {
@@ -224,18 +225,18 @@ export default function MemberDetailsPage() {
     loadData()
   }, [memberId])
   
-  // Calculer les heures travaillées par jour
+
   const dailyHours = useMemo(() => computeDailyHours(timestamps.map(t => t.date)), [timestamps])
   
-  // Calculer le total de la semaine
+
   const weekTotal = useMemo(() => {
     return dailyHours.reduce((sum, day) => sum + day.hours, 0)
   }, [dailyHours])
   
-  // Jours de la semaine en cours
+
   const weekDays = useMemo(getCurrentWeekDays, [])
   
-  // Regrouper les pointages par paires (arrivée/départ)
+
   const clockPairsByDay = useMemo(() => {
     const byDay: { [key: string]: Array<{ date: Date, iso: string }> } = {}
     
@@ -269,7 +270,7 @@ export default function MemberDetailsPage() {
     return result
   }, [timestamps])
   
-  // Fonction pour recharger les données
+
   const reloadClocks = async () => {
     if (!memberId) return
     try {
@@ -286,7 +287,7 @@ export default function MemberDetailsPage() {
     }
   }
   
-  // Fonction pour modifier un pointage
+
   const handleUpdateClock = async () => {
     if (!editingClock || !memberId) return
     
@@ -298,11 +299,11 @@ export default function MemberDetailsPage() {
       const day = originalDate.getDate()
       const newClockIn = new Date(year, month, day, inHours, inMinutes, 0, 0)
       
-      // Vérifier si c'est un nouveau pointage
+
       const isNewClock = !editingClock.clockInISO
       
       if (isNewClock) {
-        // Créer un nouveau pointage
+
         await addClockForMember(memberId, newClockIn)
         
         if (editClockOutTime) {
@@ -311,13 +312,12 @@ export default function MemberDetailsPage() {
           await addClockForMember(memberId, newClockOut)
         }
       } else {
-        // Modifier un pointage existant
-        // Trouver le timestamp actuel qui correspond (même jour, heure proche)
+
         const dayStr = originalDate.toISOString().slice(0, 10)
         const matchingClockIn = timestamps.find(t => {
           const tDayStr = t.date.toISOString().slice(0, 10)
           if (tDayStr === dayStr) {
-            // Chercher un timestamp avec une heure proche de l'heure affichée
+
             const tHour = t.date.getHours()
             const editHour = editingClock.clockIn.getHours()
             return Math.abs(tHour - editHour) <= 2 // Tolérance de 2 heures
@@ -363,7 +363,7 @@ export default function MemberDetailsPage() {
     }
   }
   
-  // Fonction pour supprimer un pointage
+
   const handleDeleteClock = async (clockToDelete: Date) => {
     if (!memberId) return
     
@@ -376,7 +376,7 @@ export default function MemberDetailsPage() {
     }
   }
   
-  // Fonction pour supprimer une paire complète
+
   const handleDeleteClick = (pair: ClockPair) => {
     setPendingDeletePair(pair)
     setConfirmDeleteModalOpen(true)
@@ -397,7 +397,7 @@ export default function MemberDetailsPage() {
     }
   }
   
-  // Fonction pour ouvrir le modal d'édition
+
   const openEditModal = (pair: ClockPair) => {
     setEditingClock(pair)
     const clockInTime = pair.clockIn.toLocaleTimeString('fr-FR', { 
@@ -419,7 +419,7 @@ export default function MemberDetailsPage() {
     }
   }
   
-  // Calculer les retards pour chaque jour
+
   const delays = useMemo(() => {
     const result: { [key: string]: { status: string, minutes: number | null } } = {}
     const expectedHour = memberTeam?.startHour ?? 9
@@ -431,7 +431,7 @@ export default function MemberDetailsPage() {
     return result
   }, [timestamps, weekDays, memberTeam, daysOff])
   
-  // Calculer les statistiques
+
   const stats = useMemo(() => {
     const statuses = Object.values(delays).map(d => d.status)
     return {
@@ -442,7 +442,7 @@ export default function MemberDetailsPage() {
     }
   }, [delays])
   
-  // Formater le texte de retard
+
   const formatDelayText = (delayInfo: { status: string, minutes: number | null }) => {
     if (!delayInfo) return 'N/A'
     
@@ -478,7 +478,7 @@ export default function MemberDetailsPage() {
     }
   }
   
-  // Couleur du badge de statut
+
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'late': return 'bg-red-500 text-white'
@@ -553,7 +553,7 @@ export default function MemberDetailsPage() {
               <div className="text-4xl font-bold text-yellow-600">
                 {formatHoursToHHMM(weekTotal)}
               </div>
-              <div className="text-sm text-gray-500">sur {formatHoursToHHMM(weekHoursTarget)}h</div>
+              <div className="text-sm text-gray-500">sur {formatHoursToHHMM(weekHoursTarget)}</div>
             </div>
           </div>
         </div>
@@ -618,26 +618,34 @@ export default function MemberDetailsPage() {
               return (
                 <div key={day} className="space-y-2">
                   <div 
-                    className={`flex items-center justify-between p-4 rounded-lg border ${
-                      isToday ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
+                    className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+                      isToday 
+                        ? isDayOff ? 'bg-purple-50 border-purple-300'
+                        : 'bg-blue-50 border-blue-200' 
+                        : isDayOff ? 'bg-purple-50 border-purple-200 hover:border-purple-300 hover:shadow-md'
+                        : 'bg-gray-50 border-gray-200'
                     }`}
                   >
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold ${
-                        isToday ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
+                        isToday && !isDayOff
+                          ? 'bg-blue-500 text-white' 
+                          : isDayOff
+                          ? 'bg-purple-400 text-white'
+                          : 'bg-gray-200 text-gray-600'
                       }`}>
-                        {dayName.substring(0, 3).toUpperCase()}
+                        {isDayOff ? '🏖️' : dayName.substring(0, 3).toUpperCase()}
                       </div>
                       <div>
-                        <div className="font-semibold text-gray-900 capitalize">{dayName}</div>
+                        <div className={`font-semibold capitalize ${isDayOff ? 'text-purple-700' : 'text-gray-900'}`}>{dayName}</div>
                         <div className="text-sm text-gray-500">{dayMonth}</div>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-6">
                       {isDayOff ? (
-                        <div className="text-right">
-                          <div className="text-sm text-purple-600 font-semibold">Jour de repos</div>
+                        <div className="flex-1 text-center">
+                          <div className="text-lg text-purple-600 font-bold">Jour de repos 🏖️</div>
                         </div>
                       ) : 
                         <div className="text-right">
@@ -646,20 +654,22 @@ export default function MemberDetailsPage() {
                         </div>
                       }
                       
-                      <div className="w-px h-12 bg-gray-300"></div>
-                      
-                      <div className="min-w-[180px]">
-                        {isDayOff ? null : 
-                          <span className={`inline-block px-3 py-1.5 rounded text-xs font-medium ${getStatusBadgeClass(delayInfo?.status)}`}>
-                            {formatDelayText(delayInfo)}
-                          </span>
-                        }
-                      </div>
+                      {!isDayOff && (
+                        <>
+                          <div className="w-px h-12 bg-gray-300"></div>
+                          
+                          <div className="min-w-[180px]">
+                            <span className={`inline-block px-3 py-1.5 rounded text-xs font-medium ${getStatusBadgeClass(delayInfo?.status)}`}>
+                              {formatDelayText(delayInfo)}
+                            </span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                   
-                  {/* Afficher les paires de pointages */}
-                  {isDayOff ? null : 
+                  {/* Afficher les paires de pointages - masqué pour les jours de repos */}
+                  {!isDayOff && ( 
                     <div className="ml-16 space-y-2">
                       {pairs.length > 0 && (
                         <>
@@ -730,7 +740,7 @@ export default function MemberDetailsPage() {
                             day: currentDay,
                             clockInOriginal: defaultClockIn,
                             clockOutOriginal: defaultClockOut
-                            // Ne pas définir clockInISO et clockOutISO pour un nouveau pointage
+
                           })
                         }}
                         className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
@@ -741,7 +751,7 @@ export default function MemberDetailsPage() {
                         Ajouter un pointage
                       </button>
                     </div>
-                  }
+                  )}
                 </div>
               )
             })}

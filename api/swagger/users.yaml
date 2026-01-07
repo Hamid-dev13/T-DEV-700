@@ -117,7 +117,7 @@ paths:
           description: Erreur serveur
 
     delete:
-      summary: Supprimer mon compte
+      summary: Supprimer le compte utilisateur
       tags: [Users]
       security:
         - bearerAuth: []

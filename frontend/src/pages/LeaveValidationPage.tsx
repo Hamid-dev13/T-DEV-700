@@ -43,7 +43,6 @@ export default function LeaveValidationPage() {
       const teamsData = await getMyTeams()
       const teamsList = Array.isArray(teamsData) ? teamsData : (teamsData && teamsData.team ? [teamsData] : [])
       
-      // Filtrer uniquement les équipes où l'utilisateur est manager
       const managerTeams = teamsList.filter((t: any) => t.team.managerId === user?.id)
       
       setTeams(managerTeams)
@@ -157,7 +156,7 @@ export default function LeaveValidationPage() {
 
   function formatDate(dateStr: string, isEndDate: boolean = false) {
     const date = new Date(dateStr)
-    // Le backend ajoute +1 jour à la date de fin, on soustrait pour l'affichage
+
     if (isEndDate) {
       date.setDate(date.getDate() - 1)
     }
@@ -171,18 +170,17 @@ export default function LeaveValidationPage() {
   function getDaysBetween(start: string, end: string) {
     const startDate = new Date(start)
     const endDate = new Date(end)
-    // Le backend ajoute +1 jour, on le soustrait pour le calcul
+
     endDate.setDate(endDate.getDate() - 1)
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 // +1 pour inclure le jour de début
     return diffDays
   }
 
-  // Fonction pour calculer les jours fériés français
   function getFrenchHolidays(year: number): Date[] {
     const holidays: Date[] = []
     
-    // Jours fixes
+
     holidays.push(new Date(year, 0, 1))   // Jour de l'an
     holidays.push(new Date(year, 4, 1))   // Fête du travail
     holidays.push(new Date(year, 4, 8))   // Victoire 1945
@@ -192,7 +190,7 @@ export default function LeaveValidationPage() {
     holidays.push(new Date(year, 10, 11)) // Armistice 1918
     holidays.push(new Date(year, 11, 25)) // Noël
     
-    // Calcul de Pâques (algorithme de Meeus)
+
     const a = year % 19
     const b = Math.floor(year / 100)
     const c = year % 100
@@ -210,17 +208,17 @@ export default function LeaveValidationPage() {
     
     const easter = new Date(year, month, day)
     
-    // Lundi de Pâques (Pâques + 1 jour)
+
     const easterMonday = new Date(easter)
     easterMonday.setDate(easter.getDate() + 1)
     holidays.push(easterMonday)
     
-    // Ascension (Pâques + 39 jours)
+
     const ascension = new Date(easter)
     ascension.setDate(easter.getDate() + 39)
     holidays.push(ascension)
     
-    // Lundi de Pentecôte (Pâques + 50 jours)
+
     const pentecost = new Date(easter)
     pentecost.setDate(easter.getDate() + 50)
     holidays.push(pentecost)
@@ -270,7 +268,6 @@ export default function LeaveValidationPage() {
     return nextMonthDate < maxDate
   }
 
-  // Créer un calendrier visuel pour l'équipe
   function renderTeamCalendar() {
     const today = new Date()
     
@@ -300,7 +297,7 @@ export default function LeaveValidationPage() {
         const end = new Date(period.endDate)
         start.setHours(0, 0, 0, 0)
         end.setHours(0, 0, 0, 0)
-        // Le backend ajoute +1 jour, on le soustrait pour la comparaison
+
         end.setDate(end.getDate() - 1)
         
         if (date >= start && date <= end) {

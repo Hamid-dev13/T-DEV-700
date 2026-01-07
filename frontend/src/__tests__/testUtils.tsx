@@ -3,7 +3,6 @@ import { render, RenderOptions } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { AuthProvider } from '../context/AuthContext'
 
-// Mock du contexte d'authentification pour les tests
 export const mockAuthContext = {
   user: null,
   loading: false,
@@ -12,7 +11,6 @@ export const mockAuthContext = {
   refreshUser: vi.fn()
 }
 
-// Wrapper personnalisé pour les tests avec contexte
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   return (
     <MemoryRouter>

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { Shell, Card, Link } from './Layout'
@@ -7,14 +8,12 @@ import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
 import * as router from '../router'
 
-// Mock du module API
 vi.mock('../utils/api', () => ({
   login: vi.fn(),
   logout: vi.fn(),
   getSession: vi.fn()
 }))
 
-// Mock du router
 vi.mock('../router', () => ({
   navigate: vi.fn()
 }))
@@ -59,7 +58,9 @@ describe('Link Component', () => {
   })
 
   it('should render link with children', () => {
-    render(<Link to="/test">Test Link</Link>)
+    render(
+      <MemoryRouter><Link to="/test">Test Link</Link></MemoryRouter>
+    )
 
     expect(screen.getByText('Test Link')).toBeInTheDocument()
   })
@@ -67,7 +68,9 @@ describe('Link Component', () => {
   it('should navigate when clicked', async () => {
     const user = userEvent.setup()
 
-    render(<Link to="/dashboard">Go to Dashboard</Link>)
+    render(
+      <MemoryRouter><Link to="/dashboard">Go to Dashboard</Link></MemoryRouter>
+    )
 
     const link = screen.getByText('Go to Dashboard')
     await user.click(link)
@@ -99,7 +102,7 @@ describe('Shell Component', () => {
   })
 
   it('should render navigation when user is logged in', async () => {
-    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User' }
+    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User', firstName: 'Test', lastName: 'User' }
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(
@@ -112,17 +115,16 @@ describe('Shell Component', () => {
       </MemoryRouter>
     )
 
-    // Attendre que l'utilisateur soit chargé
     expect(await screen.findByText('Pointage')).toBeInTheDocument()
     expect(screen.getByText('Dashboard')).toBeInTheDocument()
     expect(screen.getByText('Équipe')).toBeInTheDocument()
-    expect(screen.getByText('Mon compte')).toBeInTheDocument()
+    expect(screen.getByText('Test User')).toBeInTheDocument()
     expect(screen.getByText('Se déconnecter')).toBeInTheDocument()
   })
 
   it('should navigate to clock page when Pointage is clicked', async () => {
     const user = userEvent.setup()
-    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User' }
+    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User', firstName: 'Test', lastName: 'User' }
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(
@@ -143,7 +145,7 @@ describe('Shell Component', () => {
 
   it('should navigate to dashboard page when Dashboard is clicked', async () => {
     const user = userEvent.setup()
-    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User' }
+    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User', firstName: 'Test', lastName: 'User' }
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(
@@ -164,7 +166,7 @@ describe('Shell Component', () => {
 
   it('should call logout when Se déconnecter is clicked', async () => {
     const user = userEvent.setup()
-    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User' }
+    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User', firstName: 'Test', lastName: 'User' }
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
 
     render(

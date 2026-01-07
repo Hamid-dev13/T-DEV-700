@@ -16,6 +16,9 @@ export default function AccountPage() {
   const [phone, setPhone] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [showPasswordError, setShowPasswordError] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [showErrorModal, setShowErrorModal] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
   const [passwordValidation, setPasswordValidation] = useState({
     hasUpperCase: false,
     hasLowerCase: false,
@@ -24,7 +27,6 @@ export default function AccountPage() {
     isLongEnough: false
   })
 
-  // Initialize form with user data
   useEffect(() => {
     if (user) {
       setFirstName(user.firstName || '')
@@ -39,7 +41,6 @@ export default function AccountPage() {
 
     if (!user?.id) return
 
-    // Validation du mot de passe côté frontend si un nouveau mot de passe est fourni
     if (password) {
       const hasUpperCase = /[A-Z]/.test(password)
       const hasLowerCase = /[a-z]/.test(password)
@@ -57,29 +58,13 @@ export default function AccountPage() {
     try {
       await updateMyProfile({ firstName, lastName, email, phone, ...(password ? { password } : {}) })
       await refreshUser()
-      alert('Compte mis à jour avec succès.')
-      setPassword('') // Clear password field
+      setShowSuccessModal(true)
+      setPassword('')
     } catch (err: any) {
       console.error('Erreur lors de la mise à jour:', err)
       const errorMsg = err.message || 'Erreur inconnue'
-      
-      // Afficher un message détaillé si c'est une erreur de mot de passe
-      if (errorMsg.toLowerCase().includes("password") || 
-          errorMsg.toLowerCase().includes("security") || 
-          errorMsg.toLowerCase().includes("requirements") ||
-          errorMsg.toLowerCase().includes("meet")) {
-        alert(
-          `❌ Le mot de passe ne respecte pas les exigences de sécurité.\n\n` +
-          `Le mot de passe doit contenir :\n` +
-          `• Au moins une majuscule (A-Z)\n` +
-          `• Au moins une minuscule (a-z)\n` +
-          `• Au moins un chiffre (0-9)\n` +
-          `• Au moins un caractère spécial (!@#$%^&*...)\n` +
-          `• Plus de 4 caractères`
-        )
-      } else {
-        alert(`❌ Le compte n'a pas pu être mis à jour:\n${errorMsg}`)
-      }
+      setErrorMessage(errorMsg)
+      setShowErrorModal(true)
     }
   }
 
@@ -88,18 +73,16 @@ export default function AccountPage() {
       return
     }
     
-    // TODO: Implémenter la suppression du compte
     alert('Fonctionnalité de suppression à implémenter')
   }
 
   return (
     <div className="h-screen overflow-hidden">
       <Shell>
-        {/* Password Error Popup */}
         {showPasswordError && (
         <div 
           className="fixed inset-0 flex items-center justify-center z-50 animate-fadeIn" 
-          style={{ background: 'rgba(0, 0, 0, 0.15)' }}
+          style={{ background: 'rgba(0, 0, 0, 0.5)' }}
           onClick={() => setShowPasswordError(false)}
         >
           <div 
@@ -138,6 +121,56 @@ export default function AccountPage() {
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
             >
               Compris
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showSuccessModal && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center z-50 animate-fadeIn" 
+          style={{ background: 'rgba(0, 0, 0, 0.5)' }}
+          onClick={() => setShowSuccessModal(false)}
+        >
+          <div 
+            className="glass-modal rounded-lg shadow-2xl p-6 max-w-md w-full mx-4 animate-slideIn" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="text-4xl">✓</div>
+              <h3 className="text-xl font-semibold text-gray-900">Compte mis à jour</h3>
+            </div>
+            <p className="text-gray-600 mb-6">Vos informations ont été enregistrées avec succès.</p>
+            <button 
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+            >
+              Parfait
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showErrorModal && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center z-50 animate-fadeIn" 
+          style={{ background: 'rgba(0, 0, 0, 0.5)' }}
+          onClick={() => setShowErrorModal(false)}
+        >
+          <div 
+            className="glass-modal rounded-lg shadow-2xl p-6 max-w-md w-full mx-4 animate-slideIn" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="text-4xl">✗</div>
+              <h3 className="text-xl font-semibold text-gray-900">Erreur de mise à jour</h3>
+            </div>
+            <p className="text-gray-600 mb-6">{errorMessage}</p>
+            <button 
+              onClick={() => setShowErrorModal(false)}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+            >
+              Fermer
             </button>
           </div>
         </div>
@@ -201,7 +234,7 @@ export default function AccountPage() {
                   color: 'rgb(244 63 94)'
                 }}
               >
-                Supprimer mon compte
+                Supprimer {user?.firstName || 'mon compte'}
               </button>
               <button 
                 type="submit"

@@ -1,12 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import MemberDetailsPage from './MemberDetailsPage'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
 
-// Mock du module API
 vi.mock('../utils/api', () => ({
   getSession: vi.fn(),
   getClocks: vi.fn(),
@@ -15,7 +13,6 @@ vi.mock('../utils/api', () => ({
   logout: vi.fn()
 }))
 
-// Mock window.navigate
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom') as any
@@ -56,7 +53,6 @@ describe('MemberDetailsPage Component', () => {
     vi.mocked(api.getSession).mockResolvedValue(mockUser)
     sessionStorage.clear()
 
-    // Store member data in sessionStorage
     sessionStorage.setItem(`member_member1`, JSON.stringify(mockMember))
   })
 
@@ -118,7 +114,6 @@ describe('MemberDetailsPage Component', () => {
   })
 
   it('should calculate and display daily hours', async () => {
-    const now = new Date('2025-01-15T12:00:00')
     const clockIn = new Date('2025-01-15T09:00:00')
     const clockOut = new Date('2025-01-15T17:00:00')
 

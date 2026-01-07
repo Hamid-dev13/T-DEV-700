@@ -39,13 +39,12 @@ export default function ClockPage() {
 
   async function act() {
     const entry: Clock = await addClock()
-    setRefreshTrigger(prev => prev + 1) // Trigger refresh without causing loop
+    setRefreshTrigger(prev => prev + 1)
   }
 
   return (
     <Shell>
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Bouton de pointage en gros au centre */}
         <div className="flex flex-col items-center justify-center mb-12">
           <h1 className="page-title text-center mb-8">Pointage</h1>
           <button 
@@ -57,7 +56,6 @@ export default function ClockPage() {
           </button>
         </div>
 
-        {/* Historique en dessous */}
         <Card title="📋 Historique des pointages">
           {grouped.length === 0 ? (
             <div className="p-12 text-center text-gray-500">
@@ -90,7 +88,7 @@ export default function ClockPage() {
                           ></span>
                           <div className="flex items-center gap-4">
                             <span className={`text-sm font-semibold px-3 py-1.5 rounded-full ${isArrival ? 'pill-green' : 'pill-red'}`}>
-                              {isArrival ? '⬆️ Arrivée' : '⬇️ Départ'}
+                              {isArrival ? 'Arrivée' : 'Départ'}
                             </span>
                             <span className="text-base font-medium clock">{e.toLocaleTimeString()}</span>
                           </div>
