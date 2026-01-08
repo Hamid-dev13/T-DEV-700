@@ -198,6 +198,7 @@ export default function AccountPage() {
               <div>
                 <label className="label">Prénom</label>
                 <input className="input mt-1"
+                  type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   placeholder={"Votre prénom"}
@@ -206,6 +207,7 @@ export default function AccountPage() {
               <div>
                 <label className="label">Nom</label>
                 <input className="input mt-1"
+                  type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="Votre nom"
@@ -214,6 +216,7 @@ export default function AccountPage() {
               <div>
                 <label className="label">Email</label>
                 <input className="input mt-1"
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="ex: prenom@exemple.com"
@@ -222,6 +225,7 @@ export default function AccountPage() {
               <div>
                 <label className="label">Téléphone</label>
                 <input className="input mt-1"
+                  type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+33 ..."
