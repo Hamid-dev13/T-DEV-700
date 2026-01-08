@@ -47,7 +47,7 @@ describe('isAdmin Middleware', () => {
 
       await isAdmin(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(statusMock).toHaveBeenCalledWith(401);
+      expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({ error: 'Insufficient permissions' });
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -57,7 +57,7 @@ describe('isAdmin Middleware', () => {
 
       await isAdmin(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(statusMock).toHaveBeenCalledWith(401);
+      expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({ error: 'Insufficient permissions' });
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -67,7 +67,7 @@ describe('isAdmin Middleware', () => {
 
       await isAdmin(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(statusMock).toHaveBeenCalledWith(401);
+      expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({ error: 'Insufficient permissions' });
       expect(mockNext).not.toHaveBeenCalled();
     });

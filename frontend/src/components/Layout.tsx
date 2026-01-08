@@ -29,7 +29,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-2">
               {user && !isActive('/login') && (
                 <>
-                  <button onClick={() => navigate('/account')} className="nav-pill">Mon compte</button>
+                  <button onClick={() => navigate('/account')} className={"nav-pill" + (isActive('/account') ? ' active' : '')}>{user.firstName} {user.lastName}</button>
                   <button onClick={() => { logout().then(() => navigate('/login')); }} className="btn-ghost">Se déconnecter</button>
                 </>
               )}
@@ -45,7 +45,6 @@ export function Shell({ children }: { children: ReactNode }) {
   )
 }
 
-// Type des props du Card
 interface CardProps {
   title: string
   actions?: ReactNode
@@ -60,13 +59,12 @@ export function Card({ title, actions, footer, children }: CardProps) {
         <h2 className="text-xl md:text-2xl font-semibold">{title}</h2>
         {actions}
       </div>
-      <div className="card-body">{children}</div>
+      <div className="card-body space-y-8">{children}</div>
       {footer && <div className="card-footer">{footer}</div>}
     </div>
   )
 }
 
-// Type des props du Link
 interface LinkProps {
   to: string
   children: ReactNode

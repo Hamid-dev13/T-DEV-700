@@ -1,12 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
 import TeamManagePage from './TeamManagePage'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
 
-// Mock du module API
 vi.mock('../utils/api', () => ({
   getSession: vi.fn(),
   getMyTeams: vi.fn(),
@@ -62,11 +61,11 @@ describe('TeamManagePage Component', () => {
     )
 
     render(
-      <MemoryRouter>
-        <AuthProvider>
-          <TeamManagePage />
-        </AuthProvider>
-      </MemoryRouter>
+      <BrowserRouter>
+      <AuthProvider>
+        <TeamManagePage />
+      </AuthProvider>
+      </BrowserRouter>
     )
 
     expect(screen.getByText('Chargement de l\'équipe...')).toBeInTheDocument()
@@ -76,11 +75,11 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockResolvedValue([mockTeamData])
 
     render(
-      <MemoryRouter>
-        <AuthProvider>
-          <TeamManagePage />
-        </AuthProvider>
-      </MemoryRouter>
+      <BrowserRouter>
+      <AuthProvider>
+        <TeamManagePage />
+      </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -94,11 +93,11 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockResolvedValue([])
 
     render(
-      <MemoryRouter>
-        <AuthProvider>
-          <TeamManagePage />
-        </AuthProvider>
-      </MemoryRouter>
+      <BrowserRouter>
+      <AuthProvider>
+        <TeamManagePage />
+      </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -110,11 +109,11 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockRejectedValue(new Error('Network error'))
 
     render(
-      <MemoryRouter>
-        <AuthProvider>
-          <TeamManagePage />
-        </AuthProvider>
-      </MemoryRouter>
+      <BrowserRouter>
+      <AuthProvider>
+        <TeamManagePage />
+      </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -127,19 +126,18 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockResolvedValue([mockTeamData])
 
     render(
-      <MemoryRouter>
-        <AuthProvider>
-          <TeamManagePage />
-        </AuthProvider>
-      </MemoryRouter>
+      <BrowserRouter>
+      <AuthProvider>
+        <TeamManagePage />
+      </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
       expect(screen.getByText(/Engineering Team/i)).toBeInTheDocument()
     }, { timeout: 3000 })
 
-    // Click on manager tab
-    const managerTab = screen.getByText(/Manager/i)
+    const managerTab = screen.getByRole('button', { name: /👔 Manager/i })
     await user.click(managerTab)
 
     await waitFor(() => {
@@ -177,16 +175,16 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockResolvedValue(mockMultipleTeams)
 
     render(
-      <MemoryRouter>
-        <AuthProvider>
-          <TeamManagePage />
-        </AuthProvider>
-      </MemoryRouter>
+      <BrowserRouter>
+      <AuthProvider>
+        <TeamManagePage />
+      </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
       expect(screen.getByText('🔄 Sélectionner une équipe')).toBeInTheDocument()
-      // Use getAllByText since the team name appears in the selector and in the title
+
       const teamNames = screen.getAllByText(/Engineering Team/i)
       expect(teamNames.length).toBeGreaterThan(0)
     }, { timeout: 3000 })
@@ -223,11 +221,11 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockResolvedValue(mockMultipleTeams)
 
     render(
-      <MemoryRouter>
-        <AuthProvider>
-          <TeamManagePage />
-        </AuthProvider>
-      </MemoryRouter>
+      <BrowserRouter>
+      <AuthProvider>
+        <TeamManagePage />
+      </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -247,11 +245,11 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockResolvedValue(mockTeamData as any)
 
     render(
-      <MemoryRouter>
-        <AuthProvider>
-          <TeamManagePage />
-        </AuthProvider>
-      </MemoryRouter>
+      <BrowserRouter>
+      <AuthProvider>
+        <TeamManagePage />
+      </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
@@ -264,15 +262,15 @@ describe('TeamManagePage Component', () => {
     vi.mocked(api.getMyTeams).mockResolvedValue([mockTeamData])
 
     render(
-      <MemoryRouter>
-        <AuthProvider>
-          <TeamManagePage />
-        </AuthProvider>
-      </MemoryRouter>
+      <BrowserRouter>
+      <AuthProvider>
+        <TeamManagePage />
+      </AuthProvider>
+      </BrowserRouter>
     )
 
     await waitFor(() => {
-      // Should show loading state but not fetch teams
+
       expect(api.getMyTeams).not.toHaveBeenCalled()
     })
   })

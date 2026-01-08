@@ -10,11 +10,9 @@ interface DailySummary {
   hours: number
 }
 
-// Calcule les heures travaillées par jour à partir des timestamps de pointage
 function computeDailyHours(timestamps: Array<{ date: Date, iso: string }>): DailySummary[] {
   const byDay: { [key: string]: Date[] } = {}
   
-  // Grouper les timestamps par jour
   for (const ts of timestamps) {
     const day = ts.date.toISOString().slice(0, 10)
     if (!byDay[day]) byDay[day] = []
@@ -23,18 +21,16 @@ function computeDailyHours(timestamps: Array<{ date: Date, iso: string }>): Dail
   
   const result: DailySummary[] = []
   
-  // Calculer les heures pour chaque jour
   for (const [day, times] of Object.entries(byDay)) {
     const sorted = times.sort((a, b) => a.getTime() - b.getTime())
     let totalHours = 0
     
-    // Paires de pointages: in/out, in/out, etc.
     for (let i = 0; i < sorted.length - 1; i += 2) {
       const clockIn = sorted[i]
       const clockOut = sorted[i + 1]
       if (clockOut) {
         const diff = clockOut.getTime() - clockIn.getTime()
-        totalHours += diff / (1000 * 60 * 60) // Convertir ms en heures
+        totalHours += diff / (1000 * 60 * 60)
       }
     }
     
@@ -44,24 +40,23 @@ function computeDailyHours(timestamps: Array<{ date: Date, iso: string }>): Dail
   return result.sort((a, b) => a.day.localeCompare(b.day))
 }
 
-// Convertit les heures décimales en format HH:MM
 function formatHoursToHHMM(decimalHours: number): string {
   const hours = Math.floor(decimalHours)
   const minutes = Math.round((decimalHours - hours) * 60)
-  return `${hours}:${minutes.toString().padStart(2, '0')}`
+  if (minutes === 0) {
+    return `${hours}h`
+  }
+  return `${hours}h${minutes.toString().padStart(2, '0')}`
 }
 
-// Génère un tableau de dates pour la semaine en cours (lundi à vendredi seulement)
 function getCurrentWeekDays(): string[] {
   const days: string[] = []
   const today = new Date()
   
-  // Trouver le lundi de la semaine en cours
-  const dayOfWeek = today.getDay() || 7 // Lundi = 1, Dimanche = 7
+  const dayOfWeek = today.getDay() || 7
   const monday = new Date(today)
   monday.setDate(today.getDate() - (dayOfWeek - 1))
   
-  // Générer les 5 jours de lundi à vendredi (pas de weekend)
   for (let i = 0; i < 5; i++) {
     const date = new Date(monday)
     date.setDate(monday.getDate() + i)
@@ -93,6 +88,7 @@ export default function DashboardPage() {
     workingDaysCount: number
   } | null>(null)
   const [managedTeam, setManagedTeam] = useState<TeamWithMembers | null>(null)
+  const [userTeam, setUserTeam] = useState<Team | null>(null)
   const [teamSummary, setTeamSummary] = useState<{
     totalMembers: number
     avgHoursToday: number
@@ -100,11 +96,8 @@ export default function DashboardPage() {
   } | null>(null)
   const [loading, setLoading] = useState(true)
   
-  // Fonction pour naviguer vers les détails d'un membre
   const handleMemberClick = (member: User) => {
-    // Sauvegarder les infos du membre dans sessionStorage
     sessionStorage.setItem(`member_${member.id}`, JSON.stringify(member))
-    // Naviguer vers la page de détails
     navigate(`/member/${member.id}`)
   }
 
@@ -117,25 +110,20 @@ export default function DashboardPage() {
         
         const now = new Date()
         
-        // Calculer le lundi de la semaine en cours
-        const dayOfWeek = now.getDay() || 7 // Lundi = 1, Dimanche = 7
+        const dayOfWeek = now.getDay() || 7
         const monday = new Date(now)
         monday.setDate(now.getDate() - (dayOfWeek - 1))
         
-        // Récupérer les pointages depuis le lundi de la semaine en cours
         const timestamps = await getClocks(user!.id, monday, now)
         
-        // Calculer les heures par jour
         const dailyHours = computeDailyHours(timestamps)
         
-        // Calculer le total de la semaine en cours (utilise le même lundi calculé plus haut)
         const weekStart = monday.toISOString().slice(0, 10)
         
         const totalWeek = dailyHours
           .filter(d => d.day >= weekStart)
           .reduce((sum, d) => sum + d.hours, 0)
         
-        // Heures d'aujourd'hui
         const today = now.toISOString().slice(0, 10)
         const todayHours = dailyHours.find(d => d.day === today)?.hours || 0
         
@@ -155,24 +143,38 @@ export default function DashboardPage() {
 
     fetchData()
     fetchTeamData()
+    fetchUserTeam()
   }, [user])
 
-  // Récupérer les données de l'équipe si l'utilisateur est manager
+  async function fetchUserTeam() {
+    if (!user?.id) return
+
+    try {
+      const teams = await getMyTeams() as TeamWithMembers[]
+
+      if (teams.length > 0) {
+        setUserTeam(teams[0].team)
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'équipe de l\'utilisateur:', error)
+    }
+  }
+
   async function fetchTeamData() {
     if (!user?.id) return
 
     try {
       const teams = await getMyTeams() as TeamWithMembers[]
-      // Trouver l'équipe où l'utilisateur est manager
+
       const myManagedTeam = teams.find(t => t.manager.id === user.id)
       
       if (myManagedTeam) {
         setManagedTeam(myManagedTeam)
         
-        // Calculer les stats de l'équipe
+
         const now = new Date()
         
-        // Calculer le lundi de la semaine en cours
+
         const dayOfWeek = now.getDay() || 7
         const monday = new Date(now)
         monday.setDate(now.getDate() - (dayOfWeek - 1))
@@ -182,16 +184,16 @@ export default function DashboardPage() {
         let totalHoursWeek = 0
         const today = now.toISOString().slice(0, 10)
         
-        // Récupérer les heures de tous les membres
+
         for (const member of myManagedTeam.members) {
           const timestamps = await getClocks(member.id, monday, now)
           const dailyHours = computeDailyHours(timestamps)
           
-          // Heures d'aujourd'hui
+
           const memberToday = dailyHours.find(d => d.day === today)?.hours || 0
           totalHoursToday += memberToday
           
-          // Heures de la semaine
+
           const memberWeek = dailyHours
             .filter(d => d.day >= weekStart)
             .reduce((sum, d) => sum + d.hours, 0)
@@ -223,26 +225,26 @@ export default function DashboardPage() {
     )
   }
 
-  const dayHoursTarget = managedTeam ? (managedTeam.team.endHour - managedTeam.team.startHour) : 0
+  const dayHoursTarget = userTeam ? (userTeam.endHour - userTeam.startHour) : 0
   const weekHoursTarget = summary ? dayHoursTarget * summary.workingDaysCount : 0
 
   return (
     <Shell>
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto mb-4">
         <Card title="📊 Résumé de vos heures">
           {/* En-tête avec progression hebdomadaire */}
-          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-6 mb-8 border-2 border-yellow-200">
+          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-6 border-2 border-yellow-200">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-1">Cette semaine</h3>
-                <p className="text-sm text-gray-600">Objectif : {weekHoursTarget}h ({dayHoursTarget}h/jour)</p>
+                <p className="text-sm text-gray-600">Objectif : {formatHoursToHHMM(weekHoursTarget)} ({formatHoursToHHMM(dayHoursTarget)}/jour)</p>
               </div>
               <div className="text-right">
                 <div className="text-5xl font-bold text-yellow-600">
                   {summary ? formatHoursToHHMM(summary.totalWeek) : '0:00'}
                 </div>
                 <div className="text-sm text-gray-600 mt-1">
-                  sur {weekHoursTarget}h
+                  sur {formatHoursToHHMM(weekHoursTarget)}
                 </div>
               </div>
             </div>
@@ -261,8 +263,8 @@ export default function DashboardPage() {
               </div>
               <div className="flex justify-between text-xs text-gray-500 mt-2">
                 <span>0h</span>
-                <span>{Math.round(weekHoursTarget * 0.5)}h</span>
-                <span className="font-semibold">{weekHoursTarget}h</span>
+                <span>{formatHoursToHHMM(weekHoursTarget * 0.5)}</span>
+                <span className="font-semibold">{formatHoursToHHMM(weekHoursTarget)}</span>
               </div>
             </div>
             
@@ -284,7 +286,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Statistiques rapides */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-3 gap-4">
             {/* Aujourd'hui */}
             <div className="bg-white rounded-xl p-5 border-2 border-gray-200 hover:border-blue-300 transition-all">
               <div className="flex items-center gap-3 mb-3">
@@ -299,7 +301,7 @@ export default function DashboardPage() {
                 {summary ? formatHoursToHHMM(summary.todayHours) : '0:00'}
               </div>
               <div className="flex items-center gap-1">
-                <div className="text-xs text-gray-500">Objectif: {dayHoursTarget}h</div>
+                <div className="text-xs text-gray-500">Objectif: {formatHoursToHHMM(dayHoursTarget)}</div>
                 {summary && summary.todayHours >= dayHoursTarget && (
                   <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -426,7 +428,7 @@ export default function DashboardPage() {
                                 }`}>
                                   {formatHoursToHHMM(hours)}
                                 </div>
-                                <div className="text-xs text-gray-500">/ 8h</div>
+                                <div className="text-xs text-gray-500">/ {formatHoursToHHMM(dayHoursTarget)}</div>
                               </div>
                               
                               {/* Icône de statut */}
@@ -463,7 +465,7 @@ export default function DashboardPage() {
         {managedTeam && (
           <Card title={`👥 Résumé de l'équipe - ${managedTeam.team.name}`}>
             {/* Statistiques de l'équipe */}
-            <div className="grid grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-3 gap-6">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">

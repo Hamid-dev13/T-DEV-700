@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import ClockPage from './ClockPage'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
 
-// Mock du module API
 vi.mock('../utils/api', () => ({
   getSession: vi.fn(),
   getClocks: vi.fn(),
@@ -96,8 +96,8 @@ describe('ClockPage Component', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText(/⬆️ Arrivée/)).toBeInTheDocument()
-      expect(screen.getByText(/⬇️ Départ/)).toBeInTheDocument()
+      expect(screen.getByText('Arrivée')).toBeInTheDocument()
+      expect(screen.getByText('Départ')).toBeInTheDocument()
     })
   })
 
@@ -119,7 +119,7 @@ describe('ClockPage Component', () => {
     )
 
     await waitFor(() => {
-      // Vérifier qu'il y a 2 groupes de jours différents
+
       const dayHeaders = screen.getAllByText(/📅/)
       expect(dayHeaders.length).toBeGreaterThan(0)
     })

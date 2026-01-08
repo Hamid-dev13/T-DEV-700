@@ -19,12 +19,12 @@ export async function generatePasswordResetToken(email: string): Promise<string>
       .where(eq(passwordResetTokens.user_id, user.id));
 
     const expiresAt = new Date(Date.now() + TOKEN_EXPIRATION_TIME);
-    
+
     // create new token
     const [token] = await tx.insert(passwordResetTokens)
       .values({ user_id: user.id, expiresAt })
       .returning();
-    
+
     return token.id;
   });
 }
@@ -35,7 +35,7 @@ export async function changePasswordWithToken(password: string, token: string) {
     .from(passwordResetTokens)
     .where(eq(passwordResetTokens.id, token))
     .limit(1);
-  
+
   if (token_entry.expiresAt.getTime() < Date.now())
     throw new Error("Token has expired");
 
@@ -43,7 +43,7 @@ export async function changePasswordWithToken(password: string, token: string) {
 
   await db.transaction(async (tx) => {
     await tx.update(users)
-      .set({ password: hashed_pass })
+      .set({ password: hashed_pass, refreshToken: null })
       .where(eq(users.id, token_entry.user_id));
     await tx.delete(passwordResetTokens)
       .where(eq(passwordResetTokens.id, token_entry.id));

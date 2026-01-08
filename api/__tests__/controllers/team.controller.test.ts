@@ -183,7 +183,7 @@ describe('Team Controller', () => {
       expect(jsonMock).toHaveBeenCalledWith(mockTeam);
     });
 
-    it('should return 401 when user is not admin or manager', async () => {
+    it('should return 403 when user is not admin or manager', async () => {
       mockRequest.params = { id: 'team-1' };
       mockRequest.user_id = 'user-1';
       mockRequest.admin = false;
@@ -193,7 +193,7 @@ describe('Team Controller', () => {
 
       await updateTeamController(mockRequest as Request, mockResponse as Response);
 
-      expect(sendErrorMock).toHaveBeenCalledWith("Insufficient permissions", 401);
+      expect(sendErrorMock).toHaveBeenCalledWith("Insufficient permissions", 403);
     });
 
     it('should return 500 on error', async () => {

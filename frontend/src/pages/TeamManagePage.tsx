@@ -11,7 +11,6 @@ type TeamData = {
   members: User[]
 }
 
-// Convertit les heures décimales en format HH:MM
 function formatHoursToHHMM(decimalHours: number): string {
   const hours = Math.floor(decimalHours)
   const minutes = Math.round((decimalHours - hours) * 60)
@@ -36,7 +35,6 @@ export default function TeamManagePage() {
     
     getMyTeams()
       .then(data => {
-        // La réponse peut être un tableau ou un objet unique
         const teams = Array.isArray(data) ? data : (data && data.team ? [data] : [])
         
         if (teams.length > 0) {
@@ -101,7 +99,6 @@ export default function TeamManagePage() {
   return (
     <Shell>
       <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Sélecteur d'équipe en haut à gauche si plusieurs équipes */}
         {allTeams.length > 1 && (
           <div className="mb-8">
             <label className="label mb-2">🔄 Sélectionner une équipe</label>
@@ -119,7 +116,6 @@ export default function TeamManagePage() {
           </div>
         )}
 
-        {/* Nom de l'équipe en haut au centre */}
         <div className="text-center mb-8">
           <h1 className="page-title">👥 {team.name}</h1>
           {team.description && (
@@ -127,7 +123,6 @@ export default function TeamManagePage() {
           )}
         </div>
 
-        {/* Bouton de gestion des vacances */}
         <div className="flex justify-center mb-8">
           <button
             onClick={handleLeaveRequest}
@@ -141,7 +136,6 @@ export default function TeamManagePage() {
           </button>
         </div>
 
-        {/* Onglets */}
         <div className="flex justify-center gap-4 mb-8">
           <button
             className={`nav-pill ${activeTab === 'members' ? 'nav-pill-active' : ''}`}
@@ -168,18 +162,30 @@ export default function TeamManagePage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {members.map(member => {
-                  const isManager = member.id === manager.id;
+                  const isMemberManager = member.id === manager.id;
+                  const canClick = isManager && !isMemberManager;
+                  
+                  const handleMemberClick = () => {
+                    if (canClick) {
+                      sessionStorage.setItem(`member_${member.id}`, JSON.stringify(member));
+                      navigate(`/member/${member.id}`);
+                    }
+                  };
+                  
                   return (
                     <div
                       key={member.id}
-                      className="card p-6 hover:shadow-lg transition-all"
+                      className={`card p-6 transition-all ${
+                        canClick ? 'hover:shadow-lg cursor-pointer hover:scale-105' : ''
+                      }`}
+                      onClick={handleMemberClick}
                     >
                       <div className="flex items-start gap-4">
                         <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
-                             style={{ background: isManager 
+                             style={{ background: isMemberManager 
                                ? 'linear-gradient(135deg, rgba(255, 212, 0, 0.4), rgba(255, 212, 0, 0.2))' 
                                : 'linear-gradient(135deg, rgba(255, 212, 0, 0.2), rgba(255, 212, 0, 0.1))' }}>
-                          {isManager ? '👔' : '👤'}
+                          {isMemberManager ? '👔' : '👤'}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-bold text-lg mb-1 truncate">
@@ -194,7 +200,7 @@ export default function TeamManagePage() {
                             </p>
                           )}
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {isManager && (
+                            {isMemberManager && (
                               <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full"
                                     style={{ background: 'rgba(255, 212, 0, 0.3)', color: 'hsl(var(--ink))' }}>
                                 👔 Manager

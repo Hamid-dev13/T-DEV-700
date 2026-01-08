@@ -28,7 +28,6 @@ export default function BarChart({
     )
   }
 
-  // Limiter aux 14 derniers jours pour une meilleure lisibilité
   const displayData = data.length > 14 ? data.slice(-14) : data
   const max = maxValue || Math.max(...displayData.map(d => d.value), 1)
   
@@ -36,17 +35,14 @@ export default function BarChart({
 
   return (
     <div className="w-full bg-white rounded-lg p-6">
-      {/* Zone des barres */}
       <div className="flex items-end justify-around gap-3" style={{ height: `${chartHeight}px` }}>
         {displayData.map((point, index) => {
           const barHeightPx = max > 0 ? (point.value / max) * (chartHeight - 40) : 0
           
           let displayValue = ''
           if (unit === 'h') {
-            // Format heures : Xh00
             displayValue = `${Math.floor(point.value / 60)}h${Math.round(point.value % 60).toString().padStart(2, '0')}`
           } else if (unit === 'min') {
-            // Format minutes : si >= 60, afficher en heures et minutes, sinon juste minutes
             const totalMinutes = Math.round(point.value)
             if (totalMinutes >= 60) {
               const hours = Math.floor(totalMinutes / 60)
@@ -61,12 +57,10 @@ export default function BarChart({
           
           return (
             <div key={index} className="flex flex-col items-center flex-1 max-w-[100px]">
-              {/* Valeur au-dessus */}
               <div className="text-sm font-bold text-gray-800 mb-2" style={{ minHeight: '20px' }}>
                 {point.value > 0 ? displayValue : ''}
               </div>
               
-              {/* Barre */}
               <div 
                 className="w-full rounded-t-lg hover:opacity-80 transition-opacity"
                 style={{ 
@@ -80,7 +74,6 @@ export default function BarChart({
         })}
       </div>
 
-      {/* Labels en bas */}
       <div className="flex items-center justify-around gap-3 mt-4 pt-4 border-t border-gray-200">
         {displayData.map((point, index) => (
           <div 
