@@ -1,17 +1,25 @@
-import { useState, useEffect } from 'react';
+import { Loader2, UsersRound } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import AddTeamModal from '../components/AddTeamModal';
+import DeleteTeamModal from '../components/DeleteTeamModal';
+import EditTeamModal from '../components/EditTeamModal';
 import Sidebar from '../components/Sidebar';
 import TeamCard from '../components/TeamCard';
-import AddTeamModal from '../components/AddTeamModal';
-import { UsersRound, Loader2 } from 'lucide-react';
+import TeamMembersModal from '../components/TeamMembersModal';
+import { deleteTeam, getTeams, getUsers } from '../utils/api';
 import { Team, User } from '../utils/types';
-import { getTeams, getUsers } from '../utils/api';
 
 function Teams() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [users, setUsers] = useState<Map<string, User>>(new Map<string, User>());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchTeams = async () => {
     try {
@@ -50,6 +58,43 @@ function Teams() {
     fetchTeams();
   };
 
+  const handleEditTeam = (team: Team) => {
+    setSelectedTeam(team);
+    setIsEditModalOpen(true);
+  };
+
+  const handleTeamUpdated = (updatedTeam: Team) => {
+    setTeams(teams.map(t => t.id === updatedTeam.id ? updatedTeam : t));
+    // Recharger pour avoir les infos du manager
+    fetchTeams();
+  };
+
+  const handleDeleteTeam = (team: Team) => {
+    setSelectedTeam(team);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleViewMembers = (team: Team) => {
+    setSelectedTeam(team);
+    setIsMembersModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedTeam) return;
+
+    setDeleteLoading(true);
+    try {
+      await deleteTeam(selectedTeam.id);
+      setTeams(teams.filter(t => t.id !== selectedTeam.id));
+      setIsDeleteModalOpen(false);
+      setSelectedTeam(null);
+    } catch (err) {
+      setError('Erreur lors de la suppression: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
@@ -58,7 +103,7 @@ function Teams() {
         <header className="h-16 bg-white shadow-sm flex items-center justify-between px-6">
           <h2 className="text-2xl font-bold text-gray-800">Gestion des équipes</h2>
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setIsAddModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
           >
             <UsersRound className="w-5 h-5" />
@@ -87,6 +132,9 @@ function Teams() {
                     key={team.id}
                     team={team}
                     manager={users.get(team.managerId) || null}
+                    onEdit={handleEditTeam}
+                    onDelete={handleDeleteTeam}
+                    onViewMembers={handleViewMembers}
                   />
                 ))}
               </div>
@@ -96,9 +144,39 @@ function Teams() {
       </div>
 
       <AddTeamModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
         onTeamAdded={handleTeamAdded}
+      />
+
+      <EditTeamModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedTeam(null);
+        }}
+        onTeamUpdated={handleTeamUpdated}
+        team={selectedTeam}
+      />
+
+      <DeleteTeamModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSelectedTeam(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        team={selectedTeam}
+        loading={deleteLoading}
+      />
+
+      <TeamMembersModal
+        isOpen={isMembersModalOpen}
+        onClose={() => {
+          setIsMembersModalOpen(false);
+          setSelectedTeam(null);
+        }}
+        team={selectedTeam}
       />
     </div>
   );

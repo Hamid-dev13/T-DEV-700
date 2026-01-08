@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { X, Users, UserPlus, Trash2, Loader2, Shield } from 'lucide-react';
-import { Team, User } from "../utils/types";
+import { Loader2, Shield, Trash2, UserPlus, Users, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { addTeamMember, getTeamUsers, getUsers, removeTeamMember } from '../utils/api';
+import { Team, User } from "../utils/types";
 
 interface TeamMembersModalProps {
   isOpen: boolean;
@@ -14,6 +14,7 @@ function TeamMembersModal({ isOpen, onClose, team }: TeamMembersModalProps) {
   const [manager, setManager] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
+  const [addError, setAddError] = useState<string>('');
   const [isAddMemberOpen, setIsAddMemberOpen] = useState<boolean>(false);
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
@@ -53,13 +54,34 @@ function TeamMembersModal({ isOpen, onClose, team }: TeamMembersModalProps) {
     if (!selectedUserId) return;
 
     setAddLoading(true);
+    setAddError('');
     try {
       await addTeamMember(team!.id, selectedUserId);
       setIsAddMemberOpen(false);
       setSelectedUserId('');
       fetchTeamMembers();
-    } catch (err) {
-      alert('Erreur lors de l\'ajout du membre');
+      fetchAvailableUsers(); // Recharger la liste des utilisateurs disponibles
+    } catch (err: any) {
+      // La fonction request() dans api.ts extrait déjà le message d'erreur
+      let errorMessage = 'Erreur lors de l\'ajout du membre';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      // Messages d'erreur plus clairs et en français
+      if (errorMessage.includes('already a member') || errorMessage.includes('déjà membre')) {
+        errorMessage = 'Cet utilisateur est déjà membre d\'une autre équipe.';
+      } else if (errorMessage.includes('not unique') || errorMessage.includes('unique constraint') || errorMessage.includes('déjà dans cette équipe')) {
+        errorMessage = 'Cet utilisateur est déjà membre de cette équipe.';
+      } else if (errorMessage.includes('Missing required field')) {
+        errorMessage = 'Champ requis manquant.';
+      }
+      
+      setAddError(errorMessage);
+      console.error('Erreur lors de l\'ajout du membre:', err);
     } finally {
       setAddLoading(false);
     }
@@ -149,10 +171,18 @@ function TeamMembersModal({ isOpen, onClose, team }: TeamMembersModalProps) {
 
               {isAddMemberOpen && (
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                  {addError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg mb-3 text-sm">
+                      {addError}
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <select
                       value={selectedUserId}
-                      onChange={(e) => setSelectedUserId(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedUserId(e.target.value);
+                        setAddError(''); // Effacer l'erreur quand on change la sélection
+                      }}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                     >
                       <option value="">Sélectionner un utilisateur</option>

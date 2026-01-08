@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-  
   # ============================================
   # FRONTEND
   # ============================================
@@ -20,6 +17,7 @@ services:
       - .env
     environment:
       - NODE_ENV=development
+      - VITE_API_URL=${API_URL}
     command: npm run dev -- --host 0.0.0.0
     networks:
       - app-network
@@ -66,13 +64,12 @@ services:
       - .env
     environment:
       - NODE_ENV=development
+      - VITE_API_URL=${API_URL}
     command: npm run dev -- --host 0.0.0.0
     networks:
       - app-network
     depends_on:
       - backend
-
-
 
 networks:
   app-network:
