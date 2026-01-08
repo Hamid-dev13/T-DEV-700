@@ -71,7 +71,7 @@ export default function AccountPage() {
     }
 
     try {
-      await updateMyProfile({ firstName, lastName, email, phone, ...(oldPassword ? { old_password: oldPassword, new_password: newPassword } : {}) })
+      await updateMyProfile({ firstName, lastName, email, phone, ...(oldPassword ? { oldPassword, newPassword } : {}) })
       await refreshUser()
       setShowSuccessModal(true)
       setOldPassword('')
@@ -161,7 +161,7 @@ export default function AccountPage() {
                 onClick={() => setShowSuccessModal(false)}
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition-colors"
               >
-                Parfait
+                Ok
               </button>
             </div>
           </div>

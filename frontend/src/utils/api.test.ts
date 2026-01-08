@@ -96,7 +96,8 @@ describe('api module', () => {
         lastName: 'Doe',
         email: 'john@example.com',
         phone: '+33123456789',
-        password: 'newPassword123'
+        oldPassword: 'oldPassword123',
+        newPassword: 'newPassword123'
       })
 
       expect(client.put).toHaveBeenCalledWith('/user', {
@@ -104,29 +105,9 @@ describe('api module', () => {
         last_name: 'Doe',
         email: 'john@example.com',
         phone: '+33123456789',
-        password: 'newPassword123'
+        old_password: 'oldPassword123',
+        new_password: 'newPassword123'
       })
-    })
-  })
-
-  describe('updateUser', () => {
-    it('should update user by ID', async () => {
-      vi.mocked(client.put).mockResolvedValue({ success: true })
-
-      await api.updateUser('123', { firstName: 'Jane' })
-
-      expect(client.put).toHaveBeenCalledWith('/users/123', { firstName: 'Jane' })
-    })
-
-    it('should encode user ID', async () => {
-      vi.mocked(client.put).mockResolvedValue({ success: true })
-
-      await api.updateUser('user@email.com', { firstName: 'Jane' })
-
-      expect(client.put).toHaveBeenCalledWith(
-        expect.stringContaining('/users/'),
-        expect.any(Object)
-      )
     })
   })
 

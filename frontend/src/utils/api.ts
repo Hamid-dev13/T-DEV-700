@@ -19,17 +19,15 @@ export async function getUsers() {
   return get('/users')
 }
 export async function updateMyProfile(updates: any) {
+  // camel case to snake case
   const payload = {
     first_name: updates.firstName,
     last_name: updates.lastName,
     email: updates.email,
     phone: updates.phone,
-    ...(updates.password ? { password: updates.password } : {})
+    ...(updates.oldPassword && updates.newPassword ? { old_password: updates.oldPassword, new_password: updates.newPassword } : {})
   }
   return put('/user', payload)
-}
-export async function updateUser(id: string, updates: any) {
-  return put(`/users/${encodeURIComponent(id)}`, updates)
 }
 export async function deleteUser(id: string) {
   return del(`/users/${encodeURIComponent(id)}`)

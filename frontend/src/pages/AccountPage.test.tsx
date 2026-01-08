@@ -217,8 +217,8 @@ describe('AccountPage Component', () => {
         lastName: 'Doe',
         email: 'test@example.com',
         phone: '+33123456789',
-        old_password: 'OldPass123!',
-        new_password: 'Valid1Pass!'
+        oldPassword: 'OldPass123!',
+        newPassword: 'Valid1Pass!'
       })
     })
   })
