@@ -27,7 +27,7 @@ function EditUserModal({ isOpen, onClose, onUserUpdated, user }: EditUserModalPr
         first_name: user.firstName || '',
         last_name: user.lastName || '',
         email: user.email || '',
-        new_password: '', // Ne pas pré-remplir le mot de passe
+        new_password: '',
         phone: user.phone || '',
       });
       setError('');
@@ -40,7 +40,7 @@ function EditUserModal({ isOpen, onClose, onUserUpdated, user }: EditUserModalPr
     setLoading(true);
 
     try {
-      // Préparer les données - ne pas envoyer le password s'il est vide
+      // don't send password if empty
       const dataToSend = { ...formData };
       if (!dataToSend.new_password) {
         const { new_password, ...rest } = dataToSend;
