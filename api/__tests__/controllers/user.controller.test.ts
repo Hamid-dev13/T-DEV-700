@@ -126,7 +126,7 @@ describe('User Controller', () => {
       const mockNewAccessToken = 'jwt-new-access-token';
       const mockUser = { id: 'user-1', email: 'test@example.com', refreshToken: mockRefreshToken };
 
-      mockRequest.headers = {cookie: `${COOKIE_REFRESH_TOKEN_KEY}=${mockRefreshToken}`};
+      mockRequest.headers = { cookie: `${COOKIE_REFRESH_TOKEN_KEY}=${mockRefreshToken}` };
       mockRequest.user_id = 'user-1';
 
       (userService.retrieveUser as jest.Mock).mockResolvedValue(mockUser);
@@ -143,7 +143,7 @@ describe('User Controller', () => {
       const mockInvalidRefreshToken = 'jwt-invalid-refresh-token';
       const mockUser = { id: 'user-1', email: 'test@example.com', refreshToken: mockRefreshToken };
 
-      mockRequest.headers = {cookie: `${COOKIE_REFRESH_TOKEN_KEY}=${mockInvalidRefreshToken}`};
+      mockRequest.headers = { cookie: `${COOKIE_REFRESH_TOKEN_KEY}=${mockInvalidRefreshToken}` };
       mockRequest.user_id = 'user-1';
 
       (userService.retrieveUser as jest.Mock).mockResolvedValue(mockUser);
@@ -158,7 +158,7 @@ describe('User Controller', () => {
       const mockRefreshToken = 'jwt-refresh-token';
       const mockUser = { id: 'user-1', email: 'test@example.com', refreshToken: null };
 
-      mockRequest.headers = {cookie: `${COOKIE_REFRESH_TOKEN_KEY}=${mockRefreshToken}`};
+      mockRequest.headers = { cookie: `${COOKIE_REFRESH_TOKEN_KEY}=${mockRefreshToken}` };
       mockRequest.user_id = 'user-1';
 
       (userService.retrieveUser as jest.Mock).mockResolvedValue(mockUser);
@@ -196,7 +196,7 @@ describe('User Controller', () => {
       expect(clearCookieMock).toHaveBeenNthCalledWith(2, COOKIE_REFRESH_TOKEN_KEY);
     });
 
-    it('should return 200 even if user not found', async () => {
+    it('should clear cookies even if user not found', async () => {
       mockRequest.user_id = 'user-1';
 
       (userService.clearRefreshTokenForUser as jest.Mock).mockImplementation(() => Promise.reject());
@@ -207,12 +207,13 @@ describe('User Controller', () => {
       expect(clearCookieMock).toHaveBeenNthCalledWith(2, COOKIE_REFRESH_TOKEN_KEY);
     });
 
-    it('should return 500 if user id is undefined', async () => {
+    it('should clear cookies even if user id is undefined', async () => {
       (userService.clearRefreshTokenForUser as jest.Mock).mockImplementation(() => Promise.reject());
 
       await logoutUserController(mockRequest as Request, mockResponse as Response);
 
-      expect(clearCookieMock).not.toHaveBeenCalled();
+      expect(clearCookieMock).toHaveBeenNthCalledWith(1, COOKIE_ACCESS_TOKEN_KEY);
+      expect(clearCookieMock).toHaveBeenNthCalledWith(2, COOKIE_REFRESH_TOKEN_KEY);
     });
   });
 

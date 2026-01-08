@@ -105,7 +105,7 @@ describe('AccountPage Component', () => {
     })
   })
 
-  it('should show error when password does not meet requirements', async () => {
+  it('should show error when only oldPassword is filled', async () => {
     const user = userEvent.setup()
 
     render(
@@ -120,8 +120,63 @@ describe('AccountPage Component', () => {
       expect(screen.getByDisplayValue('John')).toBeInTheDocument()
     })
 
-    const passwordInput = screen.getByPlaceholderText('Laisser vide pour ne pas changer')
-    await user.type(passwordInput, 'weak')
+    const oldPasswordInput = screen.getByLabelText(/ancien mot de passe/i)
+    await user.type(oldPasswordInput, 'OldPass123!')
+
+    const submitButton = screen.getByRole('button', { name: /enregistrer/i })
+    await user.click(submitButton)
+
+    await waitFor(() => {
+      expect(screen.getByText(/veuillez saisir le nouveau mot de passe/i)).toBeInTheDocument()
+    })
+  })
+
+  it('should show error when only newPassword is filled', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AccountPage />
+        </AuthProvider>
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('John')).toBeInTheDocument()
+    })
+
+    const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i)
+    await user.type(newPasswordInput, 'NewPass123!')
+
+    const submitButton = screen.getByRole('button', { name: /enregistrer/i })
+    await user.click(submitButton)
+
+    await waitFor(() => {
+      expect(screen.getByText(/veuillez saisir l'ancien mot de passe/i)).toBeInTheDocument()
+    })
+  })
+
+  it('should show error when new password does not meet requirements', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AccountPage />
+        </AuthProvider>
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('John')).toBeInTheDocument()
+    })
+
+    const oldPasswordInput = screen.getByLabelText(/ancien mot de passe/i)
+    const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i)
+
+    await user.type(oldPasswordInput, 'OldPass123!')
+    await user.type(newPasswordInput, 'weak')
 
     const submitButton = screen.getByRole('button', { name: /enregistrer/i })
     await user.click(submitButton)
@@ -131,7 +186,7 @@ describe('AccountPage Component', () => {
     })
   })
 
-  it('should accept valid password', async () => {
+  it('should accept valid passwords', async () => {
     const user = userEvent.setup()
     vi.mocked(api.updateMyProfile).mockResolvedValue({ success: true })
 
@@ -147,8 +202,11 @@ describe('AccountPage Component', () => {
       expect(screen.getByDisplayValue('John')).toBeInTheDocument()
     })
 
-    const passwordInput = screen.getByPlaceholderText('Laisser vide pour ne pas changer')
-    await user.type(passwordInput, 'Valid1Pass!')
+    const oldPasswordInput = screen.getByLabelText(/ancien mot de passe/i)
+    const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i)
+
+    await user.type(oldPasswordInput, 'OldPass123!')
+    await user.type(newPasswordInput, 'Valid1Pass!')
 
     const submitButton = screen.getByRole('button', { name: /enregistrer/i })
     await user.click(submitButton)
@@ -159,7 +217,8 @@ describe('AccountPage Component', () => {
         lastName: 'Doe',
         email: 'test@example.com',
         phone: '+33123456789',
-        password: 'Valid1Pass!'
+        old_password: 'OldPass123!',
+        new_password: 'Valid1Pass!'
       })
     })
   })
@@ -179,8 +238,11 @@ describe('AccountPage Component', () => {
       expect(screen.getByDisplayValue('John')).toBeInTheDocument()
     })
 
-    const passwordInput = screen.getByPlaceholderText('Laisser vide pour ne pas changer')
-    await user.type(passwordInput, 'weak')
+    const oldPasswordInput = screen.getByLabelText(/ancien mot de passe/i)
+    const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i)
+
+    await user.type(oldPasswordInput, 'OldPass123!')
+    await user.type(newPasswordInput, 'weak')
 
     const submitButton = screen.getByRole('button', { name: /enregistrer/i })
     await user.click(submitButton)
@@ -208,8 +270,11 @@ describe('AccountPage Component', () => {
       expect(screen.getByDisplayValue('John')).toBeInTheDocument()
     })
 
-    const passwordInput = screen.getByPlaceholderText('Laisser vide pour ne pas changer')
-    await user.type(passwordInput, 'weak')
+    const oldPasswordInput = screen.getByLabelText(/ancien mot de passe/i)
+    const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i)
+
+    await user.type(oldPasswordInput, 'OldPass123!')
+    await user.type(newPasswordInput, 'weak')
 
     const submitButton = screen.getByRole('button', { name: /enregistrer/i })
     await user.click(submitButton)
@@ -267,8 +332,11 @@ describe('AccountPage Component', () => {
       expect(screen.getByDisplayValue('John')).toBeInTheDocument()
     })
 
-    const passwordInput = screen.getByPlaceholderText('Laisser vide pour ne pas changer')
-    await user.type(passwordInput, 'Valid1Pass!')
+    const oldPasswordInput = screen.getByLabelText(/ancien mot de passe/i)
+    const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i)
+
+    await user.type(oldPasswordInput, 'OldPass123!')
+    await user.type(newPasswordInput, 'Valid1Pass!')
 
     const submitButton = screen.getByRole('button', { name: /enregistrer/i })
     await user.click(submitButton)
@@ -295,7 +363,7 @@ describe('AccountPage Component', () => {
       expect(screen.getByDisplayValue('John')).toBeInTheDocument()
     })
 
-    const deleteButton = screen.getByRole('button', { name: /supprimer john/i })
+    const deleteButton = screen.getByRole('button', { name: /supprimer mon compte/i })
     await user.click(deleteButton)
 
     expect(global.confirm).toHaveBeenCalledWith(expect.stringContaining('Êtes-vous sûr'))
@@ -317,7 +385,7 @@ describe('AccountPage Component', () => {
       expect(screen.getByDisplayValue('John')).toBeInTheDocument()
     })
 
-    const deleteButton = screen.getByRole('button', { name: /supprimer john/i })
+    const deleteButton = screen.getByRole('button', { name: /supprimer mon compte/i })
     await user.click(deleteButton)
 
     await waitFor(() => {
@@ -325,7 +393,7 @@ describe('AccountPage Component', () => {
     })
   })
 
-  it('should clear password field after successful update', async () => {
+  it('should clear password fields after successful update', async () => {
     const user = userEvent.setup()
     vi.mocked(api.updateMyProfile).mockResolvedValue({ success: true })
 
@@ -341,16 +409,21 @@ describe('AccountPage Component', () => {
       expect(screen.getByDisplayValue('John')).toBeInTheDocument()
     })
 
-    const passwordInput = screen.getByPlaceholderText('Laisser vide pour ne pas changer') as HTMLInputElement
-    await user.type(passwordInput, 'Valid1Pass!')
+    const oldPasswordInput = screen.getByLabelText(/ancien mot de passe/i) as HTMLInputElement
+    const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i) as HTMLInputElement
 
-    expect(passwordInput.value).toBe('Valid1Pass!')
+    await user.type(oldPasswordInput, 'OldPass123!')
+    await user.type(newPasswordInput, 'Valid1Pass!')
+
+    expect(oldPasswordInput.value).toBe('OldPass123!')
+    expect(newPasswordInput.value).toBe('Valid1Pass!')
 
     const submitButton = screen.getByRole('button', { name: /enregistrer/i })
     await user.click(submitButton)
 
     await waitFor(() => {
-      expect(passwordInput.value).toBe('')
+      expect(oldPasswordInput.value).toBe('')
+      expect(newPasswordInput.value).toBe('')
     })
   })
 })

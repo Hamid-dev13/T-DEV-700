@@ -147,7 +147,13 @@ describe("user.service", () => {
   });
 
   describe("updateUser", () => {
-    it("hashes password when provided", async () => {
+    it("hashes password when old_password and new_password are provided", async () => {
+      (db.select as jest.Mock).mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({ limit: jest.fn().mockResolvedValue([baseUser]) }),
+        }),
+      });
+      (passwordUtils.verifyPassword as jest.Mock).mockResolvedValue(true);
       (passwordUtils.verifyPasswordRequirements as jest.Mock).mockReturnValue(true);
       (passwordUtils.hashPassword as jest.Mock).mockResolvedValue("new-hashed");
       const updated = { ...baseUser, password: "new-hashed" };
@@ -157,14 +163,51 @@ describe("user.service", () => {
         }),
       });
 
-      const result = await userService.updateUser(baseUser.id, { password: "new" });
+      const result = await userService.updateUser(baseUser.id, { old_password: "plain-old", new_password: "new" });
+      expect(passwordUtils.verifyPassword).toHaveBeenCalledWith("plain-old", baseUser.password);
       expect(passwordUtils.hashPassword).toHaveBeenCalledWith("new");
       expect(result).not.toHaveProperty("password");
     });
 
-    it("rejects weak password", async () => {
+    it("throws when old_password is incorrect", async () => {
+      (db.select as jest.Mock).mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({ limit: jest.fn().mockResolvedValue([baseUser]) }),
+        }),
+      });
+      (passwordUtils.verifyPassword as jest.Mock).mockResolvedValue(false);
+      (passwordUtils.verifyPasswordRequirements as jest.Mock).mockReturnValue(true);
+
+      await expect(userService.updateUser(baseUser.id, { old_password: "wrong", new_password: "new" }))
+        .rejects.toThrow("Invalid old password");
+    });
+
+    it("bypasses old password check when bypass_pass_check is true", async () => {
+      (passwordUtils.verifyPasswordRequirements as jest.Mock).mockReturnValue(true);
+      (passwordUtils.hashPassword as jest.Mock).mockResolvedValue("new-hashed");
+      const updated = { ...baseUser, password: "new-hashed" };
+      (db.update as jest.Mock).mockReturnValue({
+        set: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({ returning: jest.fn().mockResolvedValue([updated]) }),
+        }),
+      });
+
+      const result = await userService.updateUser(baseUser.id, { new_password: "new" }, true);
+      expect(passwordUtils.verifyPassword).not.toHaveBeenCalled();
+      expect(passwordUtils.hashPassword).toHaveBeenCalledWith("new");
+      expect(result).not.toHaveProperty("password");
+    });
+
+    it("rejects weak new_password", async () => {
+      (db.select as jest.Mock).mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({ limit: jest.fn().mockResolvedValue([baseUser]) }),
+        }),
+      });
+      (passwordUtils.verifyPassword as jest.Mock).mockResolvedValue(true);
       (passwordUtils.verifyPasswordRequirements as jest.Mock).mockReturnValue(false);
-      await expect(userService.updateUser(baseUser.id, { password: "weak" }))
+
+      await expect(userService.updateUser(baseUser.id, { old_password: "plain-old", new_password: "weak" }))
         .rejects.toThrow("Password doesn't meet the minimum security requirements");
     });
 

@@ -47,14 +47,12 @@ export async function refreshTokenController(req: Request, res: Response) {
 }
 
 export async function logoutUserController(req: Request, res: Response) {
+  res.clearCookie(COOKIE_ACCESS_TOKEN_KEY);
+  res.clearCookie(COOKIE_REFRESH_TOKEN_KEY);
+
   try {
     const user_id = req.user_id!;
-
-    // revoke refresh token
     await clearRefreshTokenForUser(user_id);
-
-    res.clearCookie(COOKIE_ACCESS_TOKEN_KEY);
-    res.clearCookie(COOKIE_REFRESH_TOKEN_KEY);
 
     return res.sendStatus(200);
   } catch (err) {

@@ -231,8 +231,9 @@ export default function AccountPage() {
 
               <div className="flex gap-4 flex-col">
                 <div>
-                  <label className="label">Ancien mot de passe</label>
+                  <label className="label" htmlFor="oldPassword">Ancien mot de passe</label>
                   <input className={`input mt-1 ${oldPasswordError ? 'border-2 border-red-500' : ''}`}
+                    id="oldPassword"
                     type="password"
                     value={oldPassword}
                     onChange={(e) => {
@@ -247,8 +248,9 @@ export default function AccountPage() {
                   )}
                 </div>
                 <div>
-                  <label className="label">Nouveau mot de passe</label>
+                  <label className="label" htmlFor="newPassword">Nouveau mot de passe</label>
                   <input className={`input mt-1 ${newPasswordError ? 'border-2 border-red-500' : ''}`}
+                    id="newPassword"
                     type="password"
                     value={newPassword}
                     onChange={(e) => {

@@ -34,8 +34,7 @@ Tous les tests sont organisés par type :
 
 ### Tests Unitaires des Utilitaires
 📂 `src/utils/`
-- `api.test.ts`
-- `apiClient.test.ts`
+- `api.test.ts` - Fonctions d'appel API
 
 ### Test Principal
 📂 `src/`

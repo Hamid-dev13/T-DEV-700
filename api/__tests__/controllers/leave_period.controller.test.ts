@@ -92,7 +92,7 @@ describe("leave_period.controller", () => {
 
     await leaveController.addLeavePeriodForUserController(req as Request, res as Response);
 
-    expect(sendError).toHaveBeenCalledWith("Insufficient permissions", 401);
+    expect(sendError).toHaveBeenCalledWith("Insufficient permissions", 403);
   });
 
   it("updates leave period as admin with dates", async () => {
@@ -132,7 +132,7 @@ describe("leave_period.controller", () => {
 
     await leaveController.updateLeavePeriodForUserController(req as Request, res as Response);
 
-    expect(sendError).toHaveBeenCalledWith("Insufficient permissions", 401);
+    expect(sendError).toHaveBeenCalledWith("Insufficient permissions", 403);
   });
 
   it("deletes leave period of current user", async () => {

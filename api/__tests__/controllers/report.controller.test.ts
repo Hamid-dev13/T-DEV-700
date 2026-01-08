@@ -41,7 +41,7 @@ describe("report.controller", () => {
 
     await reportController.getReportsForUserController(req as Request, res as Response);
 
-    expect(sendError).toHaveBeenCalledWith("Insufficient permissions", 401);
+    expect(sendError).toHaveBeenCalledWith("Insufficient permissions", 403);
   });
 
   it("returns reports for self", async () => {
