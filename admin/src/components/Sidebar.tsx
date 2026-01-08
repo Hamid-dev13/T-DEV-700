@@ -1,16 +1,16 @@
-import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import {
-  LayoutDashboard,
-  Users,
-  UserCog,
-  Clock,
-  BarChart3,
-  LogOut,
-  Menu,
-  X
+    BarChart3,
+    Clock,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    UserCog,
+    Users,
+    X
 } from 'lucide-react';
+import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 function Sidebar() {
   const [isOpen, setIsOpen] = useState<boolean>(true);
@@ -22,6 +22,7 @@ function Sidebar() {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Users, label: 'Users', path: '/users' },
     { icon: UserCog, label: 'Teams', path: '/teams' },
+    { icon: Clock, label: 'Clocks', path: '/clocks' },
     { icon: BarChart3, label: 'Reports', path: '/reports' },
   ];
 

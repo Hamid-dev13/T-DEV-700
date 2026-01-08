@@ -1,74 +1,110 @@
-import { and, between, eq, gte, lt, lte, notExists, or, sql } from "drizzle-orm";
+import {
+  and,
+  between,
+  eq,
+  gte,
+  lt,
+  lte,
+  notExists,
+  or,
+  sql,
+} from "drizzle-orm";
 import { db } from "../db/client";
 import { Clock, clocks } from "../models/clock.model";
 import { leavePeriods } from "../models/leave_period.model";
 import { publicHolidays } from "../models/public_holiday.model";
 
 export type TimePeriodInput = {
-  from: Date,
-  to: Date,
+  from: Date;
+  to: Date;
 };
 
 export async function addClock(user_id: string, at?: Date): Promise<Clock> {
-  const [clock] = await db
-    .insert(clocks)
-    .values({ user_id, at })
-    .returning();
+  const [clock] = await db.insert(clocks).values({ user_id, at }).returning();
   return clock;
 }
 
-export async function updateClock(user_id: string, from: Date, to: Date): Promise<Clock> {
-  // Utiliser une plage de ±1 seconde pour trouver l'enregistrement
+export async function updateClock(
+  user_id: string,
+  oldFrom: Date,
+  oldTo: Date,
+  newFrom: Date,
+  newTo: Date
+): Promise<Clock[]> {
+  // Mettre à jour les deux pointages : l'arrivée et le départ
+  // Utiliser une plage de ±1 seconde pour trouver les enregistrements
   // car la conversion Date entre frontend/backend change les millisecondes
-  const fromStart = new Date(from.getTime() - 1000);
-  const fromEnd = new Date(from.getTime() + 1000);
-  
-  const [clock] = await db
+
+  const oldFromStart = new Date(oldFrom.getTime() - 1000);
+  const oldFromEnd = new Date(oldFrom.getTime() + 1000);
+  const oldToStart = new Date(oldTo.getTime() - 1000);
+  const oldToEnd = new Date(oldTo.getTime() + 1000);
+
+  // Mettre à jour le pointage d'arrivée (trouver l'ancien, le remplacer par le nouveau)
+  const [updatedFrom] = await db
     .update(clocks)
-    .set({ at: to })
-    .where(and(
-      eq(clocks.user_id, user_id),
-      gte(clocks.at, fromStart),
-      lt(clocks.at, fromEnd)
-    ))
+    .set({ at: newFrom })
+    .where(
+      and(
+        eq(clocks.user_id, user_id),
+        gte(clocks.at, oldFromStart),
+        lt(clocks.at, oldFromEnd)
+      )
+    )
     .returning();
-  return clock;
+
+  // Mettre à jour le pointage de départ (trouver l'ancien, le remplacer par le nouveau)
+  const [updatedTo] = await db
+    .update(clocks)
+    .set({ at: newTo })
+    .where(
+      and(
+        eq(clocks.user_id, user_id),
+        gte(clocks.at, oldToStart),
+        lt(clocks.at, oldToEnd)
+      )
+    )
+    .returning();
+
+  // Retourner les deux pointages mis à jour (ou au moins celui qui a été trouvé)
+  return [updatedFrom, updatedTo].filter(Boolean) as Clock[];
 }
 
 export async function removeClock(user_id: string, at: Date): Promise<Clock[]> {
   // Utiliser une plage de ±1 seconde pour trouver l'enregistrement
   const atStart = new Date(at.getTime() - 1000);
   const atEnd = new Date(at.getTime() + 1000);
-  
+
   return db
     .delete(clocks)
-    .where(and(
-      eq(clocks.user_id, user_id),
-      gte(clocks.at, atStart),
-      lt(clocks.at, atEnd)
-    ))
+    .where(
+      and(
+        eq(clocks.user_id, user_id),
+        gte(clocks.at, atStart),
+        lt(clocks.at, atEnd)
+      )
+    )
     .returning();
 }
 
 export async function getClocksForUser(
   user_id: string,
-  {
-    from,
-    to,
-  }: TimePeriodInput
+  { from, to }: TimePeriodInput
 ): Promise<Date[]> {
   const dateOffset = new Date(0);
-  dateOffset.setDate(2);  // 1 based, next day is 2
+  dateOffset.setDate(2); // 1 based, next day is 2
 
   const results = await db
     .select({
       at: clocks.at,
     })
     .from(clocks)
-    .where(and(
-      eq(clocks.user_id, user_id),
-      between(clocks.at, from, new Date(to.getTime() + dateOffset.getTime()))
-    ))
+    .where(
+      and(
+        eq(clocks.user_id, user_id),
+        between(clocks.at, from, new Date(to.getTime() + dateOffset.getTime()))
+      )
+    )
     .orderBy(clocks.at);
 
   return results.map((row) => row.at);
@@ -79,34 +115,40 @@ export async function getClocksForUser(
  */
 export async function getClocksForUserFiltered(
   user_id: string,
-  {
-    from,
-    to,
-  }: TimePeriodInput
+  { from, to }: TimePeriodInput
 ): Promise<Date[]> {
   const dateOffset = new Date(0);
-  dateOffset.setDate(2);  // 1 based, next day is 2
+  dateOffset.setDate(2); // 1 based, next day is 2
 
   const results = await db
     .select({
       at: clocks.at,
     })
     .from(clocks)
-    .where(and(eq(clocks.user_id, user_id),
-      between(clocks.at, from, new Date(to.getTime() + dateOffset.getTime())),
-      notExists(db.select()
-        .from(leavePeriods)
-        .where(and(
-          eq(leavePeriods.user_id, clocks.user_id),
-          eq(leavePeriods.accepted, true),
-          between(clocks.at, leavePeriods.startDate, leavePeriods.endDate)))
-      ),
-      notExists(
-        db.select()
-          .from(publicHolidays)
-          .where(eq(publicHolidays.date, sql`date(${clocks.at})`))
+    .where(
+      and(
+        eq(clocks.user_id, user_id),
+        between(clocks.at, from, new Date(to.getTime() + dateOffset.getTime())),
+        notExists(
+          db
+            .select()
+            .from(leavePeriods)
+            .where(
+              and(
+                eq(leavePeriods.user_id, clocks.user_id),
+                eq(leavePeriods.accepted, true),
+                between(clocks.at, leavePeriods.startDate, leavePeriods.endDate)
+              )
+            )
+        ),
+        notExists(
+          db
+            .select()
+            .from(publicHolidays)
+            .where(eq(publicHolidays.date, sql`date(${clocks.at})`))
+        )
       )
-    ))
+    )
     .orderBy(clocks.at);
 
   return results.map((row) => row.at);
@@ -114,13 +156,10 @@ export async function getClocksForUserFiltered(
 
 export async function getDaysOffForUser(
   user_id: string,
-  {
-    from,
-    to,
-  }: TimePeriodInput
+  { from, to }: TimePeriodInput
 ): Promise<any> {
   const dateOffset = new Date(0);
-  dateOffset.setDate(2);  // 1 based, next day is 2
+  dateOffset.setDate(2); // 1 based, next day is 2
 
   const toNext = new Date(to.getTime() + dateOffset.getTime());
   const fromDateStr = from.toISOString().substring(0, 10);
@@ -130,25 +169,29 @@ export async function getDaysOffForUser(
     .select()
     .from(publicHolidays)
     .where(between(publicHolidays.date, fromDateStr, toNextDateStr))
-    .then(rows => rows.map(row => row.date));
-  
+    .then((rows) => rows.map((row) => row.date));
+
   const leaveDays = await db
     .select()
     .from(leavePeriods)
-    .where(and(
-      eq(leavePeriods.user_id, user_id),
-      or(
-        gte(leavePeriods.startDate, from),
-        lte(leavePeriods.endDate, toNext),
-        or(and(
-          lte(leavePeriods.startDate, from),
-          gte(leavePeriods.endDate, toNext)
-        ))
+    .where(
+      and(
+        eq(leavePeriods.user_id, user_id),
+        or(
+          gte(leavePeriods.startDate, from),
+          lte(leavePeriods.endDate, toNext),
+          or(
+            and(
+              lte(leavePeriods.startDate, from),
+              gte(leavePeriods.endDate, toNext)
+            )
+          )
+        )
       )
-    ));
-  
+    );
+
   const leaveDates: string[] = [];
-  
+
   // fill with dates from leave periods
   for (const leave of leaveDays) {
     let current = leave.startDate;

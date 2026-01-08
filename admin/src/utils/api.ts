@@ -314,12 +314,16 @@ export async function addClockForMember(userId: string, at: Date | string) {
 
 export async function updateClockForMember(
   userId: string,
-  from: Date | string,
-  to: Date | string
+  oldFrom: Date | string,
+  oldTo: Date | string,
+  newFrom: Date | string,
+  newTo: Date | string
 ) {
   const payload = {
-    from: typeof from === "string" ? from : from.toISOString(),
-    to: typeof to === "string" ? to : to.toISOString(),
+    oldFrom: typeof oldFrom === "string" ? oldFrom : oldFrom.toISOString(),
+    oldTo: typeof oldTo === "string" ? oldTo : oldTo.toISOString(),
+    newFrom: typeof newFrom === "string" ? newFrom : newFrom.toISOString(),
+    newTo: typeof newTo === "string" ? newTo : newTo.toISOString(),
   };
   try {
     const result = await patch(

@@ -1,11 +1,12 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import PrivateRoute from './components/PrivateRoute';
-import Login from './pages/Login';
+import { AuthProvider } from './contexts/AuthContext';
+import Clocks from './pages/Clocks';
 import Dashboard from './pages/Dashboard';
-import Users from './pages/Users';
-import Teams from './pages/Teams';
+import Login from './pages/Login';
 import Reports from './pages/Reports';
+import Teams from './pages/Teams';
+import Users from './pages/Users';
 
 function App() {
   return (
@@ -46,6 +47,15 @@ function App() {
             element={
               <PrivateRoute>
                 <Reports />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/clocks"
+            element={
+              <PrivateRoute>
+                <Clocks />
               </PrivateRoute>
             }
           />
