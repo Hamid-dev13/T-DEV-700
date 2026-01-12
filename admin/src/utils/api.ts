@@ -79,7 +79,7 @@ async function request(
       } else {
         msg = await res.text();
       }
-    } catch {}
+    } catch { }
     const e: any = new Error(msg || `HTTP ${res.status}`);
     e.status = res.status;
     e.response = res;
@@ -161,17 +161,6 @@ export async function addUser(payload: any) {
   return post("/users", payload);
 }
 
-export async function updateMyProfile(updates: any) {
-  // Convertir camelCase en snake_case pour le backend
-  const payload = {
-    first_name: updates.firstName,
-    last_name: updates.lastName,
-    email: updates.email,
-    phone: updates.phone,
-    ...(updates.password ? { password: updates.password } : {}),
-  };
-  return put("/user", payload);
-}
 export async function updateUser(id: string, updates: any) {
   return put(`/users/${encodeURIComponent(id)}`, updates);
 }
@@ -368,7 +357,7 @@ export async function teamAverages(teamId: string, from?: Date, to?: Date) {
     return await get(`/teams/${encodeURIComponent(teamId)}/averages`, {
       query: { from, to },
     });
-  } catch {}
+  } catch { }
   const teams = await getTeams();
   const team = teams.find((t: any) => t.id === teamId);
   if (!team) return { daily: [], weekly: [] };

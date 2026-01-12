@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, UserPlus } from 'lucide-react';
 import { User } from '../utils/types';
-import { addUser, updateUser } from '../utils/api';
+import { addUser } from '../utils/api';
 
 interface AddUserModalProps {
   isOpen: boolean;

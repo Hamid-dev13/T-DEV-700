@@ -40,23 +40,67 @@ describe("clock.service", () => {
   });
 
   describe("updateClock", () => {
-    it("updates a clock around the provided from date", async () => {
-      const from = new Date("2024-01-15T10:00:00Z");
-      const to = new Date("2024-01-15T12:00:00Z");
-      const updated = { id: "1", user_id: "u1", at: to };
+    it("updates both arrival and departure clocks", async () => {
+      const oldFrom = new Date("2024-01-15T10:00:00Z");
+      const oldTo = new Date("2024-01-15T18:00:00Z");
+      const newFrom = new Date("2024-01-15T09:00:00Z");
+      const newTo = new Date("2024-01-15T17:00:00Z");
 
-      (db.update as jest.Mock).mockReturnValue({
-        set: jest.fn().mockReturnValue({
-          where: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([updated]),
+      const updatedFrom = { id: "1", user_id: "u1", at: newFrom };
+      const updatedTo = { id: "2", user_id: "u1", at: newTo };
+
+      // mock the 2 db.update() calls
+      (db.update as jest.Mock)
+        .mockReturnValueOnce({
+          set: jest.fn().mockReturnValue({
+            where: jest.fn().mockReturnValue({
+              returning: jest.fn().mockResolvedValue([updatedFrom]),
+            }),
           }),
-        }),
-      });
+        })
+        .mockReturnValueOnce({
+          set: jest.fn().mockReturnValue({
+            where: jest.fn().mockReturnValue({
+              returning: jest.fn().mockResolvedValue([updatedTo]),
+            }),
+          }),
+        });
 
-      const result = await updateClock("u1", from, to);
+      const result = await updateClock("u1", oldFrom, oldTo, newFrom, newTo);
 
-      expect(result).toEqual(updated);
-      expect((db.update as jest.Mock).mock.calls[0][0]).toBeDefined();
+      expect(result).toEqual([updatedFrom, updatedTo]);
+      expect(db.update).toHaveBeenCalledTimes(2);
+    });
+
+    it("filters out undefined values when only one clock is updated", async () => {
+      const oldFrom = new Date("2024-01-15T10:00:00Z");
+      const oldTo = new Date("2024-01-15T18:00:00Z");
+      const newFrom = new Date("2024-01-15T09:00:00Z");
+      const newTo = new Date("2024-01-15T17:00:00Z");
+
+      const updatedFrom = { id: "1", user_id: "u1", at: newFrom };
+
+      // mock the 2 db.update() calls
+      (db.update as jest.Mock)
+        .mockReturnValueOnce({
+          set: jest.fn().mockReturnValue({
+            where: jest.fn().mockReturnValue({
+              returning: jest.fn().mockResolvedValue([updatedFrom]),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          set: jest.fn().mockReturnValue({
+            where: jest.fn().mockReturnValue({
+              returning: jest.fn().mockResolvedValue([]),
+            }),
+          }),
+        });
+
+      const result = await updateClock("u1", oldFrom, oldTo, newFrom, newTo);
+
+      expect(result).toEqual([updatedFrom]);
+      expect(db.update).toHaveBeenCalledTimes(2);
     });
   });
 

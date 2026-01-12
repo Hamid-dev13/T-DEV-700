@@ -122,10 +122,10 @@ export async function updateOtherUserController(req: Request, res: Response) {
   try {
     const id = req.params.id!;
     const body = req.body;
-    const { first_name, last_name, email, new_password, phone } = body ?? {};
+    const { first_name, last_name, email, new_password, phone, admin } = body ?? {};
 
     // bypass_pass_check is true since this is an admin action
-    const user = await updateUser(id, { first_name, last_name, email, new_password, phone }, true);
+    const user = await updateUser(id, { first_name, last_name, email, new_password, phone, admin }, true);
     return res.status(200).json(user);
   } catch (err) {
     return res.sendStatus(500);
