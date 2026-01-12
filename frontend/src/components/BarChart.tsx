@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 interface DataPoint {
   label: string
@@ -20,6 +20,8 @@ export default function BarChart({
   unit = '',
   height = 400 
 }: BarChartProps) {
+  const [currentPage, setCurrentPage] = useState(0)
+  const itemsPerPage = 14
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
@@ -28,13 +30,55 @@ export default function BarChart({
     )
   }
 
-  const displayData = data.length > 14 ? data.slice(-14) : data
-  const max = maxValue || Math.max(...displayData.map(d => d.value), 1)
+  const totalPages = Math.ceil(data.length / itemsPerPage)
+  const startIndex = currentPage * itemsPerPage
+  const endIndex = Math.min(startIndex + itemsPerPage, data.length)
+  const displayData = data.slice(startIndex, endIndex)
+  const max = maxValue || Math.max(...data.map(d => d.value), 1)
+  
+  const handlePrevious = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1)
+    }
+  }
+  
+  const handleNext = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
   
   const chartHeight = height - 100
 
   return (
     <div className="w-full bg-white rounded-lg p-6">
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+          <button
+            onClick={handlePrevious}
+            disabled={currentPage === 0}
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-semibold transition-all flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Précédent
+          </button>
+          <div className="text-sm font-medium text-gray-600">
+            Jours {startIndex + 1} à {endIndex} sur {data.length}
+          </div>
+          <button
+            onClick={handleNext}
+            disabled={currentPage === totalPages - 1}
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-semibold transition-all flex items-center gap-2"
+          >
+            Suivant
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      )}
       <div className="flex items-end justify-around gap-3" style={{ height: `${chartHeight}px` }}>
         {displayData.map((point, index) => {
           const barHeightPx = max > 0 ? (point.value / max) * (chartHeight - 40) : 0
