@@ -38,9 +38,11 @@ function Teams() {
     try {
       const users = await getUsers();
       const usersMap = new Map<string, User>();
-      users.forEach((user: User) => {
-        usersMap.set(user.id, user);
-      });
+      if (users && Array.isArray(users)) {
+        users.forEach((user: User) => {
+          usersMap.set(user.id, user);
+        });
+      }
       setUsers(usersMap);
     } catch (err) {
       console.error('Erreur lors du chargement des managers:', err);
