@@ -21,6 +21,8 @@ interface LatenessData {
   lateness: number
 }
 
+type PeriodType = 'current_week' | 'last_week' | 'current_month' | 'last_month' | 'custom'
+
 export default function MemberSummaryPage() {
   useEffect(() => {
     document.title = "Résumé du membre • Time Manager"
@@ -33,9 +35,76 @@ export default function MemberSummaryPage() {
   const [presenceData, setPresenceData] = useState<PresenceData[]>([])
   const [latenessData, setLatenessData] = useState<LatenessData[]>([])
   const [daysOff, setDaysOff] = useState<string[]>([])
+  const [periodType, setPeriodType] = useState<PeriodType>('current_week')
+  const [customStartDate, setCustomStartDate] = useState('')
+  const [customEndDate, setCustomEndDate] = useState('')
+
+  const getPeriodDates = () => {
+    const today = new Date()
+    let from: Date
+    let to: Date
+
+    switch (periodType) {
+      case 'current_week':
+        const dayOfWeek = today.getDay()
+        const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+        from = new Date(today)
+        from.setDate(today.getDate() - daysToSubtract)
+        from.setHours(0, 0, 0, 0)
+        to = new Date(from)
+        to.setDate(from.getDate() + 6)
+        to.setHours(23, 59, 59, 999)
+        break
+
+      case 'last_week':
+        const lastWeekDay = today.getDay()
+        const lastWeekDaysToSubtract = lastWeekDay === 0 ? 6 : lastWeekDay - 1
+        const lastMonday = new Date(today)
+        lastMonday.setDate(today.getDate() - lastWeekDaysToSubtract - 7)
+        lastMonday.setHours(0, 0, 0, 0)
+        from = lastMonday
+        to = new Date(lastMonday)
+        to.setDate(lastMonday.getDate() + 6)
+        to.setHours(23, 59, 59, 999)
+        break
+
+      case 'current_month':
+        from = new Date(today.getFullYear(), today.getMonth(), 1)
+        from.setHours(0, 0, 0, 0)
+        to = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+        to.setHours(23, 59, 59, 999)
+        break
+
+      case 'last_month':
+        from = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+        from.setHours(0, 0, 0, 0)
+        to = new Date(today.getFullYear(), today.getMonth(), 0)
+        to.setHours(23, 59, 59, 999)
+        break
+
+      case 'custom':
+        if (customStartDate && customEndDate) {
+          from = new Date(customStartDate)
+          from.setHours(0, 0, 0, 0)
+          to = new Date(customEndDate)
+          to.setHours(23, 59, 59, 999)
+        } else {
+          from = new Date()
+          to = new Date()
+        }
+        break
+
+      default:
+        from = new Date()
+        to = new Date()
+    }
+
+    return { from, to }
+  }
 
   useEffect(() => {
     if (!memberId) return
+    if (periodType === 'custom' && (!customStartDate || !customEndDate)) return
 
     async function loadData() {
       try {
@@ -52,20 +121,7 @@ export default function MemberSummaryPage() {
           return
         }
 
-        const today = new Date()
-
-        const dayOfWeek = today.getDay()
-        const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-        const monday = new Date(today)
-        monday.setDate(today.getDate() - daysToSubtract)
-        monday.setHours(0, 0, 0, 0)
-
-        const friday = new Date(monday)
-        friday.setDate(monday.getDate() + 4)
-        friday.setHours(23, 59, 59, 999)
-
-        const from = monday
-        const to = friday
+        const { from, to } = getPeriodDates()
 
         const formatLocalDate = (date: Date) => {
           const year = date.getFullYear()
@@ -93,22 +149,22 @@ export default function MemberSummaryPage() {
           latenessMap.set(item.day, item.lateness)
         })
 
-
-        const weekDays: string[] = []
-        for (let i = 0; i < 5; i++) { // Lundi à Vendredi
-          const day = new Date(monday)
-          day.setDate(monday.getDate() + i)
-          const dayStr = formatLocalDate(day)
-          weekDays.push(dayStr)
+        const allDays: string[] = []
+        const currentDate = new Date(from)
+        while (currentDate <= to) {
+          const dayOfWeek = currentDate.getDay()
+          if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            allDays.push(formatLocalDate(currentDate))
+          }
+          currentDate.setDate(currentDate.getDate() + 1)
         }
 
-
-        const presenceArray = weekDays.map(day => ({
+        const presenceArray = allDays.map(day => ({
           day,
           time: presenceMap.get(day) || 0
         }))
 
-        const latenessArray = weekDays.map(day => ({
+        const latenessArray = allDays.map(day => ({
           day,
           lateness: latenessMap.get(day) || 0
         }))
@@ -124,7 +180,7 @@ export default function MemberSummaryPage() {
     }
 
     loadData()
-  }, [memberId])
+  }, [memberId, periodType, customStartDate, customEndDate])
 
   if (loading) {
     return (
@@ -160,7 +216,6 @@ export default function MemberSummaryPage() {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 Résumés - {member?.firstName} {member?.lastName}
               </h1>
-              <p className="text-sm text-gray-500">Semaine en cours</p>
               <p className="text-gray-600">{member?.email}</p>
             </div>
             <div className="text-right">
@@ -171,10 +226,112 @@ export default function MemberSummaryPage() {
           </div>
         </div>
 
+        {/* Sélecteur de période */}
+        <Card title="Sélectionner une période">
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => setPeriodType('current_week')}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                  periodType === 'current_week'
+                    ? 'bg-yellow-400 text-gray-900 shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Semaine en cours
+              </button>
+              <button
+                onClick={() => setPeriodType('last_week')}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                  periodType === 'last_week'
+                    ? 'bg-yellow-400 text-gray-900 shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Semaine dernière
+              </button>
+              <button
+                onClick={() => setPeriodType('current_month')}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                  periodType === 'current_month'
+                    ? 'bg-yellow-400 text-gray-900 shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Mois en cours
+              </button>
+              <button
+                onClick={() => setPeriodType('last_month')}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                  periodType === 'last_month'
+                    ? 'bg-yellow-400 text-gray-900 shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Mois dernier
+              </button>
+              <button
+                onClick={() => setPeriodType('custom')}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                  periodType === 'custom'
+                    ? 'bg-yellow-400 text-gray-900 shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Personnalisé
+              </button>
+            </div>
+
+            {periodType === 'custom' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date de début
+                  </label>
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="input w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date de fin
+                  </label>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="input w-full"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <strong>Période sélectionnée:</strong> {
+                periodType === 'current_week' ? 'Semaine en cours' :
+                periodType === 'last_week' ? 'Semaine dernière' :
+                periodType === 'current_month' ? 'Mois en cours' :
+                periodType === 'last_month' ? 'Mois dernier' :
+                customStartDate && customEndDate ? `Du ${new Date(customStartDate).toLocaleDateString('fr-FR')} au ${new Date(customEndDate).toLocaleDateString('fr-FR')}` :
+                'Veuillez sélectionner des dates'
+              }
+            </div>
+          </div>
+        </Card>
+
         {/* Section des graphiques - GROS GRAPHIQUES */}
         <div className="space-y-6 mb-6">
           {/* Graphique 1 - Heures travaillées par jour */}
-          <Card title=" Heures travaillées cette semaine">
+          <Card title={`Heures travaillées - ${
+            periodType === 'current_week' ? 'Semaine en cours' :
+            periodType === 'last_week' ? 'Semaine dernière' :
+            periodType === 'current_month' ? 'Mois en cours' :
+            periodType === 'last_month' ? 'Mois dernier' :
+            'Période personnalisée'
+          }`}>
             {presenceData.length > 0 ? (
               <div>
                 <BarChart
@@ -217,7 +374,13 @@ export default function MemberSummaryPage() {
           </Card>
 
           {/* Graphique 2 - Retards par jour */}
-          <Card title="⏰ Retards cette semaine">
+          <Card title={`Retards - ${
+            periodType === 'current_week' ? 'Semaine en cours' :
+            periodType === 'last_week' ? 'Semaine dernière' :
+            periodType === 'current_month' ? 'Mois en cours' :
+            periodType === 'last_month' ? 'Mois dernier' :
+            'Période personnalisée'
+          }`}>
             {latenessData.length > 0 ? (
               <BarChart
                 data={latenessData.map(d => {
@@ -257,7 +420,13 @@ export default function MemberSummaryPage() {
                   `${Math.floor(presenceData.reduce((sum, d) => sum + d.time, 0) / 60)}h${Math.round(presenceData.reduce((sum, d) => sum + d.time, 0) % 60).toString().padStart(2, '0')}`
                 ) : '0h00'}
               </div>
-              <div className="text-sm text-gray-500">Cette semaine</div>
+              <div className="text-sm text-gray-500">
+                {periodType === 'current_week' ? 'Cette semaine' :
+                 periodType === 'last_week' ? 'Semaine dernière' :
+                 periodType === 'current_month' ? 'Ce mois' :
+                 periodType === 'last_month' ? 'Mois dernier' :
+                 'Période sélectionnée'}
+              </div>
             </div>
           </Card>
 
@@ -285,7 +454,13 @@ export default function MemberSummaryPage() {
                 ) : '0'}
                 <span className="text-2xl ml-1">min</span>
               </div>
-              <div className="text-sm text-gray-500">Total cette semaine</div>
+              <div className="text-sm text-gray-500">
+                {periodType === 'current_week' ? 'Total cette semaine' :
+                 periodType === 'last_week' ? 'Total semaine dernière' :
+                 periodType === 'current_month' ? 'Total ce mois' :
+                 periodType === 'last_month' ? 'Total mois dernier' :
+                 'Total période sélectionnée'}
+              </div>
             </div>
           </Card>
         </div>
