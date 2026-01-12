@@ -9,7 +9,7 @@ export default function LeaveRequestPage() {
   useEffect(() => {
     document.title = "Demandes de congés • Time Manager"
   }, [])
-  
+
   const { user } = useAuth()
   const navigate = useNavigate()
   const [leavePeriods, setLeavePeriods] = useState<LeavePeriod[]>([])
@@ -58,7 +58,7 @@ export default function LeaveRequestPage() {
       const periodStart = new Date(period.startDate)
       const periodEnd = new Date(period.endDate)
       periodEnd.setDate(periodEnd.getDate() - 1)
-      
+
       return (start <= periodEnd && end >= periodStart)
     })
 
@@ -98,14 +98,14 @@ export default function LeaveRequestPage() {
     if (period.accepted === true) {
       return (
         <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full"
-              style={{ background: 'rgba(34, 197, 94, 0.2)', color: 'rgb(34, 197, 94)' }}>
+          style={{ background: 'rgba(34, 197, 94, 0.2)', color: 'rgb(34, 197, 94)' }}>
           Validée
         </span>
       )
     } else {
       return (
         <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full"
-              style={{ background: 'rgba(255, 212, 0, 0.2)', color: 'hsl(var(--ink))' }}>
+          style={{ background: 'rgba(255, 212, 0, 0.2)', color: 'hsl(var(--ink))' }}>
           En attente
         </span>
       )
@@ -118,10 +118,10 @@ export default function LeaveRequestPage() {
     if (isEndDate) {
       date.setDate(date.getDate() - 1)
     }
-    return date.toLocaleDateString('fr-FR', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     })
   }
 
@@ -131,13 +131,13 @@ export default function LeaveRequestPage() {
 
     endDate.setDate(endDate.getDate() - 1)
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 // +1 pour inclure le jour de début
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 // +1 to include the start day
     return diffDays
   }
 
   function getFrenchHolidays(year: number): Date[] {
     const holidays: Date[] = []
-    
+
 
     holidays.push(new Date(year, 0, 1))   // Jour de l'an
     holidays.push(new Date(year, 4, 1))   // Fête du travail
@@ -147,7 +147,7 @@ export default function LeaveRequestPage() {
     holidays.push(new Date(year, 10, 1))  // Toussaint
     holidays.push(new Date(year, 10, 11)) // Armistice 1918
     holidays.push(new Date(year, 11, 25)) // Noël
-    
+
 
     const a = year % 19
     const b = Math.floor(year / 100)
@@ -163,34 +163,34 @@ export default function LeaveRequestPage() {
     const m = Math.floor((a + 11 * h + 22 * l) / 451)
     const month = Math.floor((h + l - 7 * m + 114) / 31) - 1
     const day = ((h + l - 7 * m + 114) % 31) + 1
-    
+
     const easter = new Date(year, month, day)
-    
+
 
     const easterMonday = new Date(easter)
     easterMonday.setDate(easter.getDate() + 1)
     holidays.push(easterMonday)
-    
+
 
     const ascension = new Date(easter)
     ascension.setDate(easter.getDate() + 39)
     holidays.push(ascension)
-    
+
 
     const pentecost = new Date(easter)
     pentecost.setDate(easter.getDate() + 50)
     holidays.push(pentecost)
-    
+
     return holidays
   }
 
   function isHoliday(day: number, month: number, year: number): boolean {
     const date = new Date(year, month, day)
     const holidays = getFrenchHolidays(year)
-    
-    return holidays.some(holiday => 
-      holiday.getDate() === day && 
-      holiday.getMonth() === month && 
+
+    return holidays.some(holiday =>
+      holiday.getDate() === day &&
+      holiday.getMonth() === month &&
       holiday.getFullYear() === year
     )
   }
@@ -208,7 +208,7 @@ export default function LeaveRequestPage() {
     const today = new Date()
     const maxDate = new Date(today.getFullYear() + 1, today.getMonth(), 1)
     const nextMonthDate = new Date(currentYear, currentMonth + 1, 1)
-    
+
     if (nextMonthDate < maxDate) {
       if (currentMonth === 11) {
         setCurrentMonth(0)
@@ -228,22 +228,22 @@ export default function LeaveRequestPage() {
 
   function renderCalendar() {
     const today = new Date()
-    
+
 
     const firstDay = new Date(currentYear, currentMonth, 1)
     const lastDay = new Date(currentYear, currentMonth + 1, 0)
-    
+
 
     const firstDayOfWeek = firstDay.getDay()
-    
+
     const days = []
     const daysInMonth = lastDay.getDate()
-    
+
 
     for (let i = 0; i < firstDayOfWeek; i++) {
       days.push(null)
     }
-    
+
 
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(day)
@@ -252,7 +252,7 @@ export default function LeaveRequestPage() {
     function getDayStatus(day: number) {
       const date = new Date(currentYear, currentMonth, day)
       date.setHours(0, 0, 0, 0)
-      
+
       for (const period of leavePeriods) {
         const start = new Date(period.startDate)
         const end = new Date(period.endDate)
@@ -260,7 +260,7 @@ export default function LeaveRequestPage() {
         end.setHours(0, 0, 0, 0)
 
         end.setDate(end.getDate() - 1)
-        
+
         if (date >= start && date <= end) {
           if (period.accepted === true) return 'validated'
           return 'pending'
@@ -301,23 +301,23 @@ export default function LeaveRequestPage() {
             if (day === null) {
               return <div key={`empty-${index}`} />
             }
-            
+
             const status = getDayStatus(day)
-            const isToday = day === today.getDate() && 
-                           currentMonth === today.getMonth() && 
-                           currentYear === today.getFullYear()
+            const isToday = day === today.getDate() &&
+              currentMonth === today.getMonth() &&
+              currentYear === today.getFullYear()
             const isHolidayDay = isHoliday(day, currentMonth, currentYear)
-            
+
             let bgColor = 'transparent'
             let borderColor = 'rgba(255, 212, 0, 0.2)'
             let textColor = 'inherit'
-            
+
             if (isHolidayDay) {
               bgColor = 'rgba(239, 68, 68, 0.08)'
               borderColor = 'rgba(239, 68, 68, 0.3)'
               textColor = 'rgb(239, 68, 68)'
             }
-            
+
             if (status === 'validated') {
               bgColor = 'rgba(34, 197, 94, 0.15)'
               borderColor = 'rgba(34, 197, 94, 0.4)'
@@ -325,12 +325,12 @@ export default function LeaveRequestPage() {
               bgColor = 'rgba(255, 212, 0, 0.15)'
               borderColor = 'rgba(255, 212, 0, 0.4)'
             }
-            
+
             return (
               <div
                 key={day}
                 className="aspect-square flex items-center justify-center rounded-md border text-sm transition-all"
-                style={{ 
+                style={{
                   background: bgColor,
                   borderColor: isToday ? 'rgba(255, 212, 0, 0.6)' : borderColor,
                   fontWeight: isToday ? 'bold' : 'normal',
@@ -474,8 +474,8 @@ export default function LeaveRequestPage() {
                         <button
                           onClick={() => handleDelete(period.id)}
                           className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-                          style={{ 
-                            background: 'rgba(239, 68, 68, 0.1)', 
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.1)',
                             color: 'rgb(239, 68, 68)',
                             border: '1px solid rgba(239, 68, 68, 0.3)'
                           }}

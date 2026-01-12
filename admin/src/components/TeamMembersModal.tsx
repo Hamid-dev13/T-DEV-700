@@ -60,18 +60,16 @@ function TeamMembersModal({ isOpen, onClose, team }: TeamMembersModalProps) {
       setIsAddMemberOpen(false);
       setSelectedUserId('');
       fetchTeamMembers();
-      fetchAvailableUsers(); // Recharger la liste des utilisateurs disponibles
+      fetchAvailableUsers();
     } catch (err: any) {
-      // La fonction request() dans api.ts extrait déjà le message d'erreur
       let errorMessage = 'Erreur lors de l\'ajout du membre';
-      
+
       if (err instanceof Error) {
         errorMessage = err.message;
       } else if (typeof err === 'string') {
         errorMessage = err;
       }
-      
-      // Messages d'erreur plus clairs et en français
+
       if (errorMessage.includes('already a member') || errorMessage.includes('déjà membre')) {
         errorMessage = 'Cet utilisateur est déjà membre d\'une autre équipe.';
       } else if (errorMessage.includes('not unique') || errorMessage.includes('unique constraint') || errorMessage.includes('déjà dans cette équipe')) {
@@ -79,7 +77,7 @@ function TeamMembersModal({ isOpen, onClose, team }: TeamMembersModalProps) {
       } else if (errorMessage.includes('Missing required field')) {
         errorMessage = 'Champ requis manquant.';
       }
-      
+
       setAddError(errorMessage);
       console.error('Erreur lors de l\'ajout du membre:', err);
     } finally {
@@ -100,7 +98,6 @@ function TeamMembersModal({ isOpen, onClose, team }: TeamMembersModalProps) {
 
   if (!isOpen || !team) return null;
 
-  // Filtrer les utilisateurs disponibles (exclure le manager et les membres déjà présents)
   const memberIds = members.map(m => m.id);
   const usersToAdd = availableUsers.filter(
     u => u.id !== team.managerId && !memberIds.includes(u.id)
@@ -138,7 +135,6 @@ function TeamMembersModal({ isOpen, onClose, team }: TeamMembersModalProps) {
           </div>
         ) : (
           <>
-            {/* Manager */}
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
                 <Shield className="w-4 h-4 mr-2" />
@@ -154,7 +150,6 @@ function TeamMembersModal({ isOpen, onClose, team }: TeamMembersModalProps) {
               )}
             </div>
 
-            {/* Membres */}
             <div className="mb-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-gray-700">
@@ -181,7 +176,7 @@ function TeamMembersModal({ isOpen, onClose, team }: TeamMembersModalProps) {
                       value={selectedUserId}
                       onChange={(e) => {
                         setSelectedUserId(e.target.value);
-                        setAddError(''); // Effacer l'erreur quand on change la sélection
+                        setAddError('');
                       }}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                     >

@@ -6,14 +6,12 @@ import Login from './Login'
 import { AuthProvider } from '../context/AuthContext'
 import * as api from '../utils/api'
 
-// Mock du module API
 vi.mock('../utils/api', () => ({
   login: vi.fn(),
   logout: vi.fn(),
   getSession: vi.fn()
 }))
 
-// Mock du router
 vi.mock('../router', () => ({
   navigate: vi.fn()
 }))
@@ -152,7 +150,6 @@ describe('Login Component', () => {
     await user.type(passwordInput, 'password123')
     await user.click(submitButton)
 
-    // Le bouton devrait afficher "Connexion..." pendant le chargement
     await waitFor(() => {
       expect(screen.getByText('Connexion...')).toBeInTheDocument()
     })

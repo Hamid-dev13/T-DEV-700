@@ -21,7 +21,6 @@ function AddTeamModal({ isOpen, onClose, onTeamAdded }: AddTeamModalProps) {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
-  // Récupérer la liste des utilisateurs pour le select du manager
   useEffect(() => {
     if (isOpen) {
       fetchUsers();

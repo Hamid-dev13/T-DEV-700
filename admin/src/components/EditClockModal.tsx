@@ -7,7 +7,7 @@ interface EditClockModalProps {
   onClose: () => void;
   onClockUpdated: () => void;
   userId: string;
-  clock: { from: Date; to: Date } | null; // from = ancienne arrivée, to = ancien départ
+  clock: { from: Date; to: Date } | null;
 }
 
 function EditClockModal({ isOpen, onClose, onClockUpdated, userId, clock }: EditClockModalProps) {
@@ -20,18 +20,16 @@ function EditClockModal({ isOpen, onClose, onClockUpdated, userId, clock }: Edit
 
   useEffect(() => {
     if (isOpen && clock) {
-      // Sauvegarder les anciennes dates
       setOldFrom(new Date(clock.from));
       setOldTo(new Date(clock.to));
-      
-      // Convertir les dates en format datetime-local pour l'affichage
+
       const from = new Date(clock.from);
       const to = new Date(clock.to);
-      
-      // Ajuster pour le fuseau horaire local
+
+      // Adjust for local timezone
       const fromLocal = new Date(from.getTime() - from.getTimezoneOffset() * 60000);
       const toLocal = new Date(to.getTime() - to.getTimezoneOffset() * 60000);
-      
+
       setFromDate(fromLocal.toISOString().slice(0, 16));
       setToDate(toLocal.toISOString().slice(0, 16));
       setError('');

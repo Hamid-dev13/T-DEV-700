@@ -18,11 +18,10 @@ function Clocks() {
   const [clocks, setClocks] = useState<ClockEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // Filtres de date
+
   const [fromDate, setFromDate] = useState<string>(() => {
     const date = new Date();
-    date.setDate(1); // Premier jour du mois
+    date.setDate(1);
     return date.toISOString().split('T')[0];
   });
   const [toDate, setToDate] = useState<string>(() => {
@@ -30,7 +29,6 @@ function Clocks() {
     return date.toISOString().split('T')[0];
   });
 
-  // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -66,8 +64,8 @@ function Clocks() {
     try {
       const from = new Date(fromDate);
       const to = new Date(toDate);
-      to.setHours(23, 59, 59); // Fin de journée
-      
+      to.setHours(23, 59, 59);  // end of the day
+
       const clocksList = await getClocks(selectedUserId, from, to);
       setClocks(clocksList);
     } catch (err) {
@@ -90,10 +88,9 @@ function Clocks() {
   };
 
   const handleEditClock = (clockDate: Date) => {
-    // Trouver le pointage suivant pour avoir from/to
     const sortedClocks = [...clocks].sort((a, b) => a.date.getTime() - b.date.getTime());
     const index = sortedClocks.findIndex(c => c.date.getTime() === clockDate.getTime());
-    
+
     if (index >= 0 && index < sortedClocks.length - 1) {
       setSelectedClock({
         from: sortedClocks[index].date,
@@ -149,7 +146,6 @@ function Clocks() {
 
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-7xl mx-auto">
-            {/* Filtres */}
             <div className="bg-white rounded-lg shadow p-6 mb-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -234,22 +230,20 @@ function Clocks() {
                     {clocks.map((clock, index) => {
                       const isEven = index % 2 === 0;
                       const nextClock = clocks[index + 1];
-                      const duration = nextClock 
-                        ? Math.round((nextClock.date.getTime() - clock.date.getTime()) / (1000 * 60)) // en minutes
+                      const duration = nextClock
+                        ? Math.round((nextClock.date.getTime() - clock.date.getTime()) / (1000 * 60)) // minutes
                         : null;
 
                       return (
                         <div
                           key={index}
-                          className={`p-4 hover:bg-gray-50 transition ${
-                            isEven ? 'bg-blue-50' : 'bg-white'
-                          }`}
+                          className={`p-4 hover:bg-gray-50 transition ${isEven ? 'bg-blue-50' : 'bg-white'
+                            }`}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                                isEven ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
-                              }`}>
+                              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isEven ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
+                                }`}>
                                 <ClockIcon className="w-6 h-6" />
                               </div>
                               <div>
