@@ -611,7 +611,12 @@ export default function MemberDetailsPage() {
               const dayName = date.toLocaleDateString('fr-FR', { weekday: 'long' })
               const dayMonth = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
               const delayInfo = delays[day]
+              const today = new Date()
+              today.setHours(0, 0, 0, 0)
+              const dayDate = new Date(day)
+              dayDate.setHours(0, 0, 0, 0)
               const isToday = day === new Date().toISOString().split('T')[0]
+              const isFutureDay = dayDate > today
               const pairs = clockPairsByDay[day] || []
               const isDayOff = daysOff.includes(day);
 
@@ -700,56 +705,64 @@ export default function MemberDetailsPage() {
                               </div>
                               
                               <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => openEditModal(pair)}
-                                  className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                  </svg>
-                                  Modifier
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteClick(pair)}
-                                  className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                  </svg>
-                                  Supprimer
-                                </button>
+                                {!isFutureDay && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => openEditModal(pair)}
+                                      className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                      </svg>
+                                      Modifier
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteClick(pair)}
+                                      className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                      </svg>
+                                      Supprimer
+                                    </button>
+                                  </>
+                                )}
+                                {isFutureDay && (
+                                  <span className="text-sm text-gray-400 italic">Jour futur - modification désactivée</span>
+                                )}
                               </div>
                             </div>
                           ))}
                         </>
                       )}
                       
-                      {/* Bouton pour ajouter un pointage - toujours visible */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const currentDay = day
-                          const date = new Date(currentDay)
-                          const defaultClockIn = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 9, 0, 0, 0)
-                          const defaultClockOut = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 17, 0, 0, 0)
-                          openEditModal({
-                            clockIn: defaultClockIn,
-                            clockOut: defaultClockOut,
-                            day: currentDay,
-                            clockInOriginal: defaultClockIn,
-                            clockOutOriginal: defaultClockOut
+                      {!isFutureDay && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentDay = day
+                            const date = new Date(currentDay)
+                            const defaultClockIn = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 9, 0, 0, 0)
+                            const defaultClockOut = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 17, 0, 0, 0)
+                            openEditModal({
+                              clockIn: defaultClockIn,
+                              clockOut: defaultClockOut,
+                              day: currentDay,
+                              clockInOriginal: defaultClockIn,
+                              clockOutOriginal: defaultClockOut
 
-                          })
-                        }}
-                        className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Ajouter un pointage
-                      </button>
+                            })
+                          }}
+                          className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                          Ajouter un pointage
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
