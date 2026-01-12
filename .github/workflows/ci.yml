@@ -1,78 +1,61 @@
-# Nom du workflow (apparaît dans l'interface GitHub)
 name: CI/CD - Build, Push et Deploy
 
-# Quand ce workflow se déclenche ?
 on:
-  # Sur les push vers main, dev et CICD (branche de test)
   push:
     branches: [main, dev, CICD]
-  # Sur les pull requests vers main et dev
   pull_request:
     branches: [main, dev]
 
-# Les différentes tâches à exécuter
 jobs:
-  # ==========================================
-  # JOB 1 : TESTS FRONTEND
-  # ==========================================
   test-frontend:
-    name: 🧪 Tests Frontend - Coverage & Quality
+    name: Tests Frontend - Coverage & Quality
     runs-on: ubuntu-latest
 
     # Exécuter uniquement sur push vers main
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      # Étape 1 : Récupérer le code du repo
-      - name: 📥 Checkout du code
+      - name: Checkout du code
         uses: actions/checkout@v4
 
-      # Étape 2 : Setup Node.js
-      - name: 🟢 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      # Étape 3 : Installer les dépendances
-      - name: 📦 Installation des dépendances
+      - name: Installation des dépendances
         working-directory: ./frontend
         run: npm ci
 
-      # Étape 4 : Exécuter les tests avec coverage
-      - name: 🧪 Exécution des tests avec coverage
+      - name: Exécution des tests avec coverage
         working-directory: ./frontend
         env:
           VITE_API_URL: http://localhost:3000
         run: npm run test:coverage -- --run
 
-      # Étape 5 : Vérifier le seuil de coverage (40%)
-      - name: 📊 Vérification du seuil de coverage
+      - name: Vérification du seuil de coverage
         working-directory: ./frontend
         run: |
-          echo "🔍 Vérification du seuil de coverage minimum (40%)..."
+          echo "Vérification du seuil de coverage minimum (40%)..."
 
-          # Extraire le pourcentage de coverage depuis le fichier JSON de coverage
           if [ -f "coverage/coverage-summary.json" ]; then
             COVERAGE=$(node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8')); console.log(data.total.lines.pct.toFixed(2));")
           else
-            # Fallback: extraire depuis la sortie texte si le JSON n'existe pas
             COVERAGE=$(npm run test:coverage -- --run 2>&1 | grep -E "All files|Lines" | tail -1 | awk '{print $NF}' | sed 's/%//' || echo "0")
           fi
 
-          echo "📊 Coverage actuel: ${COVERAGE}%"
+          echo "Coverage actuel: ${COVERAGE}%"
 
-          # Vérifier si le coverage est au-dessus du seuil
           if (( $(echo "$COVERAGE < 40" | bc -l) )); then
-            echo "❌ Coverage insuffisant! Minimum requis: 40%, actuel: ${COVERAGE}%"
+            echo "Coverage insuffisant! Minimum requis: 40%, actuel: ${COVERAGE}%"
             exit 1
           else
-            echo "✅ Coverage OK! Seuil atteint: ${COVERAGE}% >= 40%"
+            echo "Coverage OK! Seuil atteint: ${COVERAGE}% >= 40%"
           fi
 
-      # Étape 6 : Upload du rapport de coverage
-      - name: 📤 Upload du rapport de coverage
+      - name: Upload du rapport de coverage
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -80,39 +63,31 @@ jobs:
           path: frontend/coverage/
           retention-days: 90
 
-      # Étape 7 : Message de succès
-      - name: ✅ Tests réussis !
+      - name: Tests réussis !
         run: |
-          echo "🎉 Tous les tests sont passés avec succès !"
-          echo "📊 Le rapport de coverage est disponible dans les artifacts"
+          echo "Tous les tests sont passés avec succès !"
+          echo "Le rapport de coverage est disponible dans les artifacts"
 
-  # ==========================================
-  # JOB 2 : Builder et Pousser les IMAGES DOCKER
-  # ==========================================
   docker-build-push:
-    name: 🐳 Docker - Build et Push vers Docker Hub
+    name: Docker - Build et Push vers Docker Hub
     runs-on: ubuntu-latest
 
     needs: [test-frontend]
 
     steps:
-      # Étape 1 : Récupérer le code du repo
-      - name: 📥 Checkout du code
+      - name: Checkout du code
         uses: actions/checkout@v4
 
-      # Étape 2 : Configurer Docker Buildx (buildeur avancé et plus rapide)
-      - name: 🔧 Setup Docker Buildx
+      - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Étape 3 : Se connecter à Docker Hub
-      - name: 🔐 Login vers Docker Hub
+      - name: Login vers Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      # Étape 4 : Préparer les tags pour les images
-      - name: 🏷️ Préparer les tags Docker Backend
+      - name: Préparer les tags Docker Backend
         id: meta-backend
         run: |
           BRANCH=${GITHUB_REF##*/}
@@ -121,7 +96,7 @@ jobs:
             echo "tags=${{ secrets.DOCKER_USERNAME }}/monapp-backend:${BRANCH},${{ secrets.DOCKER_USERNAME }}/monapp-backend:latest" >> $GITHUB_OUTPUT
           fi
 
-      - name: 🏷️ Préparer les tags Docker Frontend
+      - name: Préparer les tags Docker Frontend
         id: meta-frontend
         run: |
           BRANCH=${GITHUB_REF##*/}
@@ -130,7 +105,7 @@ jobs:
             echo "tags=${{ secrets.DOCKER_USERNAME }}/monapp-frontend:${BRANCH},${{ secrets.DOCKER_USERNAME }}/monapp-frontend:latest" >> $GITHUB_OUTPUT
           fi
 
-      - name: 🏷️ Préparer les tags Docker Admin
+      - name: Préparer les tags Docker Admin
         id: meta-admin
         run: |
           BRANCH=${GITHUB_REF##*/}
@@ -139,8 +114,7 @@ jobs:
             echo "tags=${{ secrets.DOCKER_USERNAME }}/monapp-admin:${BRANCH},${{ secrets.DOCKER_USERNAME }}/monapp-admin:latest" >> $GITHUB_OUTPUT
           fi
 
-      # Étape 5 : Builder et POUSSER l'image Docker du BACKEND
-      - name: 🐳 Build et Push Backend Docker Image
+      - name: Build et Push Backend Docker Image
         uses: docker/build-push-action@v5
         with:
           context: ./api
@@ -151,8 +125,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Étape 6 : Builder et POUSSER l'image Docker du FRONTEND
-      - name: 🐳 Build et Push Frontend Docker Image
+      - name: Build et Push Frontend Docker Image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
@@ -165,8 +138,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Étape 7 : Builder et POUSSER l'image Docker du ADMIN
-      - name: 🐳 Build et Push Admin Docker Image
+      - name: Build et Push Admin Docker Image
         uses: docker/build-push-action@v5
         with:
           context: ./admin
@@ -179,25 +151,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Étape 8 : Message de succès
-      - name: ✅ Images publiées avec succès !
+      - name: Images publiées avec succès !
         run: |
-          echo "🎉 Images Docker publiées sur Docker Hub !"
-          echo "📦 Backend : ${{ steps.meta-backend.outputs.tags }}"
-          echo "📦 Frontend : ${{ steps.meta-frontend.outputs.tags }}"
-          echo "📦 Admin : ${{ steps.meta-admin.outputs.tags }}"
-
-  # ==========================================
-  # JOB 3 : DÉPLOIEMENT sur le VPS
-  # ==========================================
-  # Configuration requise dans GitHub Secrets :
-  # - SSH_HOST: 51.178.54.74 (IP du VPS)
-  # - SSH_USER: ubuntu
-  # - SSH_PORT: 22
-  # - SSH_PRIVATE_KEY: Clé privée SSH (contenu de id_ed25519)
-  # ==========================================
+          echo "Images Docker publiées sur Docker Hub !"
+          echo "Backend : ${{ steps.meta-backend.outputs.tags }}"
+          echo "Frontend : ${{ steps.meta-frontend.outputs.tags }}"
+          echo "Admin : ${{ steps.meta-admin.outputs.tags }}"
   deploy:
-    name: 🚀 Déploiement sur VPS
+    name: Déploiement sur VPS
     runs-on: ubuntu-latest
 
     needs: [test-frontend, docker-build-push]
@@ -205,12 +166,10 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      # Étape 1 : Récupérer le code (pour avoir les fichiers docker-compose)
-      - name: 📥 Checkout du code
+      - name: Checkout du code
         uses: actions/checkout@v4
 
-      # Étape 2 : Déployer sur le VPS via SSH
-      - name: 🚀 Déploiement via SSH
+      - name: Déploiement via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -218,45 +177,36 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            echo "🔄 Début du déploiement sur le VPS..."
+            echo "Début du déploiement sur le VPS..."
 
-            # Se déplacer dans le dossier du projet
             cd /home/ubuntu/epitech/T-DEV-700
             
-            # Pull les dernières modifications depuis GitHub
-            echo " Récupération des dernières modifications..."
+            echo "Récupération des dernières modifications..."
             git pull origin main
             
-            # Se connecter à Docker Hub (pour pouvoir pull les images privées si besoin)
-            echo " Connexion à Docker Hub..."
+            echo "Connexion à Docker Hub..."
             echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             
-            # Pull les nouvelles images Docker depuis Docker Hub
-            echo "🐳 Téléchargement des nouvelles images Docker..."
+            echo "Téléchargement des nouvelles images Docker..."
             docker pull ${{ secrets.DOCKER_USERNAME }}/monapp-backend:main
             docker pull ${{ secrets.DOCKER_USERNAME }}/monapp-frontend:main
             docker pull ${{ secrets.DOCKER_USERNAME }}/monapp-admin:main
 
-            # Arrêter les anciens containers
-            echo " Arrêt des anciens containers..."
+            echo "Arrêt des anciens containers..."
             docker compose -f docker-compose.prod.yml down
 
-            # Démarrer les nouveaux containers avec les nouvelles images
             echo "Démarrage des nouveaux containers..."
             docker compose -f docker-compose.prod.yml up -d
 
-            # Nettoyer les anciennes images non utilisées (économiser de l'espace)
-            echo " Nettoyage des anciennes images..."
+            echo "Nettoyage des anciennes images..."
             docker image prune -af
 
-            # Vérifier que les containers tournent
-            echo " Vérification des containers..."
+            echo "Vérification des containers..."
             docker compose -f docker-compose.prod.yml ps
             
-            echo " Déploiement terminé avec succès !"
+            echo "Déploiement terminé avec succès !"
 
-      # Étape 3 : Message de succès
-      - name:  Déploiement réussi !
+      - name: Déploiement réussi !
         run: |
           echo "Application déployée sur le VPS !"
-          echo " L'application est maintenant accessible sur http://${{ secrets.SSH_HOST }}"
+          echo "L'application est maintenant accessible sur http://${{ secrets.SSH_HOST }}"

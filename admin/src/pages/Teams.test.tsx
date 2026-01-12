@@ -39,8 +39,14 @@ describe('Teams Component', () => {
     { id: '2', name: 'Team Beta', startHour: 10, endHour: 18, managerId: 'user2' }
   ]
 
+  const mockUsers = [
+    { id: 'user1', email: 'user1@example.com', username: 'User 1', admin: false },
+    { id: 'user2', email: 'user2@example.com', username: 'User 2', admin: false }
+  ]
+
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(api.getUsers).mockResolvedValue(mockUsers)
   })
 
   it('should render teams page with title', async () => {

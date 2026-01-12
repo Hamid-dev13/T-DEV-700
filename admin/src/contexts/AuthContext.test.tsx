@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@testing-library/react'
 import { AuthProvider, useAuth } from './AuthContext'
 import * as api from '../utils/api'
 
@@ -10,11 +10,15 @@ describe('AuthContext', () => {
     vi.clearAllMocks()
   })
 
-  it('should provide auth context', () => {
+  it('should provide auth context', async () => {
     vi.mocked(api.getSession).mockResolvedValue(null)
 
     const { result } = renderHook(() => useAuth(), {
       wrapper: AuthProvider
+    })
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
     })
 
     expect(result.current).toBeDefined()
@@ -49,7 +53,10 @@ describe('AuthContext', () => {
       expect(result.current.loading).toBe(false)
     })
 
-    const loginResult = await result.current.login('admin@example.com', 'password')
+    let loginResult
+    await act(async () => {
+      loginResult = await result.current.login('admin@example.com', 'password')
+    })
 
     expect(loginResult.success).toBe(true)
   })
@@ -67,7 +74,10 @@ describe('AuthContext', () => {
       expect(result.current.loading).toBe(false)
     })
 
-    const loginResult = await result.current.login('user@example.com', 'password')
+    let loginResult
+    await act(async () => {
+      loginResult = await result.current.login('user@example.com', 'password')
+    })
 
     expect(loginResult.success).toBe(false)
     expect(loginResult.error).toBe('Accès réservé aux administrateurs')
@@ -87,7 +97,10 @@ describe('AuthContext', () => {
       expect(result.current.loading).toBe(false)
     })
 
-    const loginResult = await result.current.login('admin@example.com', 'wrongpassword')
+    let loginResult
+    await act(async () => {
+      loginResult = await result.current.login('admin@example.com', 'wrongpassword')
+    })
 
     expect(loginResult.success).toBe(false)
     expect(loginResult.error).toContain('Network error')
