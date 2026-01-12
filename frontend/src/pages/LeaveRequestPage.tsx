@@ -426,10 +426,14 @@ export default function LeaveRequestPage() {
             </div>
             <button
               type="submit"
-              className="btn-primary w-full"
+              className="btn-accent w-full text-lg font-bold py-4 shadow-lg"
               disabled={submitting}
+              style={{
+                opacity: submitting ? 0.6 : 1,
+                cursor: submitting ? 'not-allowed' : 'pointer'
+              }}
             >
-              {submitting ? 'Envoi en cours...' : 'Envoyer la demande'}
+              {submitting ? 'Envoi en cours...' : '✉️ Envoyer la demande'}
             </button>
           </form>
         </Card>
