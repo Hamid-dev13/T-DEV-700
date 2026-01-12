@@ -1,12 +1,12 @@
 import {
-    BarChart3,
-    Clock,
-    LayoutDashboard,
-    LogOut,
-    Menu,
-    UserCog,
-    Users,
-    X
+  BarChart3,
+  Clock,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  UserCog,
+  Users,
+  X
 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -32,14 +32,13 @@ function Sidebar() {
   };
 
   return (
-    <div 
+    <div
       className={`
         h-screen bg-gray-900 text-white 
         transition-all duration-300 ease-in-out
         ${isOpen ? 'w-64' : 'w-20'}
       `}
     >
-      {/* Header avec toggle */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-gray-800">
         <h1 className={`font-bold text-xl transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
           Time Manager
@@ -52,7 +51,6 @@ function Sidebar() {
         </button>
       </div>
 
-      {/* Menu items */}
       <nav className="mt-8 px-4">
         <ul className="space-y-2">
           {menuItems.map((item, index) => (
@@ -78,7 +76,6 @@ function Sidebar() {
         </ul>
       </nav>
 
-      {/* Logout en bas */}
       <div className="absolute bottom-4 left-0 right-0 px-4">
         <button
           onClick={handleLogout}

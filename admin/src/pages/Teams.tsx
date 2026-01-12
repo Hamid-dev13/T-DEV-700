@@ -26,7 +26,6 @@ function Teams() {
       const teams = await getTeams();
       setTeams(teams);
 
-      // Récupérer les infos des managers
       await fetchManagers();
     } catch (err) {
       setError('Erreur lors du chargement des équipes');
@@ -54,7 +53,6 @@ function Teams() {
 
   const handleTeamAdded = (newTeam: Team) => {
     setTeams([...teams, newTeam]);
-    // Recharger pour avoir les infos du manager
     fetchTeams();
   };
 
@@ -65,7 +63,6 @@ function Teams() {
 
   const handleTeamUpdated = (updatedTeam: Team) => {
     setTeams(teams.map(t => t.id === updatedTeam.id ? updatedTeam : t));
-    // Recharger pour avoir les infos du manager
     fetchTeams();
   };
 

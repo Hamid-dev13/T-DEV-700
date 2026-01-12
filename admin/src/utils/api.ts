@@ -4,7 +4,7 @@ import { User } from "./types";
 
 let BASE_URL = import.meta.env.VITE_API_URL || "";
 
-// Si la page est chargée en HTTPS et que l'URL de l'API est en HTTP, forcer HTTPS
+// Force HTTPS if page is loaded over HTTPS but API URL is HTTP
 if (
   typeof window !== "undefined" &&
   window.location.protocol === "https:" &&
@@ -86,7 +86,7 @@ async function request(
     throw e;
   }
 
-  // Gérer les réponses vides (204, 200 sans body)
+  // handle empty responses (204, 200 without body)
   if (res.status === 204 || res.headers.get("content-length") === "0") {
     return null;
   }
@@ -176,16 +176,13 @@ export async function getTeams() {
 
 export async function getTeamsWithMembers() {
   try {
-    // Récupérer toutes les équipes
     const allTeams = await get("/teams");
     const teams = Array.isArray(allTeams) ? allTeams : allTeams?.items || [];
 
-    // Récupérer les membres pour chaque équipe en parallèle
     const teamsWithMembers = await Promise.all(
       teams.map(async (team: any) => {
         try {
           const teamUsers = await getTeamUsers(team.id);
-          // teamUsers contient { manager, members }
           return {
             ...team,
             manager: teamUsers.manager,

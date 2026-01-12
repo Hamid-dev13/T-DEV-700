@@ -12,7 +12,7 @@ interface AddClockModalProps {
 function AddClockModal({ isOpen, onClose, onClockAdded, userId }: AddClockModalProps) {
   const [date, setDate] = useState<string>(() => {
     const now = new Date();
-    return now.toISOString().slice(0, 16); // Format datetime-local
+    return now.toISOString().slice(0, 16);
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
