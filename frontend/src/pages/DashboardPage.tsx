@@ -231,7 +231,7 @@ export default function DashboardPage() {
   return (
     <Shell>
       <div className="space-y-6 max-w-7xl mx-auto mb-4">
-        <Card title="📊 Résumé de vos heures">
+        <Card title="Résumé de vos heures">
           {/* En-tête avec progression hebdomadaire */}
           <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-6 border-2 border-yellow-200">
             <div className="flex items-center justify-between mb-4">
