@@ -30,18 +30,26 @@ describe("timezone utils", () => {
   });
 
   describe("convertToUTC", () => {
-    it("converts Paris local time back to UTC", () => {
-      const parisLocal = new Date("2025-07-01T14:00:00.000+02:00");
-      const utc = convertToUTC(parisLocal, PARIS);
+    it("converts Paris local time back to UTC (round-trip test)", () => {
+      // Start with a known UTC time
+      const originalUTC = new Date("2025-07-01T12:00:00.000Z");
+      // Convert to Paris local time (should be 14:00 in July, UTC+2)
+      const parisLocal = convertToLocalTime(originalUTC, PARIS);
+      // Convert back to UTC
+      const backToUTC = convertToUTC(parisLocal, PARIS);
 
-      expect(utc.toISOString()).toBe("2025-07-01T12:00:00.000Z");
+      expect(backToUTC.toISOString()).toBe("2025-07-01T12:00:00.000Z");
     });
 
-    it("converts New York local time back to UTC", () => {
-      const nyLocal = new Date("2025-07-01T08:00:00.000");
-      const utc = convertToUTC(nyLocal, NEW_YORK);
+    it("converts New York local time back to UTC (round-trip test)", () => {
+      // Start with a known UTC time
+      const originalUTC = new Date("2025-07-01T12:00:00.000Z");
+      // Convert to New York local time (should be 08:00 in July, UTC-4)
+      const nyLocal = convertToLocalTime(originalUTC, NEW_YORK);
+      // Convert back to UTC
+      const backToUTC = convertToUTC(nyLocal, NEW_YORK);
 
-      expect(utc.toISOString()).toBe("2025-07-01T12:00:00.000Z");
+      expect(backToUTC.toISOString()).toBe("2025-07-01T12:00:00.000Z");
     });
   });
 

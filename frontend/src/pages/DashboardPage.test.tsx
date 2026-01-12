@@ -43,7 +43,7 @@ describe('DashboardPage Component', () => {
       </MemoryRouter>
     )
 
-    expect(await screen.findByText('📊 Résumé de vos heures')).toBeInTheDocument()
+    expect(await screen.findByText('Résumé de vos heures')).toBeInTheDocument()
   })
 
   it('should display loading state initially', () => {
@@ -68,7 +68,7 @@ describe('DashboardPage Component', () => {
     )
 
     // Wait for the component to finish loading first
-    expect(await screen.findByText('📊 Résumé de vos heures')).toBeInTheDocument()
+    expect(await screen.findByText('Résumé de vos heures')).toBeInTheDocument()
 
     // Then check for the summary cards
     expect(screen.getByText("Aujourd'hui")).toBeInTheDocument()
@@ -91,7 +91,7 @@ describe('DashboardPage Component', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('📊 Résumé de vos heures')).toBeInTheDocument()
+      expect(screen.getByText('Résumé de vos heures')).toBeInTheDocument()
     })
   })
 

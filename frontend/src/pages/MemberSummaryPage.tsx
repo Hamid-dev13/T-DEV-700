@@ -25,7 +25,7 @@ export default function MemberSummaryPage() {
   useEffect(() => {
     document.title = "Résumé du membre • Time Manager"
   }, [])
-  
+
   const { memberId } = useParams<{ memberId: string }>()
   const navigate = useNavigate()
   const [member, setMember] = useState<MemberInfo | null>(null)
@@ -40,59 +40,59 @@ export default function MemberSummaryPage() {
     async function loadData() {
       try {
         setLoading(true)
-        
+
         const memberDataStr = sessionStorage.getItem(`member_${memberId}`)
         if (memberDataStr) {
           const memberData = JSON.parse(memberDataStr)
           setMember(memberData)
         }
-        
+
         if (!memberId) {
           console.error('Member ID is undefined')
           return
         }
-        
+
         const today = new Date()
-        
+
         const dayOfWeek = today.getDay()
         const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1
         const monday = new Date(today)
         monday.setDate(today.getDate() - daysToSubtract)
         monday.setHours(0, 0, 0, 0)
-        
+
         const friday = new Date(monday)
         friday.setDate(monday.getDate() + 4)
         friday.setHours(23, 59, 59, 999)
-        
+
         const from = monday
         const to = friday
-        
+
         const formatLocalDate = (date: Date) => {
           const year = date.getFullYear()
           const month = String(date.getMonth() + 1).padStart(2, '0')
           const day = String(date.getDate()).padStart(2, '0')
           return `${year}-${month}-${day}`
         }
-        
+
         const [presenceKPI, latenessKPI, daysOffData] = await Promise.all([
           getReports(memberId, 'presence', from, to),
           getReports(memberId, 'lateness', from, to),
           getDaysOffForUser(memberId, formatLocalDate(from), formatLocalDate(to))
         ])
-        
+
         setDaysOff(daysOffData)
-        
+
         const presenceMap = new Map<string, number>()
         const latenessMap = new Map<string, number>()
-        
+
         presenceKPI.forEach((item: any) => {
           presenceMap.set(item.day, item.time)
         })
-        
+
         latenessKPI.forEach((item: any) => {
           latenessMap.set(item.day, item.lateness)
         })
-        
+
 
         const weekDays: string[] = []
         for (let i = 0; i < 5; i++) { // Lundi à Vendredi
@@ -101,21 +101,21 @@ export default function MemberSummaryPage() {
           const dayStr = formatLocalDate(day)
           weekDays.push(dayStr)
         }
-        
+
 
         const presenceArray = weekDays.map(day => ({
           day,
           time: presenceMap.get(day) || 0
         }))
-        
+
         const latenessArray = weekDays.map(day => ({
           day,
           lateness: latenessMap.get(day) || 0
         }))
-        
+
         setPresenceData(presenceArray)
         setLatenessData(latenessArray)
-        
+
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error)
       } finally {
@@ -174,10 +174,10 @@ export default function MemberSummaryPage() {
         {/* Section des graphiques - GROS GRAPHIQUES */}
         <div className="space-y-6 mb-6">
           {/* Graphique 1 - Heures travaillées par jour */}
-          <Card title="📊 Heures travaillées cette semaine">
+          <Card title=" Heures travaillées cette semaine">
             {presenceData.length > 0 ? (
               <div>
-                <BarChart 
+                <BarChart
                   data={presenceData.map(d => {
                     const date = new Date(d.day)
                     const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' })
@@ -219,7 +219,7 @@ export default function MemberSummaryPage() {
           {/* Graphique 2 - Retards par jour */}
           <Card title="⏰ Retards cette semaine">
             {latenessData.length > 0 ? (
-              <BarChart 
+              <BarChart
                 data={latenessData.map(d => {
                   const date = new Date(d.day)
                   const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' })
