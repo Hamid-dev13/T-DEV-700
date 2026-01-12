@@ -227,7 +227,7 @@ export default function MemberSummaryPage() {
         </div>
 
         {/* Sélecteur de période */}
-        <Card title="📅 Sélectionner une période">
+        <Card title="Sélectionner une période">
           <div className="space-y-4">
             <div className="flex flex-wrap gap-3">
               <button
@@ -238,7 +238,7 @@ export default function MemberSummaryPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                📊 Semaine en cours
+                Semaine en cours
               </button>
               <button
                 onClick={() => setPeriodType('last_week')}
@@ -248,7 +248,7 @@ export default function MemberSummaryPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                📆 Semaine dernière
+                Semaine dernière
               </button>
               <button
                 onClick={() => setPeriodType('current_month')}
@@ -258,7 +258,7 @@ export default function MemberSummaryPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                📅 Mois en cours
+                Mois en cours
               </button>
               <button
                 onClick={() => setPeriodType('last_month')}
@@ -268,7 +268,7 @@ export default function MemberSummaryPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                🗓️ Mois dernier
+                Mois dernier
               </button>
               <button
                 onClick={() => setPeriodType('custom')}
@@ -278,7 +278,7 @@ export default function MemberSummaryPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                🔧 Personnalisé
+                Personnalisé
               </button>
             </div>
 
@@ -325,7 +325,7 @@ export default function MemberSummaryPage() {
         {/* Section des graphiques - GROS GRAPHIQUES */}
         <div className="space-y-6 mb-6">
           {/* Graphique 1 - Heures travaillées par jour */}
-          <Card title={`📊 Heures travaillées - ${
+          <Card title={`Heures travaillées - ${
             periodType === 'current_week' ? 'Semaine en cours' :
             periodType === 'last_week' ? 'Semaine dernière' :
             periodType === 'current_month' ? 'Mois en cours' :
@@ -374,7 +374,7 @@ export default function MemberSummaryPage() {
           </Card>
 
           {/* Graphique 2 - Retards par jour */}
-          <Card title={`⏰ Retards - ${
+          <Card title={`Retards - ${
             periodType === 'current_week' ? 'Semaine en cours' :
             periodType === 'last_week' ? 'Semaine dernière' :
             periodType === 'current_month' ? 'Mois en cours' :
