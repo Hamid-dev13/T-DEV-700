@@ -177,15 +177,14 @@ export async function getDaysOffForUser(
     .where(
       and(
         eq(leavePeriods.user_id, user_id),
+        eq(leavePeriods.accepted, true),
         or(
           gte(leavePeriods.startDate, from),
           lte(leavePeriods.endDate, toNext),
-          or(
-            and(
-              lte(leavePeriods.startDate, from),
-              gte(leavePeriods.endDate, toNext)
-            )
-          )
+          or(and(
+            lte(leavePeriods.startDate, from),
+            gte(leavePeriods.endDate, toNext)
+          ))
         )
       )
     );
