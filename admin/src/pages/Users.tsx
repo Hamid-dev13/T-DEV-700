@@ -8,6 +8,7 @@ import { UserPlus, Loader2 } from 'lucide-react';
 import { User } from '../utils/types';
 import { deleteUser, getUsers } from '../utils/api';
 import { except } from 'drizzle-orm/gel-core';
+import { getErrorMessage } from '../utils/errors';
 
 function Users() {
   const [users, setUsers] = useState<User[]>([]);
@@ -23,9 +24,9 @@ function Users() {
     try {
       const users = await getUsers();
       setUsers(users);
-    
-    } catch (err) {
-      setError('Erreur lors du chargement des utilisateurs' + (err instanceof Error ? ': ' + err.message : String(err)));
+
+    } catch (err: unknown) {
+      setError('Erreur lors du chargement des utilisateurs' + getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -62,8 +63,8 @@ function Users() {
       setUsers(users.filter(u => u.id !== selectedUser.id));
       setIsDeleteModalOpen(false);
       setSelectedUser(null);
-    } catch (err) {
-      alert('Erreur lors de la suppression: ' + (err instanceof Error ? err.message : String(err)));
+    } catch (err: unknown) {
+      alert('Erreur lors de la suppression: ' + getErrorMessage(err));
     } finally {
       setDeleteLoading(false);
     }

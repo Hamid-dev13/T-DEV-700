@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { generatePasswordResetToken } from "./password.service";
+import { getErrorMessage } from "../utils/errors";
 
 export let transporter: nodemailer.Transporter;
 
@@ -14,8 +15,8 @@ try {
     },
   });
   console.log("Mail service configured");
-} catch (err: any) {
-  console.log("Error configuring mailer: %s\nThe mail service will not be available.", err instanceof Error ? err.message : err);
+} catch (err: unknown) {
+  console.log("Error configuring mailer: %s\nThe mail service will not be available.", getErrorMessage(err));
 }
 
 export async function sendPasswordResetToken(email: string) {

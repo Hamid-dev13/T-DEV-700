@@ -36,19 +36,19 @@ interface Team {
 
 function computeDailyHours(timestamps: Date[]): DailySummary[] {
   const byDay: { [key: string]: Date[] } = {}
-  
+
   for (const ts of timestamps) {
     const day = ts.toISOString().slice(0, 10)
     if (!byDay[day]) byDay[day] = []
     byDay[day].push(ts)
   }
-  
+
   const result: DailySummary[] = []
-  
+
   for (const [day, times] of Object.entries(byDay)) {
     const sorted = times.sort((a, b) => a.getTime() - b.getTime())
     let totalHours = 0
-    
+
     for (let i = 0; i < sorted.length - 1; i += 2) {
       const clockIn = sorted[i]
       const clockOut = sorted[i + 1]
@@ -57,10 +57,10 @@ function computeDailyHours(timestamps: Date[]): DailySummary[] {
         totalHours += diff / (1000 * 60 * 60)
       }
     }
-    
+
     result.push({ day, hours: parseFloat(totalHours.toFixed(2)) })
   }
-  
+
   return result.sort((a, b) => a.day.localeCompare(b.day))
 }
 
@@ -76,17 +76,17 @@ function formatHoursToHHMM(decimalHours: number): string {
 function getCurrentWeekDays(): string[] {
   const days: string[] = []
   const today = new Date()
-  
+
   const dayOfWeek = today.getDay() || 7
   const monday = new Date(today)
   monday.setDate(today.getDate() - (dayOfWeek - 1))
-  
+
   for (let i = 0; i < 5; i++) {
     const date = new Date(monday)
     date.setDate(monday.getDate() + i)
     days.push(date.toISOString().slice(0, 10))
   }
-  
+
   return days
 }
 
@@ -95,24 +95,24 @@ function calculateDelay(timestamps: Date[], targetDay: string, expectedHour: num
   today.setHours(0, 0, 0, 0)
   const targetDate = new Date(targetDay)
   targetDate.setHours(0, 0, 0, 0)
-  
+
   if (targetDate > today) {
     return { status: 'future', minutes: null }
   }
-  
+
   if (daysOff.includes(targetDay)) {
     return { status: 'day_off', minutes: null }
   }
-  
+
   const dayTimestamps = timestamps.filter(ts => ts.toISOString().slice(0, 10) === targetDay)
-  
+
   if (dayTimestamps.length === 0) {
     return { status: 'absent', minutes: null }
   }
-  
+
   const firstClock = dayTimestamps.sort((a, b) => a.getTime() - b.getTime())[0]
-  
-  const parisTime = firstClock.toLocaleString('fr-FR', { 
+
+  const parisTime = firstClock.toLocaleString('fr-FR', {
     timeZone: 'Europe/Paris',
     hour: '2-digit',
     minute: '2-digit',
@@ -121,15 +121,15 @@ function calculateDelay(timestamps: Date[], targetDay: string, expectedHour: num
   const [hourStr, minuteStr] = parisTime.split(':')
   const hour = parseInt(hourStr, 10)
   const minute = parseInt(minuteStr, 10)
-  
+
   const actualMinutes = hour * 60 + minute
   const expectedMinutes = expectedHour * 60
   const delayMinutes = actualMinutes - expectedMinutes
-  
+
   let status = 'on_time'
   if (delayMinutes > 5) status = 'late'
   else if (delayMinutes < -5) status = 'early'
-  
+
   return { status, minutes: delayMinutes }
 }
 
@@ -137,7 +137,7 @@ export default function MemberDetailsPage() {
   useEffect(() => {
     document.title = "Détails du membre • Time Manager"
   }, [])
-  
+
   const { memberId } = useParams<{ memberId: string }>()
   const navigate = useNavigate()
   const [member, setMember] = useState<MemberInfo | null>(null)
@@ -158,57 +158,57 @@ export default function MemberDetailsPage() {
     async function loadData() {
       try {
         setLoading(true)
-        
+
 
         const memberDataStr = sessionStorage.getItem(`member_${memberId}`)
         if (memberDataStr) {
           const memberData = JSON.parse(memberDataStr)
           setMember(memberData)
         }
-        
+
 
         const allTeams = await getTeamsWithMembers()
-        
 
-        const userTeams = allTeams.filter((team: Team) => 
-          team.members && team.members.some((m: any) => 
-            (typeof m === 'string' && m === memberId) || 
+
+        const userTeams = allTeams.filter((team: Team) =>
+          team.members && team.members.some((m: any) =>
+            (typeof m === 'string' && m === memberId) ||
             (m && typeof m === 'object' && m.id === memberId)
           )
         )
-        
 
-        const managerTeam = allTeams.find((team: Team) => 
+
+        const managerTeam = allTeams.find((team: Team) =>
           team.name && (
-            team.name.toLowerCase() === 'manager' || 
+            team.name.toLowerCase() === 'manager' ||
             team.name.toLowerCase() === 'team manager' ||
             team.name.toLowerCase().includes('manager')
           )
         )
-        
 
-        const isManager = managerTeam && managerTeam.members && managerTeam.members.some((m: any) => 
-          (typeof m === 'string' && m === memberId) || 
+
+        const isManager = managerTeam && managerTeam.members && managerTeam.members.some((m: any) =>
+          (typeof m === 'string' && m === memberId) ||
           (m && typeof m === 'object' && m.id === memberId)
         )
-        
+
 
         const selectedTeam = isManager ? managerTeam : (userTeams[0] || null)
-        
+
         setMemberTeam(selectedTeam)
-        
+
 
         const now = new Date()
         const dayOfWeek = now.getDay() || 7 // Dimanche = 7
         const monday = new Date(now)
         monday.setDate(now.getDate() - (dayOfWeek - 1))
         monday.setHours(0, 0, 0, 0)
-        
+
 
         const friday = new Date(monday)
         friday.setDate(monday.getDate() + 4)
         friday.setHours(23, 59, 59, 999)
-        
+
         const clocks = await getClocks(memberId!, monday, now)
         setTimestamps(clocks)
 
@@ -224,34 +224,34 @@ export default function MemberDetailsPage() {
 
     loadData()
   }, [memberId])
-  
+
 
   const dailyHours = useMemo(() => computeDailyHours(timestamps.map(t => t.date)), [timestamps])
-  
+
 
   const weekTotal = useMemo(() => {
     return dailyHours.reduce((sum, day) => sum + day.hours, 0)
   }, [dailyHours])
-  
+
 
   const weekDays = useMemo(getCurrentWeekDays, [])
-  
+
 
   const clockPairsByDay = useMemo(() => {
     const byDay: { [key: string]: Array<{ date: Date, iso: string }> } = {}
-    
+
     for (const ts of timestamps) {
       const day = ts.date.toISOString().slice(0, 10)
       if (!byDay[day]) byDay[day] = []
       byDay[day].push(ts)
     }
-    
+
     const result: { [key: string]: ClockPair[] } = {}
-    
+
     for (const [day, times] of Object.entries(byDay)) {
       const sorted = times.sort((a, b) => a.date.getTime() - b.date.getTime())
       const pairs: ClockPair[] = []
-      
+
       for (let i = 0; i < sorted.length; i += 2) {
         pairs.push({
           clockIn: sorted[i].date,
@@ -263,13 +263,13 @@ export default function MemberDetailsPage() {
           clockOutISO: sorted[i + 1]?.iso || undefined
         })
       }
-      
+
       result[day] = pairs
     }
-    
+
     return result
   }, [timestamps])
-  
+
 
   const reloadClocks = async () => {
     if (!memberId) return
@@ -279,18 +279,18 @@ export default function MemberDetailsPage() {
       const monday = new Date(now)
       monday.setDate(now.getDate() - (dayOfWeek - 1))
       monday.setHours(0, 0, 0, 0)
-      
+
       const clocks = await getClocks(memberId, monday, now)
       setTimestamps(clocks)
     } catch (error) {
       console.error('Erreur lors du rechargement des pointages:', error)
     }
   }
-  
+
 
   const handleUpdateClock = async () => {
     if (!editingClock || !memberId) return
-    
+
     try {
       const [inHours, inMinutes] = editClockInTime.split(':').map(Number)
       const originalDate = new Date(editingClock.clockIn)
@@ -298,14 +298,14 @@ export default function MemberDetailsPage() {
       const month = originalDate.getMonth()
       const day = originalDate.getDate()
       const newClockIn = new Date(year, month, day, inHours, inMinutes, 0, 0)
-      
+
 
       const isNewClock = !editingClock.clockInISO
-      
+
       if (isNewClock) {
 
         await addClockForMember(memberId, newClockIn)
-        
+
         if (editClockOutTime) {
           const [outHours, outMinutes] = editClockOutTime.split(':').map(Number)
           const newClockOut = new Date(year, month, day, outHours, outMinutes, 0, 0)
@@ -324,11 +324,11 @@ export default function MemberDetailsPage() {
           }
           return false
         })
-        
+
         if (matchingClockIn) {
           await updateClockForMember(memberId, matchingClockIn.iso, newClockIn)
         }
-        
+
         if (editingClock.clockOut && editClockOutTime) {
           const [outHours, outMinutes] = editClockOutTime.split(':').map(Number)
           const originalOutDate = new Date(editingClock.clockOut)
@@ -336,7 +336,7 @@ export default function MemberDetailsPage() {
           const outMonth = originalOutDate.getMonth()
           const outDay = originalOutDate.getDate()
           const newClockOut = new Date(outYear, outMonth, outDay, outHours, outMinutes, 0, 0)
-          
+
           const outDayStr = originalOutDate.toISOString().slice(0, 10)
           const matchingClockOut = timestamps.find(t => {
             const tDayStr = t.date.toISOString().slice(0, 10)
@@ -347,13 +347,13 @@ export default function MemberDetailsPage() {
             }
             return false
           })
-          
+
           if (matchingClockOut) {
             await updateClockForMember(memberId, matchingClockOut.iso, newClockOut)
           }
         }
       }
-      
+
       await reloadClocks()
       setEditingClock(null)
       setEditClockInTime('')
@@ -362,11 +362,11 @@ export default function MemberDetailsPage() {
       console.error('Erreur:', error)
     }
   }
-  
+
 
   const handleDeleteClock = async (clockToDelete: Date) => {
     if (!memberId) return
-    
+
     try {
       await deleteClockForMember(memberId, clockToDelete)
       await reloadClocks()
@@ -375,7 +375,7 @@ export default function MemberDetailsPage() {
       console.error('Erreur lors de la suppression:', error)
     }
   }
-  
+
 
   const handleDeleteClick = (pair: ClockPair) => {
     setPendingDeletePair(pair)
@@ -384,7 +384,7 @@ export default function MemberDetailsPage() {
 
   const confirmDelete = async () => {
     if (!memberId || !pendingDeletePair) return
-    
+
     try {
       await deleteClockForMember(memberId, pendingDeletePair.clockIn.toISOString())
       if (pendingDeletePair.clockOut) {
@@ -396,20 +396,20 @@ export default function MemberDetailsPage() {
       console.error('Erreur lors de la suppression:', err)
     }
   }
-  
+
 
   const openEditModal = (pair: ClockPair) => {
     setEditingClock(pair)
-    const clockInTime = pair.clockIn.toLocaleTimeString('fr-FR', { 
-      hour: '2-digit', 
+    const clockInTime = pair.clockIn.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
       minute: '2-digit',
       hour12: false
     })
     setEditClockInTime(clockInTime)
-    
+
     if (pair.clockOut) {
-      const clockOutTime = pair.clockOut.toLocaleTimeString('fr-FR', { 
-        hour: '2-digit', 
+      const clockOutTime = pair.clockOut.toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
         minute: '2-digit',
         hour12: false
       })
@@ -418,19 +418,19 @@ export default function MemberDetailsPage() {
       setEditClockOutTime('')
     }
   }
-  
+
 
   const delays = useMemo(() => {
     const result: { [key: string]: { status: string, minutes: number | null } } = {}
     const expectedHour = memberTeam?.startHour ?? 9
-    
+
     for (const day of weekDays) {
       result[day] = calculateDelay(timestamps.map(t => t.date), day, expectedHour, daysOff)
     }
-    
+
     return result
   }, [timestamps, weekDays, memberTeam, daysOff])
-  
+
 
   const stats = useMemo(() => {
     const statuses = Object.values(delays).map(d => d.status)
@@ -441,16 +441,16 @@ export default function MemberDetailsPage() {
       absent: statuses.filter(s => s === 'absent').length
     }
   }, [delays])
-  
+
 
   const formatDelayText = (delayInfo: { status: string, minutes: number | null }) => {
     if (!delayInfo) return 'N/A'
-    
+
     const formatMinutesToHM = (totalMinutes: number) => {
       const absMinutes = Math.abs(totalMinutes)
       const hours = Math.floor(absMinutes / 60)
       const minutes = absMinutes % 60
-      
+
       if (hours > 0 && minutes > 0) {
         return `${hours}h${minutes.toString().padStart(2, '0')}`
       } else if (hours > 0) {
@@ -459,7 +459,7 @@ export default function MemberDetailsPage() {
         return `${minutes}min`
       }
     }
-    
+
     switch (delayInfo.status) {
       case 'late':
         return `En retard de ${formatMinutesToHM(delayInfo.minutes || 0)}`
@@ -477,7 +477,7 @@ export default function MemberDetailsPage() {
         return 'N/A'
     }
   }
-  
+
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
@@ -547,7 +547,7 @@ export default function MemberDetailsPage() {
                 </div>
               )}
             </div>
-            
+
             <div className="text-right">
               <div className="text-sm text-gray-500 mb-1">Semaine du {new Date(weekDays[0]).toLocaleDateString('fr-FR')}</div>
               <div className="text-4xl font-bold text-yellow-600">
@@ -569,7 +569,7 @@ export default function MemberDetailsPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="glass">
             <div className="px-3 py-2">
               <div className="text-xs font-medium text-gray-600 mb-2">En retard</div>
@@ -579,7 +579,7 @@ export default function MemberDetailsPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="glass">
             <div className="px-3 py-2">
               <div className="text-xs font-medium text-gray-600 mb-2">En avance</div>
@@ -589,7 +589,7 @@ export default function MemberDetailsPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="glass">
             <div className="px-3 py-2">
               <div className="text-xs font-medium text-gray-600 mb-2">Absences</div>
@@ -622,23 +622,21 @@ export default function MemberDetailsPage() {
 
               return (
                 <div key={day} className="space-y-2">
-                  <div 
-                    className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
-                      isToday 
-                        ? isDayOff ? 'bg-purple-50 border-purple-300'
-                        : 'bg-blue-50 border-blue-200' 
-                        : isDayOff ? 'bg-purple-50 border-purple-200 hover:border-purple-300 hover:shadow-md'
+                  <div
+                    className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${isToday
+                      ? isDayOff ? 'bg-purple-50 border-purple-300'
+                        : 'bg-blue-50 border-blue-200'
+                      : isDayOff ? 'bg-purple-50 border-purple-200 hover:border-purple-300 hover:shadow-md'
                         : 'bg-gray-50 border-gray-200'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold ${
-                        isToday && !isDayOff
-                          ? 'bg-blue-500 text-white' 
-                          : isDayOff
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold ${isToday && !isDayOff
+                        ? 'bg-blue-500 text-white'
+                        : isDayOff
                           ? 'bg-purple-400 text-white'
                           : 'bg-gray-200 text-gray-600'
-                      }`}>
+                        }`}>
                         {isDayOff ? '🏖️' : dayName.substring(0, 3).toUpperCase()}
                       </div>
                       <div>
@@ -646,23 +644,23 @@ export default function MemberDetailsPage() {
                         <div className="text-sm text-gray-500">{dayMonth}</div>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-6">
                       {isDayOff ? (
                         <div className="flex-1 text-center">
                           <div className="text-lg text-purple-600 font-bold">Jour de repos 🏖️</div>
                         </div>
-                      ) : 
+                      ) :
                         <div className="text-right">
                           <div className="text-xs text-gray-500 mb-1">Heures travaillées</div>
                           <div className="text-lg font-bold text-gray-900">{formatHoursToHHMM(hours)}</div>
                         </div>
                       }
-                      
+
                       {!isDayOff && (
                         <>
                           <div className="w-px h-12 bg-gray-300"></div>
-                          
+
                           <div className="min-w-[180px]">
                             <span className={`inline-block px-3 py-1.5 rounded text-xs font-medium ${getStatusBadgeClass(delayInfo?.status)}`}>
                               {formatDelayText(delayInfo)}
@@ -672,9 +670,9 @@ export default function MemberDetailsPage() {
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Afficher les paires de pointages - masqué pour les jours de repos */}
-                  {!isDayOff && ( 
+                  {!isDayOff && (
                     <div className="ml-16 space-y-2">
                       {pairs.length > 0 && (
                         <>
@@ -689,11 +687,11 @@ export default function MemberDetailsPage() {
                                     {pair.clockIn.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false })}
                                   </span>
                                 </div>
-                                
+
                                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                 </svg>
-                                
+
                                 <div className="flex items-center gap-2">
                                   <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -703,7 +701,7 @@ export default function MemberDetailsPage() {
                                   </span>
                                 </div>
                               </div>
-                              
+
                               <div className="flex items-center gap-2">
                                 {!isFutureDay && (
                                   <>
@@ -737,7 +735,7 @@ export default function MemberDetailsPage() {
                           ))}
                         </>
                       )}
-                      
+
                       {!isFutureDay && (
                         <button
                           type="button"
@@ -770,13 +768,13 @@ export default function MemberDetailsPage() {
             })}
           </div>
         </Card>
-        
+
         {/* Modal d'édition */}
         {editingClock && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Modifier les horaires</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -789,7 +787,7 @@ export default function MemberDetailsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 {editingClock.clockOut && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -804,7 +802,7 @@ export default function MemberDetailsPage() {
                   </div>
                 )}
               </div>
-              
+
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => {

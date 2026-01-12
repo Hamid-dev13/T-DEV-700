@@ -1,6 +1,7 @@
 import { Clock, X } from 'lucide-react';
 import { useState } from 'react';
 import { addClockForMember } from '../utils/api';
+import { getErrorMessage } from '../utils/errors';
 
 interface AddClockModalProps {
   isOpen: boolean;
@@ -27,9 +28,8 @@ function AddClockModal({ isOpen, onClose, onClockAdded, userId }: AddClockModalP
       await addClockForMember(userId, dateObj);
       onClockAdded();
       onClose();
-    } catch (err: any) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de l\'ajout du pointage';
-      setError(errorMessage);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

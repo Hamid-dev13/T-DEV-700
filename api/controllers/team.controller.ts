@@ -27,7 +27,7 @@ export async function addTeamController(req: Request, res: Response) {
     if (!name || !description || !start_hour || !end_hour)
       return res.sendError("Missing required fields", 400);
     if (start_hour > end_hour)
-        return res.sendStatus(400);
+      return res.sendStatus(400);
 
     const team = await addTeam({ name, description, start_hour, end_hour, manager_id: manager });
     return res.status(200).json(team);
@@ -83,7 +83,7 @@ export async function addTeamMemberController(req: Request, res: Response) {
     const { user } = body ?? {};
     if (!user)
       return res.sendError("Missing required field \"user\"", 400);
-    
+
     await addTeamMember(team_id, user);
     return res.sendStatus(200);
   } catch (err) {
@@ -98,7 +98,7 @@ export async function removeTeamMemberController(req: Request, res: Response) {
     const { user } = body ?? {};
     if (!user)
       return res.sendError("Missing required field \"user\"", 400);
-    
+
     await removeTeamMember(team_id, user);
     return res.sendStatus(200);
   } catch (err) {

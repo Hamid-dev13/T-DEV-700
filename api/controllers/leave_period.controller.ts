@@ -36,11 +36,11 @@ export async function addLeavePeriodForMyUserController(req: Request, res: Respo
     const endDate = new Date(end);
     if (isNaN(endDate.getTime())) return res.sendError("Invalid Date \"end_date\"", 400);
     endDate.setHours(0, 0, 0, 0);
-    endDate.setDate(endDate.getDate()+1); // cover whole day
+    endDate.setDate(endDate.getDate() + 1); // cover whole day
 
     if (endDate.getTime() - startDate.getTime() < 360000 * 24)
       return res.sendError("Invalid Dates", 400);
-    
+
     // Check for overlapping leave periods
     const existingPeriods = await retrieveLeavePeriods(user_id);
     const hasOverlap = existingPeriods.some(period => {
@@ -52,7 +52,7 @@ export async function addLeavePeriodForMyUserController(req: Request, res: Respo
     if (hasOverlap) {
       return res.sendError("Specified dates overlap with an existing leave period", 400);
     }
-    
+
     const period = await addLeavePeriod(user_id, startDate, endDate);
     return res.status(200).json(period);
   } catch (err) {
@@ -73,14 +73,14 @@ export async function addLeavePeriodForUserController(req: Request, res: Respons
     const endDate = new Date(end);
     if (isNaN(endDate.getTime())) return res.sendError("Invalid Date \"end_date\"", 400);
     endDate.setHours(0, 0, 0, 0);
-    endDate.setDate(endDate.getDate()+1); // cover whole day
+    endDate.setDate(endDate.getDate() + 1); // cover whole day
 
     if (endDate.getTime() - startDate.getTime() < 360000 * 24)
       return res.sendError("Invalid Dates", 400);
 
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
       return res.sendError("Insufficient permissions", 403);
-    
+
     const period = await addLeavePeriod(user_id, startDate, endDate, accepted);
     return res.status(200).json(period);
   } catch (err) {
@@ -107,7 +107,7 @@ export async function updateLeavePeriodForUserController(req: Request, res: Resp
       const endDate = new Date(end);
       if (isNaN(endDate.getTime())) return res.sendError("Invalid Date \"end_date\"", 400);
       endDate.setHours(0, 0, 0, 0);
-      endDate.setDate(endDate.getDate()+1); // cover whole day
+      endDate.setDate(endDate.getDate() + 1); // cover whole day
 
       if (endDate.getTime() - startDate.getTime() < 360000 * 24)
         return res.sendError("Invalid Dates", 400);
@@ -127,7 +127,7 @@ export async function deleteLeavePeriodForMyUserController(req: Request, res: Re
   try {
     const user_id = req.user_id!;
     const { id: leave_id } = req.params ?? {};
-    
+
     const result = await deleteLeavePeriodOfMyUser(user_id, leave_id);
     return res.status(200).json({ result });
   } catch (err) {
@@ -143,7 +143,7 @@ export async function deleteLeavePeriodForUserController(req: Request, res: Resp
 
     if (!(is_admin || await isManagerOfUser(sender_id, user_id)))
       return res.sendError("Insufficient permissions", 403);
-    
+
     const result = await deleteLeavePeriod(leave_id);
     return res.status(200).json({ result });
   } catch (err) {

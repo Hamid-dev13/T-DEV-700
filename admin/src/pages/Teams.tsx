@@ -8,6 +8,7 @@ import TeamCard from '../components/TeamCard';
 import TeamMembersModal from '../components/TeamMembersModal';
 import { deleteTeam, getTeams, getUsers } from '../utils/api';
 import { Team, User } from '../utils/types';
+import { getErrorMessage } from '../utils/errors';
 
 function Teams() {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -42,8 +43,8 @@ function Teams() {
         usersMap.set(user.id, user);
       });
       setUsers(usersMap);
-    } catch (err) {
-      console.error('Erreur lors du chargement des managers:', err);
+    } catch (err: unknown) {
+      console.error('Erreur lors du chargement des managers:', getErrorMessage(err));
     }
   };
 
@@ -85,8 +86,8 @@ function Teams() {
       setTeams(teams.filter(t => t.id !== selectedTeam.id));
       setIsDeleteModalOpen(false);
       setSelectedTeam(null);
-    } catch (err) {
-      setError('Erreur lors de la suppression: ' + (err instanceof Error ? err.message : String(err)));
+    } catch (err: unknown) {
+      setError('Erreur lors de la suppression: ' + getErrorMessage(err));
     } finally {
       setDeleteLoading(false);
     }

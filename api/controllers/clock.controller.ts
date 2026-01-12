@@ -20,7 +20,6 @@ export async function reportTimeController(req: Request, res: Response) {
       at: formatWithTimezone(clock.at),
     });
   } catch (err) {
-    console.log(err);
     return res.sendStatus(500);
   }
 }
@@ -94,19 +93,15 @@ export async function updateClockForMemberController(
     const { id: user_id } = req.params ?? {};
     const { oldFrom, oldTo, newFrom, newTo } = req.body ?? {};
 
-    // Support de l'ancienne API (from/to) pour compatibilité
+    // support for from/to date (old implementation)
     let oldFromDate: Date, oldToDate: Date, newFromDate: Date, newToDate: Date;
 
     if (oldFrom && oldTo && newFrom && newTo) {
-      // Nouvelle API avec anciennes et nouvelles dates
       oldFromDate = new Date(oldFrom);
       oldToDate = new Date(oldTo);
       newFromDate = new Date(newFrom);
       newToDate = new Date(newTo);
     } else if (req.body.from && req.body.to) {
-      // Ancienne API : on suppose que from/to sont les nouvelles dates
-      // Il faut trouver les anciennes dates dans la base, mais c'est complexe
-      // Pour l'instant, on utilise from/to comme anciennes ET nouvelles (pas idéal mais fonctionnel)
       const fromDate = new Date(req.body.from);
       const toDate = new Date(req.body.to);
       oldFromDate = fromDate;

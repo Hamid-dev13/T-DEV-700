@@ -4,6 +4,7 @@ import { Shell, Card } from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { getMyLeavePeriods, createLeavePeriod, deleteLeavePeriod } from '../utils/api'
 import { LeavePeriod } from '../utils/types'
+import { getErrorMessage } from '../utils/errors'
 
 export default function LeaveRequestPage() {
   useEffect(() => {
@@ -31,9 +32,10 @@ export default function LeaveRequestPage() {
       const periods = await getMyLeavePeriods()
       setLeavePeriods(periods)
       setError(null)
-    } catch (err: any) {
-      console.error('Erreur lors du chargement des périodes:', err)
-      setError(err.message || 'Erreur lors du chargement')
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err)
+      console.error('Erreur lors du chargement des périodes:', errorMessage)
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -74,9 +76,10 @@ export default function LeaveRequestPage() {
       setStartDate('')
       setEndDate('')
       await loadLeavePeriods()
-    } catch (err: any) {
-      console.error('Erreur lors de la création:', err)
-      setError(err.message || 'Erreur lors de la création de la demande')
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err)
+      console.error('Erreur lors de la création:', errorMessage)
+      setError(errorMessage)
     } finally {
       setSubmitting(false)
     }
@@ -88,9 +91,10 @@ export default function LeaveRequestPage() {
     try {
       await deleteLeavePeriod(leaveId)
       await loadLeavePeriods()
-    } catch (err: any) {
-      console.error('Erreur lors de la suppression:', err)
-      setError(err.message || 'Erreur lors de la suppression')
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err)
+      console.error('Erreur lors de la suppression:', errorMessage)
+      setError(errorMessage)
     }
   }
 

@@ -2,6 +2,7 @@ import { UsersRound, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { updateTeam } from '../utils/api';
 import { Team } from '../utils/types';
+import { getErrorMessage } from '../utils/errors';
 
 interface EditTeamModalProps {
   isOpen: boolean;
@@ -47,8 +48,8 @@ function EditTeamModal({ isOpen, onClose, onTeamUpdated, team }: EditTeamModalPr
       const updatedTeam = await updateTeam(team!.id, formData);
       onTeamUpdated(updatedTeam);
       onClose();
-    } catch (err) {
-      setError('Erreur lors de la modification: ' + (err instanceof Error ? err.message : String(err)));
+    } catch (err: unknown) {
+      setError('Erreur lors de la modification: ' + getErrorMessage(err));
     } finally {
       setLoading(false);
     }

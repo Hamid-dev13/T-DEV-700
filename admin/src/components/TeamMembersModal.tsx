@@ -2,6 +2,7 @@ import { Loader2, Shield, Trash2, UserPlus, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { addTeamMember, getTeamUsers, getUsers, removeTeamMember } from '../utils/api';
 import { Team, User } from "../utils/types";
+import { getErrorMessage } from '../utils/errors';
 
 interface TeamMembersModalProps {
   isOpen: boolean;
@@ -61,14 +62,8 @@ function TeamMembersModal({ isOpen, onClose, team }: TeamMembersModalProps) {
       setSelectedUserId('');
       fetchTeamMembers();
       fetchAvailableUsers();
-    } catch (err: any) {
-      let errorMessage = 'Erreur lors de l\'ajout du membre';
-
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
+    } catch (err: unknown) {
+      let errorMessage = getErrorMessage(err);
 
       if (errorMessage.includes('already a member') || errorMessage.includes('déjà membre')) {
         errorMessage = 'Cet utilisateur est déjà membre d\'une autre équipe.';
@@ -91,8 +86,8 @@ function TeamMembersModal({ isOpen, onClose, team }: TeamMembersModalProps) {
     try {
       await removeTeamMember(team!.id, userId);
       fetchTeamMembers();
-    } catch (err) {
-      alert('Erreur lors de la suppression du membre: ' + (err instanceof Error ? err.message : String(err)));
+    } catch (err: unknown) {
+      alert('Erreur lors de la suppression du membre: ' + getErrorMessage(err));
     }
   };
 

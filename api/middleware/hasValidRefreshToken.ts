@@ -15,7 +15,7 @@ export async function hasValidRefreshToken(req: Request, res: Response, next: Ne
         req.user_id = decoded.user_id;
 
         return next();
-    } catch(error: any) {
+    } catch (error: unknown) {
         return res.sendError(error, 401);
     }
 }

@@ -2,6 +2,7 @@ import React, { useState, FormEvent, useEffect } from 'react'
 import { Shell, Card } from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { updateMyProfile } from '../utils/api'
+import { getErrorMessage } from '../utils/errors'
 
 export default function AccountPage() {
   useEffect(() => {
@@ -76,10 +77,10 @@ export default function AccountPage() {
       setShowSuccessModal(true)
       setOldPassword('')
       setNewPassword('')
-    } catch (err: any) {
-      console.error('Erreur lors de la mise à jour:', err)
-      const errorMsg = err.message || 'Erreur inconnue'
-      setErrorMessage(errorMsg)
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err)
+      console.error('Erreur lors de la mise à jour:', errorMessage)
+      setErrorMessage(errorMessage)
       setShowErrorModal(true)
     }
   }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, UsersRound } from 'lucide-react';
 import { Team, User } from '../utils/types';
 import { addTeam, getUsers } from '../utils/api';
+import { getErrorMessage } from '../utils/errors';
 
 interface AddTeamModalProps {
   isOpen: boolean;
@@ -59,7 +60,7 @@ function AddTeamModal({ isOpen, onClose, onTeamAdded }: AddTeamModalProps) {
       });
       onClose();
     } catch (err) {
-      setError('Erreur lors de la création: ' + (err instanceof Error ? err.message : String(err)));
+      setError('Erreur lors de la création: ' + getErrorMessage(err));
     } finally {
       setLoading(false);
     }

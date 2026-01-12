@@ -6,6 +6,7 @@ import EditClockModal from '../components/EditClockModal';
 import Sidebar from '../components/Sidebar';
 import { getClocks, getUsers } from '../utils/api';
 import { User } from '../utils/types';
+import { getErrorMessage } from '../utils/errors';
 
 interface ClockEntry {
   date: Date;
@@ -68,8 +69,8 @@ function Clocks() {
 
       const clocksList = await getClocks(selectedUserId, from, to);
       setClocks(clocksList);
-    } catch (err) {
-      setError('Erreur lors du chargement des pointages: ' + (err instanceof Error ? err.message : String(err)));
+    } catch (err: unknown) {
+      setError('Erreur lors du chargement des pointages: ' + getErrorMessage(err));
     } finally {
       setLoading(false);
     }

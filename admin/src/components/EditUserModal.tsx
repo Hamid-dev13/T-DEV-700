@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, UserCog } from 'lucide-react';
 import { User } from '../utils/types';
 import { updateUser } from '../utils/api';
+import { getErrorMessage } from '../utils/errors';
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -50,8 +51,8 @@ function EditUserModal({ isOpen, onClose, onUserUpdated, user }: EditUserModalPr
       const updatedUser = await updateUser(user!.id, dataToSend);
       onUserUpdated(updatedUser);
       onClose();
-    } catch (err) {
-      setError('Erreur lors de la modification: ' + (err instanceof Error ? err.message : String(err)));
+    } catch (err: unknown) {
+      setError('Erreur lors de la modification: ' + getErrorMessage(err));
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { addUser, clearRefreshTokenForUser, deleteUser, generateAccessToken, loginUser, retrieveUser, retrieveUserSafe, retrieveUsersSafe, updateUser } from "../services/user.service";
 import { ACCESS_TOKEN_COOKIE_OPTS, COOKIE_ACCESS_TOKEN_KEY, COOKIE_REFRESH_TOKEN_KEY, getCookie, REFRESH_TOKEN_COOKIE_OPTS } from "../utils/cookies";
+import { getErrorMessage } from "../utils/errors";
 
 export async function loginUserController(req: Request, res: Response) {
   try {
@@ -15,10 +16,8 @@ export async function loginUserController(req: Request, res: Response) {
 
     return res.status(200).json(user);
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Internal server error";
+    const message = getErrorMessage(err);
     const status = message.includes("Invalid credentials") ? 401 : 500;
-    console.log('[LOGIN] Authentication failed:', message);
     return res.status(status).json({ error: message });
   }
 }
@@ -85,7 +84,6 @@ export async function retrieveUsersController(req: Request, res: Response) {
     const users = await retrieveUsersSafe();
     return res.status(200).json(users);
   } catch (err) {
-    console.log(err)
     return res.sendStatus(500);
   }
 }

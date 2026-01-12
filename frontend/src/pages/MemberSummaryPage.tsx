@@ -232,51 +232,46 @@ export default function MemberSummaryPage() {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setPeriodType('current_week')}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  periodType === 'current_week'
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${periodType === 'current_week'
                     ? 'bg-yellow-400 text-gray-900 shadow-lg'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 Semaine en cours
               </button>
               <button
                 onClick={() => setPeriodType('last_week')}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  periodType === 'last_week'
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${periodType === 'last_week'
                     ? 'bg-yellow-400 text-gray-900 shadow-lg'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 Semaine dernière
               </button>
               <button
                 onClick={() => setPeriodType('current_month')}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  periodType === 'current_month'
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${periodType === 'current_month'
                     ? 'bg-yellow-400 text-gray-900 shadow-lg'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 Mois en cours
               </button>
               <button
                 onClick={() => setPeriodType('last_month')}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  periodType === 'last_month'
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${periodType === 'last_month'
                     ? 'bg-yellow-400 text-gray-900 shadow-lg'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 Mois dernier
               </button>
               <button
                 onClick={() => setPeriodType('custom')}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  periodType === 'custom'
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${periodType === 'custom'
                     ? 'bg-yellow-400 text-gray-900 shadow-lg'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 Personnalisé
               </button>
@@ -312,11 +307,11 @@ export default function MemberSummaryPage() {
             <div className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
               <strong>Période sélectionnée:</strong> {
                 periodType === 'current_week' ? 'Semaine en cours' :
-                periodType === 'last_week' ? 'Semaine dernière' :
-                periodType === 'current_month' ? 'Mois en cours' :
-                periodType === 'last_month' ? 'Mois dernier' :
-                customStartDate && customEndDate ? `Du ${new Date(customStartDate).toLocaleDateString('fr-FR')} au ${new Date(customEndDate).toLocaleDateString('fr-FR')}` :
-                'Veuillez sélectionner des dates'
+                  periodType === 'last_week' ? 'Semaine dernière' :
+                    periodType === 'current_month' ? 'Mois en cours' :
+                      periodType === 'last_month' ? 'Mois dernier' :
+                        customStartDate && customEndDate ? `Du ${new Date(customStartDate).toLocaleDateString('fr-FR')} au ${new Date(customEndDate).toLocaleDateString('fr-FR')}` :
+                          'Veuillez sélectionner des dates'
               }
             </div>
           </div>
@@ -325,13 +320,12 @@ export default function MemberSummaryPage() {
         {/* Section des graphiques - GROS GRAPHIQUES */}
         <div className="space-y-6 mb-6">
           {/* Graphique 1 - Heures travaillées par jour */}
-          <Card title={`Heures travaillées - ${
-            periodType === 'current_week' ? 'Semaine en cours' :
-            periodType === 'last_week' ? 'Semaine dernière' :
-            periodType === 'current_month' ? 'Mois en cours' :
-            periodType === 'last_month' ? 'Mois dernier' :
-            'Période personnalisée'
-          }`}>
+          <Card title={`Heures travaillées - ${periodType === 'current_week' ? 'Semaine en cours' :
+              periodType === 'last_week' ? 'Semaine dernière' :
+                periodType === 'current_month' ? 'Mois en cours' :
+                  periodType === 'last_month' ? 'Mois dernier' :
+                    'Période personnalisée'
+            }`}>
             {presenceData.length > 0 ? (
               <div>
                 <BarChart
@@ -374,13 +368,12 @@ export default function MemberSummaryPage() {
           </Card>
 
           {/* Graphique 2 - Retards par jour */}
-          <Card title={`Retards - ${
-            periodType === 'current_week' ? 'Semaine en cours' :
-            periodType === 'last_week' ? 'Semaine dernière' :
-            periodType === 'current_month' ? 'Mois en cours' :
-            periodType === 'last_month' ? 'Mois dernier' :
-            'Période personnalisée'
-          }`}>
+          <Card title={`Retards - ${periodType === 'current_week' ? 'Semaine en cours' :
+              periodType === 'last_week' ? 'Semaine dernière' :
+                periodType === 'current_month' ? 'Mois en cours' :
+                  periodType === 'last_month' ? 'Mois dernier' :
+                    'Période personnalisée'
+            }`}>
             {latenessData.length > 0 ? (
               <BarChart
                 data={latenessData.map(d => {
@@ -422,10 +415,10 @@ export default function MemberSummaryPage() {
               </div>
               <div className="text-sm text-gray-500">
                 {periodType === 'current_week' ? 'Cette semaine' :
-                 periodType === 'last_week' ? 'Semaine dernière' :
-                 periodType === 'current_month' ? 'Ce mois' :
-                 periodType === 'last_month' ? 'Mois dernier' :
-                 'Période sélectionnée'}
+                  periodType === 'last_week' ? 'Semaine dernière' :
+                    periodType === 'current_month' ? 'Ce mois' :
+                      periodType === 'last_month' ? 'Mois dernier' :
+                        'Période sélectionnée'}
               </div>
             </div>
           </Card>
@@ -456,10 +449,10 @@ export default function MemberSummaryPage() {
               </div>
               <div className="text-sm text-gray-500">
                 {periodType === 'current_week' ? 'Total cette semaine' :
-                 periodType === 'last_week' ? 'Total semaine dernière' :
-                 periodType === 'current_month' ? 'Total ce mois' :
-                 periodType === 'last_month' ? 'Total mois dernier' :
-                 'Total période sélectionnée'}
+                  periodType === 'last_week' ? 'Total semaine dernière' :
+                    periodType === 'current_month' ? 'Total ce mois' :
+                      periodType === 'last_month' ? 'Total mois dernier' :
+                        'Total période sélectionnée'}
               </div>
             </div>
           </Card>

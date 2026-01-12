@@ -17,8 +17,6 @@ import { transporter } from "./services/mail.service";
 import winston from "winston";
 import expressWinston from "express-winston";
 
-// En production, les variables sont injectées par Docker via env_file
-// En développement, on charge le fichier .env
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config({ path: "../.env" });
 }

@@ -40,7 +40,7 @@ export async function isAuth(req: Request, res: Response, next: NextFunction) {
             return res.sendError("Invalid Token", 401);
         }
 
-    } catch(error: any) {
+    } catch (error: unknown) {
         return res.sendError(error, 401);
     }
 }

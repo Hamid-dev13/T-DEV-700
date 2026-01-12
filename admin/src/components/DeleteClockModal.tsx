@@ -1,6 +1,7 @@
 import { AlertTriangle, X } from 'lucide-react';
 import { useState } from 'react';
 import { deleteClockForMember } from '../utils/api';
+import { getErrorMessage } from '../utils/errors';
 
 interface DeleteClockModalProps {
   isOpen: boolean;
@@ -24,9 +25,8 @@ function DeleteClockModal({ isOpen, onClose, onClockDeleted, userId, clockDate }
       await deleteClockForMember(userId, clockDate);
       onClockDeleted();
       onClose();
-    } catch (err: any) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la suppression du pointage';
-      setError(errorMessage);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

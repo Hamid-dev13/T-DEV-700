@@ -1,6 +1,7 @@
 import { Clock, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { updateClockForMember } from '../utils/api';
+import { getErrorMessage } from '../utils/errors';
 
 interface EditClockModalProps {
   isOpen: boolean;
@@ -59,9 +60,8 @@ function EditClockModal({ isOpen, onClose, onClockUpdated, userId, clock }: Edit
       await updateClockForMember(userId, oldFrom, oldTo, newFrom, newTo);
       onClockUpdated();
       onClose();
-    } catch (err: any) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la modification du pointage';
-      setError(errorMessage);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

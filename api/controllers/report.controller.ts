@@ -23,7 +23,7 @@ export async function getReportsForUserController(req: Request, res: Response) {
     if (user_id !== sender_id) {
       // Check if the sender is the manager of the target user's team
       const targetUserTeam = await retrieveMainTeamForUser(user_id);
-      
+
       if (!targetUserTeam)
         return res.sendError("User is not in any team", 404);
 
@@ -32,7 +32,7 @@ export async function getReportsForUserController(req: Request, res: Response) {
     }
 
     const reports = await getReportForUser(user_id, report_type, fromDate, toDate);
-    
+
     return res.status(200).json(reports);
   } catch (err) {
     return res.sendError(err);

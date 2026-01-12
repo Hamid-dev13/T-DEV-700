@@ -4,6 +4,7 @@ import { Shell, Card } from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { getMyTeams } from '../utils/api'
 import { Team, User } from '../utils/types'
+import { getErrorMessage } from '../utils/errors'
 
 type TeamData = {
   team: Team
@@ -32,11 +33,11 @@ export default function TeamManagePage() {
 
   useEffect(() => {
     if (!me) return
-    
+
     getMyTeams()
       .then(data => {
         const teams = Array.isArray(data) ? data : (data && data.team ? [data] : [])
-        
+
         if (teams.length > 0) {
           setAllTeams(teams)
           setSelectedTeamIndex(0)
@@ -48,9 +49,10 @@ export default function TeamManagePage() {
         setLoading(false)
       })
       .catch(err => {
-        console.error('Erreur lors de la récupération des équipes:', err)
+        const errorMessage = getErrorMessage(err)
+        console.error('Erreur lors de la récupération des équipes:', errorMessage)
         setAllTeams([])
-        setError(err.message || 'Erreur lors du chargement des équipes')
+        setError(errorMessage || 'Erreur lors du chargement des équipes')
         setLoading(false)
       })
   }, [me])
@@ -127,7 +129,7 @@ export default function TeamManagePage() {
           <button
             onClick={handleLeaveRequest}
             className="btn-primary px-8 py-4 text-lg font-semibold rounded-xl shadow-lg transition-all hover:scale-105"
-            style={{ 
+            style={{
               background: 'linear-gradient(135deg, rgba(255, 212, 0, 0.3), rgba(255, 212, 0, 0.15))',
               border: '2px solid rgba(255, 212, 0, 0.4)'
             }}
@@ -164,27 +166,28 @@ export default function TeamManagePage() {
                 {members.map(member => {
                   const isMemberManager = member.id === manager.id;
                   const canClick = isManager && !isMemberManager;
-                  
+
                   const handleMemberClick = () => {
                     if (canClick) {
                       sessionStorage.setItem(`member_${member.id}`, JSON.stringify(member));
                       navigate(`/member/${member.id}`);
                     }
                   };
-                  
+
                   return (
                     <div
                       key={member.id}
-                      className={`card p-6 transition-all ${
-                        canClick ? 'hover:shadow-lg cursor-pointer hover:scale-105' : ''
-                      }`}
+                      className={`card p-6 transition-all ${canClick ? 'hover:shadow-lg cursor-pointer hover:scale-105' : ''
+                        }`}
                       onClick={handleMemberClick}
                     >
                       <div className="flex items-start gap-4">
                         <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
-                             style={{ background: isMemberManager 
-                               ? 'linear-gradient(135deg, rgba(255, 212, 0, 0.4), rgba(255, 212, 0, 0.2))' 
-                               : 'linear-gradient(135deg, rgba(255, 212, 0, 0.2), rgba(255, 212, 0, 0.1))' }}>
+                          style={{
+                            background: isMemberManager
+                              ? 'linear-gradient(135deg, rgba(255, 212, 0, 0.4), rgba(255, 212, 0, 0.2))'
+                              : 'linear-gradient(135deg, rgba(255, 212, 0, 0.2), rgba(255, 212, 0, 0.1))'
+                          }}>
                           {isMemberManager ? '👔' : '👤'}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -202,13 +205,13 @@ export default function TeamManagePage() {
                           <div className="flex flex-wrap gap-2 mt-2">
                             {isMemberManager && (
                               <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full"
-                                    style={{ background: 'rgba(255, 212, 0, 0.3)', color: 'hsl(var(--ink))' }}>
+                                style={{ background: 'rgba(255, 212, 0, 0.3)', color: 'hsl(var(--ink))' }}>
                                 👔 Manager
                               </span>
                             )}
                             {member.admin && (
                               <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full"
-                                    style={{ background: 'rgba(255, 212, 0, 0.2)', color: 'hsl(var(--ink))' }}>
+                                style={{ background: 'rgba(255, 212, 0, 0.2)', color: 'hsl(var(--ink))' }}>
                                 ⭐ Admin
                               </span>
                             )}
@@ -227,9 +230,9 @@ export default function TeamManagePage() {
           <Card title="👔 Manager de l'équipe">
             <div className="max-w-2xl mx-auto">
               <div className="flex items-start gap-6 p-6 rounded-2xl"
-                   style={{ background: 'linear-gradient(135deg, rgba(255, 212, 0, 0.1), rgba(255, 212, 0, 0.05))' }}>
+                style={{ background: 'linear-gradient(135deg, rgba(255, 212, 0, 0.1), rgba(255, 212, 0, 0.05))' }}>
                 <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl"
-                     style={{ background: 'linear-gradient(135deg, rgba(255, 212, 0, 0.3), rgba(255, 212, 0, 0.15))' }}>
+                  style={{ background: 'linear-gradient(135deg, rgba(255, 212, 0, 0.3), rgba(255, 212, 0, 0.15))' }}>
                   👔
                 </div>
                 <div className="flex-1">
@@ -249,7 +252,7 @@ export default function TeamManagePage() {
                     )}
                     {manager.admin && (
                       <span className="inline-block mt-2 px-3 py-1.5 text-sm font-semibold rounded-full"
-                            style={{ background: 'rgba(255, 212, 0, 0.3)', color: 'hsl(var(--ink))' }}>
+                        style={{ background: 'rgba(255, 212, 0, 0.3)', color: 'hsl(var(--ink))' }}>
                         ⭐ Administrateur
                       </span>
                     )}

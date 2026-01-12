@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, UserPlus } from 'lucide-react';
 import { User } from '../utils/types';
 import { addUser } from '../utils/api';
+import { getErrorMessage } from '../utils/errors';
 
 interface AddUserModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps) {
       });
       onClose();
     } catch (err) {
-      setError('Erreur lors de la création: ' + (err instanceof Error ? err.message : String(err)));
+      setError('Erreur lors de la création: ' + getErrorMessage(err));
     } finally {
       setLoading(false);
     }

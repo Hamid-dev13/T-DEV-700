@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { getMyTeams, getTeamMembersLeavePeriods, updateLeavePeriodStatus, deleteUserLeavePeriod } from '../utils/api'
 import { LeavePeriod, User } from '../utils/types'
 import { ConfirmModal } from '../components/ConfirmModal'
+import { getErrorMessage } from '../utils/errors'
 
 type LeavePeriodWithUser = LeavePeriod & {
   user: User
@@ -14,7 +15,7 @@ export default function LeaveValidationPage() {
   useEffect(() => {
     document.title = "Demandes de congés • Time Manager"
   }, [])
-  
+
   const { user } = useAuth()
   const navigate = useNavigate()
   const [leavePeriods, setLeavePeriods] = useState<LeavePeriodWithUser[]>([])
@@ -42,11 +43,11 @@ export default function LeaveValidationPage() {
       setLoading(true)
       const teamsData = await getMyTeams()
       const teamsList = Array.isArray(teamsData) ? teamsData : (teamsData && teamsData.team ? [teamsData] : [])
-      
+
       const managerTeams = teamsList.filter((t: any) => t.team.managerId === user?.id)
-      
+
       setTeams(managerTeams)
-      
+
       if (managerTeams.length > 0) {
         const firstTeamId = managerTeams[0].team.id
         setSelectedTeamId(firstTeamId)
@@ -55,9 +56,10 @@ export default function LeaveValidationPage() {
         setError('Vous n\'êtes manager d\'aucune équipe')
         setLoading(false)
       }
-    } catch (err: any) {
-      console.error('Erreur lors du chargement:', err)
-      setError(err.message || 'Erreur lors du chargement')
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err)
+      console.error('Erreur lors du chargement:', errorMessage)
+      setError(errorMessage)
       setLoading(false)
     }
   }
@@ -68,9 +70,10 @@ export default function LeaveValidationPage() {
       const periods = await getTeamMembersLeavePeriods(teamId)
       setLeavePeriods(periods)
       setError(null)
-    } catch (err: any) {
-      console.error('Erreur lors du chargement des périodes:', err)
-      setError(err.message || 'Erreur lors du chargement')
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err)
+      console.error('Erreur lors du chargement des périodes:', errorMessage)
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -83,16 +86,17 @@ export default function LeaveValidationPage() {
 
   async function confirmValidate() {
     if (!pendingValidate) return
-    
+
     try {
       await updateLeavePeriodStatus(pendingValidate.userId, pendingValidate.leaveId, true)
       if (selectedTeamId) {
         await loadLeavePeriods(selectedTeamId)
       }
       setPendingValidate(null)
-    } catch (err: any) {
-      console.error('Erreur lors de la validation:', err)
-      setError(err.message || 'Erreur lors de la validation')
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err)
+      console.error('Erreur lors de la validation:', errorMessage)
+      setError(errorMessage)
     }
   }
 
@@ -103,16 +107,17 @@ export default function LeaveValidationPage() {
 
   async function confirmReject() {
     if (!pendingReject) return
-    
+
     try {
       await deleteUserLeavePeriod(pendingReject.userId, pendingReject.leaveId)
       if (selectedTeamId) {
         await loadLeavePeriods(selectedTeamId)
       }
       setPendingReject(null)
-    } catch (err: any) {
-      console.error('Erreur lors du refus:', err)
-      setError(err.message || 'Erreur lors du refus')
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err)
+      console.error('Erreur lors du refus:', errorMessage)
+      setError(errorMessage)
     }
   }
 
@@ -123,16 +128,17 @@ export default function LeaveValidationPage() {
 
   async function confirmCancel() {
     if (!pendingCancel) return
-    
+
     try {
       await deleteUserLeavePeriod(pendingCancel.userId, pendingCancel.leaveId)
       if (selectedTeamId) {
         await loadLeavePeriods(selectedTeamId)
       }
       setPendingCancel(null)
-    } catch (err: any) {
-      console.error('Erreur lors de l\'annulation:', err)
-      setError(err.message || 'Erreur lors de l\'annulation')
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err)
+      console.error('Erreur lors de l\'annulation:', errorMessage)
+      setError(errorMessage)
     }
   }
 
@@ -140,14 +146,14 @@ export default function LeaveValidationPage() {
     if (period.accepted === true) {
       return (
         <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full"
-              style={{ background: 'rgba(34, 197, 94, 0.2)', color: 'rgb(34, 197, 94)' }}>
+          style={{ background: 'rgba(34, 197, 94, 0.2)', color: 'rgb(34, 197, 94)' }}>
           Validée
         </span>
       )
     } else {
       return (
         <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full"
-              style={{ background: 'rgba(255, 212, 0, 0.2)', color: 'hsl(var(--ink))' }}>
+          style={{ background: 'rgba(255, 212, 0, 0.2)', color: 'hsl(var(--ink))' }}>
           En attente
         </span>
       )
@@ -160,10 +166,10 @@ export default function LeaveValidationPage() {
     if (isEndDate) {
       date.setDate(date.getDate() - 1)
     }
-    return date.toLocaleDateString('fr-FR', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     })
   }
 
@@ -179,7 +185,7 @@ export default function LeaveValidationPage() {
 
   function getFrenchHolidays(year: number): Date[] {
     const holidays: Date[] = []
-    
+
 
     holidays.push(new Date(year, 0, 1))   // Jour de l'an
     holidays.push(new Date(year, 4, 1))   // Fête du travail
@@ -189,7 +195,7 @@ export default function LeaveValidationPage() {
     holidays.push(new Date(year, 10, 1))  // Toussaint
     holidays.push(new Date(year, 10, 11)) // Armistice 1918
     holidays.push(new Date(year, 11, 25)) // Noël
-    
+
 
     const a = year % 19
     const b = Math.floor(year / 100)
@@ -205,34 +211,34 @@ export default function LeaveValidationPage() {
     const m = Math.floor((a + 11 * h + 22 * l) / 451)
     const month = Math.floor((h + l - 7 * m + 114) / 31) - 1
     const day = ((h + l - 7 * m + 114) % 31) + 1
-    
+
     const easter = new Date(year, month, day)
-    
+
 
     const easterMonday = new Date(easter)
     easterMonday.setDate(easter.getDate() + 1)
     holidays.push(easterMonday)
-    
+
 
     const ascension = new Date(easter)
     ascension.setDate(easter.getDate() + 39)
     holidays.push(ascension)
-    
+
 
     const pentecost = new Date(easter)
     pentecost.setDate(easter.getDate() + 50)
     holidays.push(pentecost)
-    
+
     return holidays
   }
 
   function isHoliday(day: number, month: number, year: number): boolean {
     const date = new Date(year, month, day)
     const holidays = getFrenchHolidays(year)
-    
-    return holidays.some(holiday => 
-      holiday.getDate() === day && 
-      holiday.getMonth() === month && 
+
+    return holidays.some(holiday =>
+      holiday.getDate() === day &&
+      holiday.getMonth() === month &&
       holiday.getFullYear() === year
     )
   }
@@ -250,7 +256,7 @@ export default function LeaveValidationPage() {
     const today = new Date()
     const maxDate = new Date(today.getFullYear() + 1, today.getMonth(), 1)
     const nextMonthDate = new Date(currentYear, currentMonth + 1, 1)
-    
+
     if (nextMonthDate < maxDate) {
       if (currentMonth === 11) {
         setCurrentMonth(0)
@@ -270,18 +276,18 @@ export default function LeaveValidationPage() {
 
   function renderTeamCalendar() {
     const today = new Date()
-    
+
     const firstDay = new Date(currentYear, currentMonth, 1)
     const lastDay = new Date(currentYear, currentMonth + 1, 0)
     const firstDayOfWeek = firstDay.getDay()
-    
+
     const days = []
     const daysInMonth = lastDay.getDate()
-    
+
     for (let i = 0; i < firstDayOfWeek; i++) {
       days.push(null)
     }
-    
+
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(day)
     }
@@ -289,9 +295,9 @@ export default function LeaveValidationPage() {
     function getDayPeriods(day: number) {
       const date = new Date(currentYear, currentMonth, day)
       date.setHours(0, 0, 0, 0)
-      
+
       const periodsOnDay: LeavePeriodWithUser[] = []
-      
+
       for (const period of leavePeriods) {
         const start = new Date(period.startDate)
         const end = new Date(period.endDate)
@@ -299,12 +305,12 @@ export default function LeaveValidationPage() {
         end.setHours(0, 0, 0, 0)
 
         end.setDate(end.getDate() - 1)
-        
+
         if (date >= start && date <= end) {
           periodsOnDay.push(period)
         }
       }
-      
+
       return periodsOnDay
     }
 
@@ -340,26 +346,26 @@ export default function LeaveValidationPage() {
             if (day === null) {
               return <div key={`empty-${index}`} />
             }
-            
+
             const periodsOnDay = getDayPeriods(day)
-            const isToday = day === today.getDate() && 
-                           currentMonth === today.getMonth() && 
-                           currentYear === today.getFullYear()
+            const isToday = day === today.getDate() &&
+              currentMonth === today.getMonth() &&
+              currentYear === today.getFullYear()
             const isHolidayDay = isHoliday(day, currentMonth, currentYear)
-            
+
             const hasValidated = periodsOnDay.some(p => p.accepted === true)
             const hasPending = periodsOnDay.some(p => p.accepted === false)
-            
+
             let bgColor = 'transparent'
             let borderColor = 'rgba(255, 212, 0, 0.2)'
             let textColor = 'inherit'
-            
+
             if (isHolidayDay) {
               bgColor = 'rgba(239, 68, 68, 0.08)'
               borderColor = 'rgba(239, 68, 68, 0.3)'
               textColor = 'rgb(239, 68, 68)'
             }
-            
+
             if (hasValidated && hasPending) {
               bgColor = 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 50%, rgba(255, 212, 0, 0.15) 50%)'
             } else if (hasValidated) {
@@ -369,12 +375,12 @@ export default function LeaveValidationPage() {
               bgColor = 'rgba(255, 212, 0, 0.15)'
               borderColor = 'rgba(255, 212, 0, 0.4)'
             }
-            
+
             return (
               <div
                 key={day}
                 className="aspect-square flex flex-col items-center justify-center rounded-md border transition-all relative group cursor-pointer text-sm"
-                style={{ 
+                style={{
                   background: bgColor,
                   borderColor: isToday ? 'rgba(255, 212, 0, 0.6)' : borderColor,
                   fontWeight: isToday ? 'bold' : 'normal',
@@ -389,7 +395,7 @@ export default function LeaveValidationPage() {
                 )}
                 {periodsOnDay.length > 0 && (
                   <div className="absolute top-full left-0 mt-2 p-2 rounded-lg shadow-lg z-10 hidden group-hover:block min-w-[200px]"
-                       style={{ background: 'hsl(var(--paper))', border: '1px solid rgba(255, 212, 0, 0.3)' }}>
+                    style={{ background: 'hsl(var(--paper))', border: '1px solid rgba(255, 212, 0, 0.3)' }}>
                     {periodsOnDay.map(period => (
                       <div key={period.id} className="text-xs mb-1">
                         <span className="font-semibold">{period.user.firstName} {period.user.lastName}</span>
@@ -451,7 +457,7 @@ export default function LeaveValidationPage() {
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  
+
   const pendingPeriods = leavePeriods.filter(p => p.accepted === false && new Date(p.endDate) >= today)
   const validatedPeriods = leavePeriods.filter(p => p.accepted === true && new Date(p.endDate) >= today)
 
@@ -543,7 +549,7 @@ export default function LeaveValidationPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-3">
                           <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
-                               style={{ background: 'linear-gradient(135deg, rgba(255, 212, 0, 0.2), rgba(255, 212, 0, 0.1))' }}>
+                            style={{ background: 'linear-gradient(135deg, rgba(255, 212, 0, 0.2), rgba(255, 212, 0, 0.1))' }}>
                           </div>
                           <div>
                             <h3 className="text-lg font-bold">
@@ -568,8 +574,8 @@ export default function LeaveValidationPage() {
                         <button
                           onClick={() => handleValidateClick(period.user_id, period.id)}
                           className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-                          style={{ 
-                            background: 'rgba(34, 197, 94, 0.1)', 
+                          style={{
+                            background: 'rgba(34, 197, 94, 0.1)',
                             color: 'rgb(34, 197, 94)',
                             border: '1px solid rgba(34, 197, 94, 0.3)'
                           }}
@@ -579,8 +585,8 @@ export default function LeaveValidationPage() {
                         <button
                           onClick={() => handleRejectClick(period.user_id, period.id)}
                           className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-                          style={{ 
-                            background: 'rgba(239, 68, 68, 0.1)', 
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.1)',
                             color: 'rgb(239, 68, 68)',
                             border: '1px solid rgba(239, 68, 68, 0.3)'
                           }}
@@ -609,7 +615,7 @@ export default function LeaveValidationPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-4 flex-1">
                         <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
-                             style={{ background: 'rgba(34, 197, 94, 0.2)' }}>
+                          style={{ background: 'rgba(34, 197, 94, 0.2)' }}>
                         </div>
                         <div className="flex-1">
                           <h3 className="text-lg font-bold mb-1">
@@ -627,8 +633,8 @@ export default function LeaveValidationPage() {
                       <button
                         onClick={() => handleCancelClick(period.user_id, period.id)}
                         className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-                        style={{ 
-                          background: 'rgba(239, 68, 68, 0.1)', 
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.1)',
                           color: 'rgb(239, 68, 68)',
                           border: '1px solid rgba(239, 68, 68, 0.3)'
                         }}

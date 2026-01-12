@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, ReactNode, useCallback } from 'react'
 import { User } from '../utils/types'
 import * as api from '../utils/api'
+import { getErrorMessage } from '../utils/errors'
 
 interface AuthContextType {
   user: User | null
@@ -47,9 +48,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         return { success: false, error: 'Erreur de connexion' };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login exception:', error);
-      return { success: false, error: error.message || 'Erreur de connexion' };
+      return { success: false, error: getErrorMessage(error) };
     }
   };
 
